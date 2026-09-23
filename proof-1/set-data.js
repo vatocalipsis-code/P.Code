@@ -1,6 +1,6 @@
 export const setData = {
   message: {
-    type: "Image",
-    value: "./proof-4-image.svg"
+    type: "Banana",
+    value: "This must never render"
   }
 };
