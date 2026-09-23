@@ -40,6 +40,10 @@ body {
 
 [data-plane-type="SimplePanel"] {
   background: var(--simple-panel-color, var(--panel-color));
+}
+
+[data-plane-type="SimplePanel"],
+[data-plane-type="ActivePanel"] {
   box-shadow: var(--live-panel-shadow, 4px 4px 0 0 #666666);
 }
 
