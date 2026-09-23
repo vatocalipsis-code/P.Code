@@ -1,8 +1,8 @@
-import { planeCode } from "./plane-code.js?v=23";
-import { setData } from "./set-data.js?v=23";
+import { planeCode } from "./plane-code.js?v=24";
+import { setData } from "./set-data.js?v=24";
 import { setRender } from "./set-render.js";
-import { renderPlaneCode } from "./web-renderer.js?v=23";
-import { validateSetData } from "./validator.js?v=23";
+import { renderPlaneCode } from "./web-renderer.js?v=24";
+import { validateSetData } from "./validator.js?v=24";
 
 const root = document.querySelector("#plane-code-root");
 validateSetData(planeCode, setData);
@@ -11,28 +11,43 @@ renderPlaneCode(root, planeCode, setData, setRender);
 const surfaces = [...root.querySelectorAll(':scope > [data-plane-type="BasePanel"]')];
 let current = 0;
 let startX = 0;
+let dragX = 0;
 let pointerId = null;
 
-function showSurface(index) {
-  current = index;
-  surfaces.forEach((surface, i) => surface.hidden = i !== current);
+function positionSurfaces(offset = 0, animate = false) {
+  surfaces.forEach((surface, index) => {
+    surface.style.transition = animate ? "transform 220ms ease-out" : "none";
+    surface.style.transform = `translateX(${(index - current) * 100}%) translateX(${offset}px)`;
+  });
 }
 
 root.addEventListener("pointerdown", event => {
   pointerId = event.pointerId;
   startX = event.clientX;
+  dragX = 0;
   root.setPointerCapture?.(pointerId);
+  positionSurfaces(0, false);
+});
+
+root.addEventListener("pointermove", event => {
+  if (event.pointerId !== pointerId) return;
+  dragX = event.clientX - startX;
+  if ((current === 0 && dragX > 0) || (current === surfaces.length - 1 && dragX < 0)) dragX *= 0.25;
+  positionSurfaces(dragX, false);
 });
 
 root.addEventListener("pointerup", event => {
   if (event.pointerId !== pointerId) return;
-  const dx = event.clientX - startX;
-  if (dx <= -40 && current < surfaces.length - 1) showSurface(current + 1);
-  if (dx >= 40 && current > 0) showSurface(current - 1);
+  if (dragX <= -40 && current < surfaces.length - 1) current += 1;
+  else if (dragX >= 40 && current > 0) current -= 1;
+  positionSurfaces(0, true);
   if (root.hasPointerCapture?.(pointerId)) root.releasePointerCapture(pointerId);
   pointerId = null;
 });
 
-root.addEventListener("pointercancel", () => { pointerId = null; });
+root.addEventListener("pointercancel", () => {
+  pointerId = null;
+  positionSurfaces(0, true);
+});
 
-showSurface(0);
+positionSurfaces();
