@@ -18,13 +18,30 @@ body,
   min-height: 100dvh;
 }
 
+#plane-code-root {
+  perspective: var(--perspective);
+}
+
 [data-plane-type="BasePanel"],
 [data-plane-type="SimplePanel"],
 [data-plane-type="ActivePanel"] {
   border: 1px solid currentColor;
+  transform-style: preserve-3d;
 }
 
 [data-plane-type="BasePanel"],
 [data-plane-type="SimplePanel"] {
   padding: var(--panel-spacing);
+}
+
+[data-plane-type="SimplePanel"] {
+  transform: translateZ(var(--simple-panel-z));
+  box-shadow: var(--panel-shadow);
+  background: linear-gradient(var(--panel-light), var(--panel-light));
+}
+
+[data-plane-type="ActivePanel"] {
+  transform: translateZ(var(--active-panel-z));
+  box-shadow: var(--panel-shadow);
+  background: linear-gradient(var(--panel-light), var(--panel-light));
 }
