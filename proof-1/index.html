@@ -1,13 +1,49 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>PlaneCode Proof-1</title>
+  <title>PlaneCode Proof-2 Shadow Lab</title>
   <link rel="stylesheet" href="./renderer.css">
 </head>
 <body>
   <main id="plane-code-root"></main>
+
+  <section id="shadow-controls" aria-label="Настройка тени">
+    <h2>Тень панелей</h2>
+
+    <label>Смещение X <output id="shadow-x-output">4 px</output>
+      <input id="shadow-x" type="range" min="-20" max="20" step="1" value="4">
+      <input id="shadow-x-number" type="number" min="-20" max="20" step="1" value="4">
+    </label>
+
+    <label>Смещение Y <output id="shadow-y-output">4 px</output>
+      <input id="shadow-y" type="range" min="-20" max="20" step="1" value="4">
+      <input id="shadow-y-number" type="number" min="-20" max="20" step="1" value="4">
+    </label>
+
+    <label>Размытие <output id="shadow-blur-output">0 px</output>
+      <input id="shadow-blur" type="range" min="0" max="30" step="1" value="0">
+      <input id="shadow-blur-number" type="number" min="0" max="30" step="1" value="0">
+    </label>
+
+    <label>Расширение <output id="shadow-spread-output">0 px</output>
+      <input id="shadow-spread" type="range" min="-20" max="20" step="1" value="0">
+      <input id="shadow-spread-number" type="number" min="-20" max="20" step="1" value="0">
+    </label>
+
+    <label class="control-row">Цвет
+      <input id="shadow-color" type="color" value="#666666">
+      <input id="shadow-color-text" type="text" value="#666666" inputmode="text">
+    </label>
+
+    <label class="control-row">Внутренняя тень (inset)
+      <input id="shadow-inset" type="checkbox">
+    </label>
+
+    <output id="shadow-css">box-shadow: 4px 4px 0px 0px #666666;</output>
+  </section>
+
   <script type="module" src="./main.js"></script>
 </body>
 </html>
