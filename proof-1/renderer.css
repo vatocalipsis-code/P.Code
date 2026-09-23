@@ -35,7 +35,7 @@ body {
 
 [data-plane-type="SimplePanel"],
 [data-plane-type="ActivePanel"] {
-  border: 1px solid var(--border-color);
+  border: var(--panel-border-width, 1px) solid var(--border-color);
 }
 
 [data-plane-type="SimplePanel"] {
