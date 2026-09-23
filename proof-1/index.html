@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>PlaneCode Proof-2 Shadow Lab</title>
-  <link rel="stylesheet" href="./renderer.css?v=9">
+  <link rel="stylesheet" href="./renderer.css?v=10">
 </head>
 <body>
   <main id="plane-code-root"></main>
@@ -12,20 +12,17 @@
   <section id="shadow-controls" aria-label="Настройка тени">
     <h2>Тень панелей</h2>
 
-    <label>Смещение X + Y <output id="shadow-offset-output">4 px</output>
-      <input id="shadow-offset" type="range" min="-20" max="20" step="1" value="4">
-      <input id="shadow-offset-number" type="number" min="-20" max="20" step="1" value="4">
+    <label>Z — высота панели <output id="shadow-z-output">4</output>
+      <input id="shadow-z" type="range" min="0" max="20" step="0.1" value="4">
+      <input id="shadow-z-number" type="number" min="0" max="20" step="0.1" value="4">
     </label>
 
-    <label>Размытие <output id="shadow-blur-output">0 px</output>
-      <input id="shadow-blur" type="range" min="0" max="30" step="1" value="0">
-      <input id="shadow-blur-number" type="number" min="0" max="30" step="1" value="0">
-    </label>
-
-    <label>Расширение <output id="shadow-spread-output">0 px</output>
-      <input id="shadow-spread" type="range" min="-20" max="20" step="1" value="0">
-      <input id="shadow-spread-number" type="number" min="-20" max="20" step="1" value="0">
-    </label>
+    <div id="shadow-derived">
+      <span>X</span><output id="shadow-x-output">4 px</output>
+      <span>Y</span><output id="shadow-y-output">4 px</output>
+      <span>Размытие</span><output id="shadow-blur-output">4 px</output>
+      <span>Расширение</span><output id="shadow-spread-output">0.6 px</output>
+    </div>
 
     <label class="control-row">Цвет
       <input id="shadow-color" type="color" value="#666666">
@@ -39,6 +36,6 @@
     <output id="shadow-css">box-shadow: 4px 4px 0px 0px #666666;</output>
   </section>
 
-  <script type="module" src="./main.js?v=9"></script>
+  <script type="module" src="./main.js?v=10"></script>
 </body>
 </html>
