@@ -5,7 +5,7 @@ function renderNode(node, data) {
 
   if (node.type === "Container") {
     if (node.content !== "Text") {
-      throw new Error(`Proof-1 supports Text Container only: ${node.id ?? "unnamed"}`);
+      throw new Error(`Proof-2 supports Text Container only: ${node.id ?? "unnamed"}`);
     }
     element.textContent = data[node.id] ?? "";
     return element;
@@ -20,5 +20,10 @@ function renderNode(node, data) {
 
 export function renderPlaneCode(root, planeCode, data, renderSet) {
   root.style.setProperty("--panel-spacing", `${renderSet.PanelSpacing}px`);
+  root.style.setProperty("--perspective", `${renderSet.Perspective}px`);
+  root.style.setProperty("--simple-panel-z", `${renderSet.SimplePanelTranslateZ}px`);
+  root.style.setProperty("--active-panel-z", `${renderSet.ActivePanelTranslateZ}px`);
+  root.style.setProperty("--panel-shadow", renderSet.Shadow);
+  root.style.setProperty("--panel-light", renderSet.Light);
   root.replaceChildren(renderNode(planeCode, data));
 }
