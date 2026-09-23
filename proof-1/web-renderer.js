@@ -20,10 +20,7 @@ function renderNode(node, data) {
 
 export function renderPlaneCode(root, planeCode, data, renderSet) {
   root.style.setProperty("--panel-spacing", `${renderSet.PanelSpacing}px`);
-  root.style.setProperty("--perspective", `${renderSet.Perspective}px`);
-  root.style.setProperty("--simple-panel-z", `${renderSet.SimplePanelTranslateZ}px`);
-  root.style.setProperty("--active-panel-z", `${renderSet.ActivePanelTranslateZ}px`);
-  root.style.setProperty("--panel-shadow", renderSet.Shadow);
-  root.style.setProperty("--panel-light", renderSet.Light);
+  root.style.setProperty("--panel-depth", `${renderSet.PanelDepth}px`);
+  root.style.setProperty("--panel-depth-color", renderSet.PanelDepthColor);
   root.replaceChildren(renderNode(planeCode, data));
 }
