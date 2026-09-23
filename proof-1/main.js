@@ -17,6 +17,12 @@ const colorText = document.querySelector("#shadow-color-text");
 const inset = document.querySelector("#shadow-inset");
 const cssOutput = document.querySelector("#shadow-css");
 
+const panelColors = [
+  ["base-panel-color", "base-panel-color-text", "--base-panel-color"],
+  ["simple-panel-color", "simple-panel-color-text", "--simple-panel-color"],
+  ["active-panel-color", "active-panel-color-text", "--active-panel-color"]
+];
+
 function round(value, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
@@ -74,5 +80,24 @@ colorText.addEventListener("input", () => {
   applyZ();
 });
 inset.addEventListener("change", applyZ);
+
+for (const [pickerId, textId, variable] of panelColors) {
+  const picker = document.querySelector(`#${pickerId}`);
+  const text = document.querySelector(`#${textId}`);
+
+  picker.addEventListener("input", () => {
+    text.value = picker.value;
+    root.style.setProperty(variable, picker.value);
+  });
+
+  text.addEventListener("input", () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(text.value)) {
+      picker.value = text.value;
+      root.style.setProperty(variable, text.value);
+    }
+  });
+
+  root.style.setProperty(variable, picker.value);
+}
 
 applyZ();
