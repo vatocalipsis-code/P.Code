@@ -1,105 +1,84 @@
 # PlaneCode 1.0.0
 
-Status: CANON
+Status: RELEASED / CURRENT
 
-PlaneCode is a minimal declarative language for composing panel-based interfaces.
+PlaneCode 1.0.0 is the released working state of the PlaneCode visual and tactile interface runtime.
 
-## Core grammar
+## Current structure
+
+A PlaneCode composition in this release uses:
 
 ```text
 BasePanel
-├── SimplePanel
-└── Spacer
-    └── Orientation: Vertical OR Horizontal
-
-SimplePanel
-├── ActivePanel
-└── Spacer
-    └── Orientation: Vertical OR Horizontal
-
-ActivePanel
-├── ActivePanel.Aggregate
-├── ActivePanel
-├── Container: Text OR Image
-└── Spacer
-    └── Orientation: Vertical OR Horizontal
+└── SimplePanel
+    └── ActivePanel
+        └── Container
 ```
 
-## BasePanel
+The current implementation supports one or more root `BasePanel` surfaces.
 
-`BasePanel` is the invisible root of a composition.
+Every element may have an `id`.
 
-Allowed children:
-- `SimplePanel`
-- `Spacer`
+## Container data
 
-## SimplePanel
+Container content is supplied by `SetData` and is addressed by the Container `id`.
 
-`SimplePanel` is a panel that may contain interactive panels.
-
-Allowed children:
-- `ActivePanel`
-- `Spacer`
-
-## ActivePanel
-
-`ActivePanel` is an interactive panel.
-
-Allowed children:
-- `ActivePanel.Aggregate`
-- `ActivePanel`
-- `Container`
-- `Spacer`
-
-An `ActivePanel` may contain another `ActivePanel`. Nesting depth is not fixed by the grammar.
-
-## ActivePanel.Aggregate
-
-`ActivePanel.Aggregate` is a distinct child entity of `ActivePanel` for an aggregate name or aggregate function.
-
-Its explicit dimensions are not defined by the grammar.
-
-Its size is automatic and follows its content.
-
-## Container
-
-`Container` displays exactly one content type:
+Supported data types:
 
 ```text
-Container: Text OR Image
+Text
+Image
 ```
 
-`Text` and `Image` are alternatives, not simultaneous sequential content types.
+A Container displays one supplied data item.
 
-## Spacer
+## Validation
 
-`Spacer` is one reusable spacing entity used at every level where the grammar permits it.
+`Validator` runs before rendering.
 
-Its orientation is exactly one of:
+For every Container used by the composition, its SetData item must:
+- exist;
+- have type `Text` or `Image`;
+- have a non-empty string value.
 
-```text
-Vertical
-OR
-Horizontal
-```
+Invalid SetData stops rendering.
 
-## Scope
+## Rendering
 
-PlaneCode defines composition grammar only.
+`WebRenderer` consumes:
+- PlaneCode composition;
+- validated SetData;
+- SetRender.
 
-It does not define application meaning, business entities, visual styling, physical depth, rendering technology, input technology, fixed dimensions, or a target device.
+Current SetRender parameters:
+- `PanelSpacing`;
+- `BackgroundColor`;
+- `PanelColor`;
+- `BorderColor`;
+- `TextColor`.
 
-Those concerns belong to the system that interprets a PlaneCode composition.
+Current `PanelSpacing`: **20 px**.
 
-## Invariants
+The current web rendering uses visible borders and physical panel depth for SimplePanel and ActivePanel.
 
-1. `BasePanel` is invisible.
-2. `BasePanel` contains only `SimplePanel` and `Spacer`.
-3. `SimplePanel` contains only `ActivePanel` and `Spacer`.
-4. `ActivePanel` contains only `ActivePanel.Aggregate`, `ActivePanel`, `Container`, and `Spacer`.
-5. `Container` contains exactly one of `Text` or `Image`.
-6. `Spacer` is the same entity wherever it is used.
-7. `Spacer` orientation is `Vertical` or `Horizontal`.
-8. `ActivePanel` nesting depth is not fixed by the grammar.
-9. `ActivePanel.Aggregate` uses automatic content-driven sizing.
-10. Anything not defined by this specification is outside PlaneCode 1.0.0.
+## Multiple BasePanel surfaces
+
+Multiple root BasePanel surfaces are rendered as separate full-screen surfaces.
+
+The current web runtime supports horizontal pointer/touch movement between adjacent BasePanel surfaces:
+- surfaces follow horizontal pointer movement;
+- a 40 px release threshold changes the current surface;
+- releasing below the threshold returns the surfaces to their current position.
+
+## Current implementation files
+
+- `plane-code.js`
+- `set-data.js`
+- `set-render.js`
+- `validator.js`
+- `web-renderer.js`
+- `renderer.css`
+- `main.js`
+- `index.html`
+
+This document describes PlaneCode 1.0.0 only.
