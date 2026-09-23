@@ -1,4 +1,4 @@
-name: Deploy PlaneCode Proof-1 to GitHub Pages
+name: Deploy PlaneCode
 
 on:
   push:
