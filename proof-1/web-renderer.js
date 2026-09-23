@@ -1,4 +1,4 @@
-function renderNode(node, data, spacing) {
+function renderNode(node, data) {
   const element = document.createElement("div");
   element.dataset.planeType = node.type;
   if (node.id) element.dataset.planeId = node.id;
@@ -11,13 +11,8 @@ function renderNode(node, data, spacing) {
     return element;
   }
 
-  if (node.type === "SimplePanel" || node.type === "ActivePanel") {
-    element.style.marginLeft = `${spacing}px`;
-    element.style.marginRight = `${spacing}px`;
-  }
-
   for (const child of node.children ?? []) {
-    element.append(renderNode(child, data, spacing));
+    element.append(renderNode(child, data));
   }
 
   return element;
@@ -25,5 +20,5 @@ function renderNode(node, data, spacing) {
 
 export function renderPlaneCode(root, planeCode, data, renderSet) {
   root.style.setProperty("--panel-spacing", `${renderSet.PanelSpacing}px`);
-  root.replaceChildren(renderNode(planeCode, data, renderSet.PanelSpacing));
+  root.replaceChildren(renderNode(planeCode, data));
 }
