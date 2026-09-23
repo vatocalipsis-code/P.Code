@@ -1,6 +1,4 @@
 export const setData = {
-  message: {
-    type: "Text",
-    value: "PlaneCode Proof-4 VERIFIED"
-  }
+  "home-message": { type: "Text", value: "Home" },
+  "menu-message": { type: "Text", value: "Menu" }
 };
