@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>PlaneCode Proof-2 Shadow Lab</title>
-  <link rel="stylesheet" href="./renderer.css?v=11">
+  <link rel="stylesheet" href="./renderer.css?v=12">
 </head>
 <body>
   <main id="plane-code-root"></main>
@@ -29,7 +29,22 @@
       <span>Расширение</span><output id="shadow-spread-output">0.6 px</output>
     </div>
 
-    <label class="control-row">Цвет
+    <div id="panel-colors">
+      <label class="control-row">BasePanel
+        <input id="base-panel-color" type="color" value="#f2f2f2">
+        <input id="base-panel-color-text" type="text" value="#f2f2f2">
+      </label>
+      <label class="control-row">SimplePanel
+        <input id="simple-panel-color" type="color" value="#f2f2f2">
+        <input id="simple-panel-color-text" type="text" value="#f2f2f2">
+      </label>
+      <label class="control-row">ActivePanel
+        <input id="active-panel-color" type="color" value="#f2f2f2">
+        <input id="active-panel-color-text" type="text" value="#f2f2f2">
+      </label>
+    </div>
+
+    <label class="control-row">Цвет тени
       <input id="shadow-color" type="color" value="#666666">
       <input id="shadow-color-text" type="text" value="#666666" inputmode="text">
     </label>
@@ -41,6 +56,6 @@
     <output id="shadow-css">box-shadow: 4px 4px 0px 0px #666666;</output>
   </section>
 
-  <script type="module" src="./main.js?v=11"></script>
+  <script type="module" src="./main.js?v=12"></script>
 </body>
 </html>
