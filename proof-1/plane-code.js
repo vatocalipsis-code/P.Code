@@ -13,7 +13,6 @@ export const planeCode = {
             {
               type: "Container",
               id: "message",
-              content: "Text"
             }
           ]
         }
