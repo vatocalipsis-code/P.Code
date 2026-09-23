@@ -21,21 +21,45 @@ body,
   background: var(--background-color);
 }
 
-[data-plane-type="BasePanel"],
+[data-plane-type="BasePanel"] {
+  min-height: 100dvh;
+  width: 100%;
+  padding: var(--panel-spacing);
+  border: 0;
+  background: var(--panel-color);
+}
+
 [data-plane-type="SimplePanel"],
 [data-plane-type="ActivePanel"] {
+  position: relative;
   border: 1px solid var(--border-color);
   background: var(--panel-color);
 }
 
-[data-plane-type="BasePanel"],
 [data-plane-type="SimplePanel"] {
   padding: var(--panel-spacing);
 }
 
-[data-plane-type="SimplePanel"],
-[data-plane-type="ActivePanel"] {
-  box-shadow:
-    var(--panel-depth) 0 0 var(--panel-depth-color),
-    0 var(--panel-depth) 0 var(--panel-depth-color);
+[data-plane-type="SimplePanel"]::before,
+[data-plane-type="ActivePanel"]::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: calc(-1 * var(--panel-depth));
+  width: var(--panel-depth);
+  height: calc(100% + var(--panel-depth));
+  background: var(--panel-depth-color);
+}
+
+[data-plane-type="SimplePanel"]::after,
+[data-plane-type="ActivePanel"]::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  bottom: calc(-1 * var(--panel-depth));
+  width: 100%;
+  height: var(--panel-depth);
+  background: var(--panel-depth-color);
 }
