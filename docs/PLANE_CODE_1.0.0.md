@@ -6,8 +6,6 @@ PlaneCode 1.0.0 is the released working state of the PlaneCode visual and tactil
 
 ## Current structure
 
-A PlaneCode composition in this release uses:
-
 ```text
 BasePanel
 └── SimplePanel
@@ -15,13 +13,13 @@ BasePanel
         └── Container
 ```
 
-The current implementation supports one or more root `BasePanel` surfaces.
+The implementation supports one or more root `BasePanel` surfaces.
 
 Every element may have an `id`.
 
 ## Container data
 
-Container content is supplied by `SetData` and is addressed by the Container `id`.
+Container content is supplied by `SetData` and addressed by the Container `id`.
 
 Supported data types:
 
@@ -29,8 +27,6 @@ Supported data types:
 Text
 Image
 ```
-
-A Container displays one supplied data item.
 
 ## Validation
 
@@ -45,10 +41,7 @@ Invalid SetData stops rendering.
 
 ## Rendering
 
-`WebRenderer` consumes:
-- PlaneCode composition;
-- validated SetData;
-- SetRender.
+`WebRenderer` consumes the PlaneCode composition, validated SetData and SetRender.
 
 Current SetRender parameters:
 - `PanelSpacing`;
@@ -70,15 +63,10 @@ The current web runtime supports horizontal pointer/touch movement between adjac
 - a 40 px release threshold changes the current surface;
 - releasing below the threshold returns the surfaces to their current position.
 
-## Current implementation files
+## Release layout
 
-- `plane-code.js`
-- `set-data.js`
-- `set-render.js`
-- `validator.js`
-- `web-renderer.js`
-- `renderer.css`
-- `main.js`
-- `index.html`
+- `runtime/` — WebRenderer, Validator and renderer CSS.
+- `release/` — released PlaneCode composition, SetData and SetRender.
+- `web/` — browser entry point.
 
 This document describes PlaneCode 1.0.0 only.

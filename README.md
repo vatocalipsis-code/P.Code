@@ -4,8 +4,9 @@ PlaneCode is a standalone visual and tactile interface layer that can be used by
 
 Current version: **1.0.0**
 
-- Current specification: `PLANE_CODE_1.0.0.md`
-- Current implementation: repository root
-- Current working example: `index.html`
+- Specification: `docs/PLANE_CODE_1.0.0.md`
+- Runtime: `runtime/`
+- Released working composition: `release/`
+- Web entry point: `web/`
 
-Run the current working example with GitHub Pages.
+Run the released working state with GitHub Pages.

@@ -23,12 +23,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site/runtime _site/release
+          cp web/index.html _site/index.html
+          cp web/main.js _site/main.js
+          cp runtime/renderer.css _site/runtime/renderer.css
+          cp runtime/web-renderer.js _site/runtime/web-renderer.js
+          cp runtime/validator.js _site/runtime/validator.js
+          cp release/plane-code.js _site/release/plane-code.js
+          cp release/set-data.js _site/release/set-data.js
+          cp release/set-render.js _site/release/set-render.js
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
