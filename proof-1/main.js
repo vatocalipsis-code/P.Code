@@ -1,8 +1,8 @@
 import { planeCode } from "./plane-code.js";
-import { setData } from "./set-data.js";
+import { setData } from "./set-data.js?v=20";
 import { setRender } from "./set-render.js";
-import { renderPlaneCode } from "./web-renderer.js";
-import { validateSetData } from "./validator.js";
+import { renderPlaneCode } from "./web-renderer.js?v=20";
+import { validateSetData } from "./validator.js?v=20";
 
 const root = document.querySelector("#plane-code-root");
 validateSetData(planeCode, setData);
