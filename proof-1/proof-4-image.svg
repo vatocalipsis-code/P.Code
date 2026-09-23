@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120">
+  <rect width="320" height="120" fill="#d9d9d9"/>
+  <circle cx="70" cy="60" r="32" fill="#666666"/>
+  <text x="120" y="68" font-family="Arial, sans-serif" font-size="22" fill="#1f1f1f">PlaneCode Image</text>
+</svg>
