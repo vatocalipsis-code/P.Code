@@ -1,6 +1,6 @@
 export const setData = {
   message: {
-    type: "Banana",
-    value: "This must never render"
+    type: "Text",
+    value: "PlaneCode Proof-4 VERIFIED"
   }
 };
