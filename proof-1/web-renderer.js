@@ -4,11 +4,20 @@ function renderNode(node, data) {
   if (node.id) element.dataset.planeId = node.id;
 
   if (node.type === "Container") {
-    if (node.content !== "Text") {
-      throw new Error(`Proof-2 supports Text Container only: ${node.id ?? "unnamed"}`);
+    const item = data[node.id];
+
+    if (item.type === "Text") {
+      element.textContent = item.value;
+      return element;
     }
-    element.textContent = data[node.id] ?? "";
-    return element;
+
+    if (item.type === "Image") {
+      const image = document.createElement("img");
+      image.src = item.value;
+      image.alt = "";
+      element.append(image);
+      return element;
+    }
   }
 
   for (const child of node.children ?? []) {
