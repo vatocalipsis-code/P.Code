@@ -1,0 +1,9 @@
+:root { font-family: system-ui, sans-serif; color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--background-color); color: var(--text-color); }
+body { min-height: 100dvh; background: var(--background-color); }
+#plane-code-root { position: relative; height: 100dvh; min-height: 100dvh; background: var(--background-color); touch-action: pan-y; overflow: hidden; }
+[data-plane-type="BasePanel"] { position: absolute; inset: 0; height: 100%; min-height: 100%; width: 100%; padding: var(--panel-spacing); border: 0; background: var(--base-panel-color, var(--panel-color)); will-change: transform; }
+[data-plane-type="SimplePanel"], [data-plane-type="ActivePanel"] { border: 1px solid var(--border-color); }
+[data-plane-type="SimplePanel"] { padding: var(--panel-spacing); background: var(--simple-panel-color, var(--panel-color)); box-shadow: 4px 4px 4px .6px #666; }
+[data-plane-type="ActivePanel"] { height: 50px; background: var(--active-panel-color, var(--panel-color)); box-shadow: 4px 4px 4px .6px #666; }
