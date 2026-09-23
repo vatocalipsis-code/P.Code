@@ -1,4 +1,5 @@
 name: Deploy PlaneCode
+# Redeploy trigger after switching GitHub Pages source to GitHub Actions.
 
 on:
   push:
