@@ -7,8 +7,7 @@ const root = document.querySelector("#plane-code-root");
 renderPlaneCode(root, planeCode, setData, setRender);
 
 const pairs = [
-  ["shadow-x", "shadow-x-number", "shadow-x-output"],
-  ["shadow-y", "shadow-y-number", "shadow-y-output"],
+  ["shadow-offset", "shadow-offset-number", "shadow-offset-output"],
   ["shadow-blur", "shadow-blur-number", "shadow-blur-output"],
   ["shadow-spread", "shadow-spread-number", "shadow-spread-output"]
 ];
@@ -32,8 +31,9 @@ function syncPair(rangeId, numberId) {
 }
 
 function applyShadow() {
-  const x = document.querySelector("#shadow-x-number").value || 0;
-  const y = document.querySelector("#shadow-y-number").value || 0;
+  const offset = document.querySelector("#shadow-offset-number").value || 0;
+  const x = offset;
+  const y = offset;
   const blur = document.querySelector("#shadow-blur-number").value || 0;
   const spread = document.querySelector("#shadow-spread-number").value || 0;
   const shadowColor = colorText.value || "#666666";
@@ -43,8 +43,7 @@ function applyShadow() {
   root.style.setProperty("--live-panel-shadow", value);
   cssOutput.value = `box-shadow: ${value};`;
 
-  document.querySelector("#shadow-x-output").value = `${x} px`;
-  document.querySelector("#shadow-y-output").value = `${y} px`;
+  document.querySelector("#shadow-offset-output").value = `${offset} px`;
   document.querySelector("#shadow-blur-output").value = `${blur} px`;
   document.querySelector("#shadow-spread-output").value = `${spread} px`;
 }
