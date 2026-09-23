@@ -30,18 +30,25 @@ body {
   width: 100%;
   padding: var(--panel-spacing);
   border: 0;
-  background: var(--panel-color);
+  background: var(--base-panel-color, var(--panel-color));
 }
 
 [data-plane-type="SimplePanel"],
 [data-plane-type="ActivePanel"] {
   border: 1px solid var(--border-color);
-  background: var(--panel-color);
+}
+
+[data-plane-type="SimplePanel"] {
+  background: var(--simple-panel-color, var(--panel-color));
   box-shadow: var(--live-panel-shadow, 4px 4px 0 0 #666666);
 }
 
 [data-plane-type="SimplePanel"] {
   padding: var(--panel-spacing);
+}
+
+[data-plane-type="ActivePanel"] {
+  background: var(--active-panel-color, var(--panel-color));
 }
 
 #shadow-controls {
