@@ -2,8 +2,10 @@ import { planeCode } from "./plane-code.js";
 import { setData } from "./set-data.js";
 import { setRender } from "./set-render.js";
 import { renderPlaneCode } from "./web-renderer.js";
+import { validateSetData } from "./validator.js";
 
 const root = document.querySelector("#plane-code-root");
+validateSetData(planeCode, setData);
 renderPlaneCode(root, planeCode, setData, setRender);
 
 const zRange = document.querySelector("#shadow-z");
