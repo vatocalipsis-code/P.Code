@@ -1,3 +1,6 @@
 export const setData = {
-  message: "PlaneCode Proof-1"
+  message: {
+    type: "Text",
+    value: "PlaneCode Proof-4: Text"
+  }
 };
