@@ -1,7 +1,11 @@
 # PlaneCode
 
-Minimal declarative grammar for composing panel-based interfaces.
+PlaneCode is a standalone visual and tactile interface layer that can be used by any application.
 
-Current canonical version: **1.0.0**
+Current version: **1.0.0**
 
-The complete specification is in [PLANE_CODE_1.0.0.md](./PLANE_CODE_1.0.0.md).
+- Current specification: `PLANE_CODE_1.0.0.md`
+- Current implementation: repository root
+- Current working example: `index.html`
+
+Run the current working example with GitHub Pages.
