@@ -1,5 +1,5 @@
 import { planeCode } from "./plane-code.js";
-import { setData } from "./set-data.js?v=21";
+import { setData } from "./set-data.js?v=22";
 import { setRender } from "./set-render.js";
 import { renderPlaneCode } from "./web-renderer.js?v=20";
 import { validateSetData } from "./validator.js?v=20";
