@@ -5,25 +5,17 @@ function renderNode(node, data) {
 
   if (node.type === "Container") {
     const item = data[node.id];
-
-    if (item.type === "Text") {
-      element.textContent = item.value;
-      return element;
-    }
-
+    if (item.type === "Text") element.textContent = item.value;
     if (item.type === "Image") {
       const image = document.createElement("img");
       image.src = item.value;
       image.alt = "";
       element.append(image);
-      return element;
     }
+    return element;
   }
 
-  for (const child of node.children ?? []) {
-    element.append(renderNode(child, data));
-  }
-
+  for (const child of node.children ?? []) element.append(renderNode(child, data));
   return element;
 }
 
@@ -35,5 +27,6 @@ export function renderPlaneCode(root, planeCode, data, renderSet) {
   root.style.setProperty("--text-color", renderSet.TextColor);
   root.style.setProperty("--panel-depth", `${renderSet.PanelDepth}px`);
   root.style.setProperty("--panel-depth-color", renderSet.PanelDepthColor);
-  root.replaceChildren(renderNode(planeCode, data));
+  const roots = Array.isArray(planeCode) ? planeCode : [planeCode];
+  root.replaceChildren(...roots.map(node => renderNode(node, data)));
 }
