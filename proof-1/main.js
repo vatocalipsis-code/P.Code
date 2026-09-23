@@ -15,6 +15,9 @@ const spacingOutput = document.querySelector("#panel-spacing-output");
 const borderRange = document.querySelector("#panel-border");
 const borderNumber = document.querySelector("#panel-border-number");
 const borderOutput = document.querySelector("#panel-border-output");
+const borderRange = document.querySelector("#panel-border");
+const borderNumber = document.querySelector("#panel-border-number");
+const borderOutput = document.querySelector("#panel-border-output");
 const color = document.querySelector("#shadow-color");
 const colorText = document.querySelector("#shadow-color-text");
 const inset = document.querySelector("#shadow-inset");
@@ -37,6 +40,14 @@ function applySpacing() {
   spacingNumber.value = String(spacing);
   root.style.setProperty("--panel-spacing", `${spacing}px`);
   spacingOutput.value = `${spacing} px`;
+}
+
+function applyBorder() {
+  const border = Math.max(0, Number(borderNumber.value) || 0);
+  borderRange.value = String(border);
+  borderNumber.value = String(border);
+  root.style.setProperty("--panel-border-width", `${border}px`);
+  borderOutput.value = `${border} px`;
 }
 
 function applyBorder() {
@@ -82,6 +93,12 @@ spacingRange.addEventListener("input", () => {
   applySpacing();
 });
 spacingNumber.addEventListener("input", applySpacing);
+
+borderRange.addEventListener("input", () => {
+  borderNumber.value = borderRange.value;
+  applyBorder();
+});
+borderNumber.addEventListener("input", applyBorder);
 
 borderRange.addEventListener("input", () => {
   borderNumber.value = borderRange.value;
