@@ -109,6 +109,24 @@ for (const [pickerId, textId, variable] of panelColors) {
   root.style.setProperty(variable, picker.value);
 }
 
+const activePanel = root.querySelector('[data-plane-type="ActivePanel"]');
+
+function onPress(event) {
+  activePanel.setPointerCapture?.(event.pointerId);
+  activePanel.style.boxShadow = "none";
+}
+
+function onRelease(event) {
+  if (activePanel.hasPointerCapture?.(event.pointerId)) {
+    activePanel.releasePointerCapture(event.pointerId);
+  }
+  activePanel.style.boxShadow = "";
+}
+
+activePanel.addEventListener("pointerdown", onPress);
+activePanel.addEventListener("pointerup", onRelease);
+activePanel.addEventListener("pointercancel", onRelease);
+
 applySpacing();
 applyBorder();
 applyZ();
