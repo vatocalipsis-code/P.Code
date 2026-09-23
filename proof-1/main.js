@@ -12,6 +12,9 @@ const zOutput = document.querySelector("#shadow-z-output");
 const spacingRange = document.querySelector("#panel-spacing");
 const spacingNumber = document.querySelector("#panel-spacing-number");
 const spacingOutput = document.querySelector("#panel-spacing-output");
+const borderRange = document.querySelector("#panel-border");
+const borderNumber = document.querySelector("#panel-border-number");
+const borderOutput = document.querySelector("#panel-border-output");
 const color = document.querySelector("#shadow-color");
 const colorText = document.querySelector("#shadow-color-text");
 const inset = document.querySelector("#shadow-inset");
@@ -34,6 +37,14 @@ function applySpacing() {
   spacingNumber.value = String(spacing);
   root.style.setProperty("--panel-spacing", `${spacing}px`);
   spacingOutput.value = `${spacing} px`;
+}
+
+function applyBorder() {
+  const border = Math.max(0, Number(borderNumber.value) || 0);
+  borderRange.value = String(border);
+  borderNumber.value = String(border);
+  root.style.setProperty("--panel-border-width", `${border}px`);
+  borderOutput.value = `${border} px`;
 }
 
 function applyZ() {
@@ -61,6 +72,7 @@ function applyZ() {
 zRange.addEventListener("input", () => {
   zNumber.value = zRange.value;
   applySpacing();
+applyBorder();
 applyZ();
 });
 zNumber.addEventListener("input", applyZ);
@@ -70,6 +82,12 @@ spacingRange.addEventListener("input", () => {
   applySpacing();
 });
 spacingNumber.addEventListener("input", applySpacing);
+
+borderRange.addEventListener("input", () => {
+  borderNumber.value = borderRange.value;
+  applyBorder();
+});
+borderNumber.addEventListener("input", applyBorder);
 
 color.addEventListener("input", () => {
   colorText.value = color.value;
