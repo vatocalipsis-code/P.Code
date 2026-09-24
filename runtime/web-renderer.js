@@ -2,11 +2,12 @@ function renderNode(node, data) {
   const element = document.createElement("div");
   element.dataset.planeType = node.type;
   if (node.id) element.dataset.planeId = node.id;
+  if (node.name) element.dataset.planeName = node.name;
 
   if (node.type === "Container") {
     const item = data[node.id];
     if (item.type === "Text") element.textContent = item.value;
-    if (item.type === "Image") {
+    if (item.type === "Picture") {
       const image = document.createElement("img");
       image.src = item.value;
       image.alt = "";
