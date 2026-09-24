@@ -110,13 +110,24 @@ function renderSource(source, renderSet, rule) {
   throw new Error(`WebRenderer: unsupported source kind "${source.kind}"`);
 }
 
-function renderNode(node, renderSet, parallaxNodes) {
+function sourcesFromData(node, dataSet) {
+  if (node.type !== "Container") return [];
+  const item = dataSet[node.dataSlot] ?? {};
+  const text = typeof item.SourceText === "string" && item.SourceText.length ? { kind: "Text", value: item.SourceText } : null;
+  const picture = typeof item.SourcePicture === "string" && item.SourcePicture.length ? { kind: "Picture", value: item.SourcePicture } : null;
+  if (text && picture) return node.Orientation === "Negative" ? [text, picture] : [picture, text];
+  return text ? [text] : picture ? [picture] : [];
+}
+
+function renderNode(node, dataSet, renderSet, parallaxNodes) {
   const element = document.createElement("div");
   element.dataset.planeType = node.type;
   if (node.id) element.dataset.planeId = node.id;
   if (node.Login) element.dataset.planeLogin = node.Login;
 
   const rule = node.Visual ?? {};
+  element.__planeVisual = rule;
+  if (node.Orientation !== undefined) element.dataset.planeOrientation = node.Orientation;
   element.style.setProperty("--plane-structural-opacity", structuralPercent(renderSet.Transparency));
   applyBoxRule(element, rule, renderSet);
 
@@ -128,13 +139,14 @@ function renderNode(node, renderSet, parallaxNodes) {
     const content = document.createElement("div");
     content.dataset.planeContainerContent = "";
     applyLayoutRule(content, rule);
-    for (const source of node.sources ?? []) content.append(renderSource(source, renderSet, rule));
+    for (const source of sourcesFromData(node, dataSet)) content.append(renderSource(source, renderSet, rule));
+    element.dataset.planeDataSlot = node.dataSlot;
     element.append(content);
     return element;
   }
 
   applyLayoutRule(element, rule);
-  for (const child of node.children ?? []) element.append(renderNode(child, renderSet, parallaxNodes));
+  for (const child of node.children ?? []) element.append(renderNode(child, dataSet, renderSet, parallaxNodes));
 
   if (node.type === "ActivePanel" || node.type === "AggregateActivePanel") {
     element.dataset.planeActive = "";
@@ -194,7 +206,7 @@ function bindParallax(root, nodes) {
   }, { signal: controller.signal });
 }
 
-export function renderPlaneCode(root, composition, renderSet) {
+export function renderPlaneCode(root, objectPlan, dataSet, renderSet) {
   root.style.setProperty("--panel-spacing", `${renderSet.PanelSpacing}px`);
   root.style.setProperty("--background-color", renderSet.BackgroundColor);
   root.style.setProperty("--panel-color", renderSet.PanelColor);
@@ -202,7 +214,19 @@ export function renderPlaneCode(root, composition, renderSet) {
   root.style.setProperty("--text-color", renderSet.TextColor);
 
   const parallaxNodes = [];
-  const roots = Array.isArray(composition) ? composition : [composition];
-  root.replaceChildren(...roots.map(node => renderNode(node, renderSet, parallaxNodes)));
+  const roots = Array.isArray(objectPlan) ? objectPlan : [objectPlan];
+  root.replaceChildren(...roots.map(node => renderNode(node, dataSet, renderSet, parallaxNodes)));
   bindParallax(root, parallaxNodes);
+}
+
+export function patchSetData(root, nextData, renderSet) {
+  for (const element of root.querySelectorAll("[data-plane-data-slot]")) {
+    const slot = element.dataset.planeDataSlot;
+    const content = element.querySelector(":scope > [data-plane-container-content]");
+    if (!content) continue;
+    const node = { type: "Container", dataSlot: slot, Orientation: element.dataset.planeOrientation };
+    const rule = {};
+    const visual = element.__planeVisual ?? rule;
+    content.replaceChildren(...sourcesFromData(node, nextData).map(source => renderSource(source, renderSet, visual)));
+  }
 }

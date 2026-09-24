@@ -93,3 +93,7 @@ Type defaults and inheritance are SetLang semantics. AggregateActivePanel inheri
 ## SetLang serialization in SPL
 
 Inside a `.SPL` SetLang block, PLang uses nested entity blocks. Nesting is the structural parent-child relation; no duplicate Parent/Child property is required. Properties use `Name = Value` syntax. Strings are quoted. `NOT_YET_SPECIFIED` is the canonical token for an existing property whose value is not yet defined.
+
+## Runtime lifecycle
+
+SetLang is static runtime input. It is compiled into an immutable Object Plan before the hot application-data path. SetData updates MUST NOT cause SetLang parsing, composition or recompilation. A SetLang change requires a new Object Plan compilation.
