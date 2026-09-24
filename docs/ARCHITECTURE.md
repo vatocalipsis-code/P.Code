@@ -93,4 +93,4 @@ A new structural object type is not a property extension. It belongs to a new Pl
 
 ## Current implementation boundary
 
-The current browser integration compiles SetLang before rendering and then patches SetData directly into bound Container slots. The current parallax input is pointer movement. Device-orientation input for iPhone tilt is not implemented in 2.9.0.
+The current browser integration compiles SetLang before rendering and then patches SetData directly into bound Container slots. The current parallax input is pointer movement. Device-orientation input for iPhone tilt is not implemented in 2.9.1.
