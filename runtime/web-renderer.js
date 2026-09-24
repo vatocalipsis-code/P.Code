@@ -21,7 +21,7 @@ function renderNode(node) {
   const element = document.createElement("div");
   element.dataset.planeType = node.type;
   if (node.id) element.dataset.planeId = node.id;
-  if (node.login) element.dataset.planeLogin = node.login;
+  if (node.Login) element.dataset.planeLogin = node.Login;
 
   if (node.type === "Container") {
     const content = document.createElement("div");
