@@ -102,7 +102,21 @@ A Container may resolve `SourceText`, `SourcePicture`, or both. Login itself is 
 
 ## Object properties
 
-Current object-property families include geometry, layout, borders, colors, typography, picture tint, and parallax. See [PLANG_CANON.md](PLANG_CANON.md) for the canonical list and semantics.
+Current object-property families include geometry, layout, borders, colors, typography, picture tint, parallax, panel-surface transparency, and alpha-shaped content shadow. `PanelTransparency` and `Shadow` are valid only on SimplePanel, ActivePanel, and AggregateActivePanel; Container remains a transparent content slot. See [PLANG_CANON.md](PLANG_CANON.md) for the canonical list and semantics.
+
+Example panel properties:
+
+```text
+ActivePanel "Floating action" {
+  Properties {
+    PanelTransparency = 1
+    Shadow = 8
+  }
+  Containers [ ... ]
+}
+```
+
+`PanelTransparency = 1` removes the panel surface without hiding its Container content. `Shadow` follows text glyphs and PNG alpha rather than the panel rectangle.
 
 Unknown properties are ignored by an engine that does not know them. Missing known properties use the defined inheritance/default behavior. Structural types are not subject to this tolerant-property rule.
 

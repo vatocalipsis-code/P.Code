@@ -1,7 +1,7 @@
 /**
  * Legacy composition utility retained for historical compatibility/tests.
  *
- * The current 2.9.0 browser entry point does not import this module. Its
+ * The current 2.9.1 browser entry point does not import this module. Its
  * generic children traversal describes the older composition path, not the
  * current typed SetLang/SPL grammar.
  */

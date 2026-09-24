@@ -51,11 +51,11 @@ object Properties.Parallax
         -> otherwise 0
 ```
 
-In 2.9.0 the browser input is `pointermove`, normalized to the render root and applied with `requestAnimationFrame`. iPhone device-orientation input is not implemented yet.
+In 2.9.1 the browser input is `pointermove`, normalized to the render root and applied with `requestAnimationFrame`. iPhone device-orientation input is not implemented yet.
 
 ## Current integration entry point
 
-`web/main.js` is the authoritative browser wiring for 2.9.0. It also owns the current PWA service-worker registration, horizontal BasePanel navigation, and pull-to-refresh behavior.
+`web/main.js` is the authoritative browser wiring for 2.9.1. It also owns the current PWA service-worker registration, horizontal BasePanel navigation, and pull-to-refresh behavior.
 
 ## Earlier utilities
 
