@@ -20,8 +20,20 @@ function px(value) {
   return `${value}px`;
 }
 
-function structuralColor(color, renderSet) {
-  return `color-mix(in srgb, ${color} ${structuralPercent(renderSet.Transparency)}, transparent)`;
+function combinedPanelTransparency(renderSet, panelTransparency = 0) {
+  return 1 - ((1 - renderSet.Transparency) * (1 - panelTransparency));
+}
+
+function structuralColor(color, renderSet, panelTransparency = 0) {
+  return `color-mix(in srgb, ${color} ${structuralPercent(combinedPanelTransparency(renderSet, panelTransparency))}, transparent)`;
+}
+
+function contentShadowFilter(depth) {
+  if (!(depth > 0)) return "";
+  const x = depth / 7;
+  const y = depth;
+  const blur = depth * 10 / 7;
+  return `drop-shadow(${x}px ${y}px ${blur}px rgba(0, 12, 22, .62))`;
 }
 
 function alignmentValue(value) {
@@ -44,7 +56,8 @@ function distributionValue(value) {
   }[value];
 }
 
-function applyBoxRule(element, rule = {}, renderSet) {
+function applyBoxRule(element, rule = {}, renderSet, panelEffects = false) {
+  const panelTransparency = panelEffects ? (rule.PanelTransparency ?? 0) : 0;
   if (rule.Background !== undefined) {
     element.style.setProperty("--plane-background", rule.Background);
     element.dataset.planeBackground = "present";
@@ -52,11 +65,11 @@ function applyBoxRule(element, rule = {}, renderSet) {
     element.dataset.planeBackground = "absent";
   }
 
-  if (rule.BorderColor !== undefined) element.style.borderColor = structuralColor(rule.BorderColor, renderSet);
+  if (rule.BorderColor !== undefined) element.style.borderColor = structuralColor(rule.BorderColor, renderSet, panelTransparency);
   if (rule.BorderWidth !== undefined) element.style.borderWidth = px(rule.BorderWidth);
 
   for (const side of ["Left", "Right", "Top", "Bottom"]) {
-    if (rule[`Border${side}Color`] !== undefined) element.style[`border${side}Color`] = structuralColor(rule[`Border${side}Color`], renderSet);
+    if (rule[`Border${side}Color`] !== undefined) element.style[`border${side}Color`] = structuralColor(rule[`Border${side}Color`], renderSet, panelTransparency);
     if (rule[`Border${side}Width`] !== undefined) element.style[`border${side}Width`] = px(rule[`Border${side}Width`]);
   }
 
@@ -72,7 +85,7 @@ function applyLayoutRule(element, rule = {}) {
   if (rule.Direction !== undefined) element.style.flexDirection = rule.Direction === "Horizontal" ? "row" : "column";
 }
 
-function renderSource(source, renderSet, rule) {
+function renderSource(source, renderSet, rule, shadow = 0) {
   if (source.kind === "Text") {
     const text = document.createElement("span");
     text.dataset.planeSource = "Text";
@@ -81,6 +94,7 @@ function renderSource(source, renderSet, rule) {
     if (rule?.TextColor !== undefined) text.style.color = rule.TextColor;
     if (rule?.FontSize !== undefined) text.style.fontSize = px(rule.FontSize);
     if (rule?.FontWeight !== undefined) text.style.fontWeight = String(rule.FontWeight);
+    if (shadow > 0) text.style.filter = contentShadowFilter(shadow);
     return text;
   }
 
@@ -90,6 +104,7 @@ function renderSource(source, renderSet, rule) {
       picture.dataset.planeSource = "Picture";
       picture.dataset.planePictureTint = "present";
       picture.style.opacity = opacityFromTransparency(renderSet.PictureTransparency);
+      if (shadow > 0) picture.style.filter = contentShadowFilter(shadow);
 
       const sizer = document.createElement("img");
       sizer.src = source.value;
@@ -112,6 +127,7 @@ function renderSource(source, renderSet, rule) {
     image.src = source.value;
     image.alt = "";
     image.style.opacity = opacityFromTransparency(renderSet.PictureTransparency);
+    if (shadow > 0) image.style.filter = contentShadowFilter(shadow);
     return image;
   }
 
@@ -127,7 +143,7 @@ function sourcesFromData(node, dataSet) {
   return text ? [text] : picture ? [picture] : [];
 }
 
-function renderNode(node, dataSet, renderSet, parallaxNodes) {
+function renderNode(node, dataSet, renderSet, parallaxNodes, ownerShadow = 0) {
   const element = document.createElement("div");
   element.dataset.planeType = node.type;
   if (node.id) element.dataset.planeId = node.id;
@@ -136,8 +152,11 @@ function renderNode(node, dataSet, renderSet, parallaxNodes) {
   const rule = node.Visual ?? {};
   element.__planeVisual = rule;
   if (node.Orientation !== undefined) element.dataset.planeOrientation = node.Orientation;
-  element.style.setProperty("--plane-structural-opacity", structuralPercent(renderSet.Transparency));
-  applyBoxRule(element, rule, renderSet);
+  const panelEffects = node.type === "SimplePanel" || node.type === "ActivePanel" || node.type === "AggregateActivePanel";
+  const panelTransparency = panelEffects ? (rule.PanelTransparency ?? 0) : 0;
+  element.style.setProperty("--plane-structural-opacity", structuralPercent(combinedPanelTransparency(renderSet, panelTransparency)));
+  element.style.setProperty("--plane-panel-surface-opacity", String(1 - panelTransparency));
+  applyBoxRule(element, rule, renderSet, panelEffects);
 
   const parallax = rule.Parallax ?? renderSet.Parallax ?? 0;
   if (parallax !== 0) parallaxNodes.push({ element, parallax });
@@ -147,14 +166,17 @@ function renderNode(node, dataSet, renderSet, parallaxNodes) {
     const content = document.createElement("div");
     content.dataset.planeContainerContent = "";
     applyLayoutRule(content, rule);
-    for (const source of sourcesFromData(node, dataSet)) content.append(renderSource(source, renderSet, rule));
+    for (const source of sourcesFromData(node, dataSet)) content.append(renderSource(source, renderSet, rule, ownerShadow));
     element.dataset.planeDataSlot = node.dataSlot;
     element.append(content);
     return element;
   }
 
   applyLayoutRule(element, rule);
-  for (const child of node.children ?? []) element.append(renderNode(child, dataSet, renderSet, parallaxNodes));
+  const contentShadow = panelEffects ? (rule.Shadow ?? 0) : 0;
+  for (const child of node.children ?? []) {
+    element.append(renderNode(child, dataSet, renderSet, parallaxNodes, child.type === "Container" ? contentShadow : 0));
+  }
 
   if (node.type === "ActivePanel" || node.type === "AggregateActivePanel") {
     element.dataset.planeActive = "";
@@ -235,6 +257,8 @@ export function patchSetData(root, nextData, renderSet) {
     const node = { type: "Container", dataSlot: slot, Orientation: element.dataset.planeOrientation };
     const rule = {};
     const visual = element.__planeVisual ?? rule;
-    content.replaceChildren(...sourcesFromData(node, nextData).map(source => renderSource(source, renderSet, visual)));
+    const owner = element.parentElement;
+    const shadow = owner?.__planeVisual?.Shadow ?? 0;
+    content.replaceChildren(...sourcesFromData(node, nextData).map(source => renderSource(source, renderSet, visual, shadow)));
   }
 }
