@@ -29,6 +29,7 @@ jobs:
           mkdir -p _site/runtime _site/release _site/assets _site/icons
           cp web/index.html _site/index.html
           cp web/main.js _site/main.js
+          cp web/sw.js _site/sw.js
           cp web/manifest.webmanifest _site/manifest.webmanifest
           cp web/assets/*.png _site/assets/
           cp web/icons/*.png _site/icons/
