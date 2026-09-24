@@ -2,11 +2,11 @@
 
 PlaneCode is a standalone visual and tactile interface project that can be used by any application.
 
-Current version: **2.3.0**
+Current version: **2.3.1**
 
-PlaneCode 2.3.0 adds SetLang and portable `.SPL` SetPlan files while preserving the strict separation of PLang, SetData and SetRender.
+PlaneCode 2.3.1 adds SetLang and portable `.SPL` SetPlan files while preserving the strict separation of PLang, SetData and SetRender.
 
-- Integration canon: `docs/PLANE_CODE_2.3.0.md`
+- Integration canon: `docs/PLANE_CODE_2.3.1.md`
 - Previous integration canon: `docs/PLANE_CODE_2.2.1.md`
 - PLang canon: `docs/PLANG_CANON.md`
 - SetRender canon: `docs/SET_RENDER_CANON.md`
