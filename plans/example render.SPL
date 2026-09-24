@@ -133,6 +133,8 @@ SetLang {
           ActivePanels [
             ActivePanel "Основная касса" {
               Properties {
+                PanelTransparency = 1
+                Shadow = 8
                 BorderColor = "#15384D"
                 TextColor = "#E8F2FF"
                 Background = "#0D2D43"
