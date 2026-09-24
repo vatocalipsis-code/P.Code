@@ -1,4 +1,5 @@
 export const setData={
+"Название приложения":{SourceText:"Кэш"},"Иконка меню":{SourcePicture:"../plans/example render.assets/menu-grid.png"},
 "Мои кассы заголовок":{SourceText:"Мои кассы"},"Основная касса название":{SourceText:"Основная касса"},"Основная касса сумма":{SourceText:"125 000.00"},"Основная касса валюта":{SourceText:"UAH"},
 "Подчинённые кассы заголовок":{SourceText:"Подчинённые кассы"},"Офис Киев название":{SourceText:"Офис Киев"},"Офис Киев сумма":{SourceText:"3 420.00"},"Офис Киев валюта":{SourceText:"USD"},"Магазин Петровка название":{SourceText:"Магазин Петровка"},"Магазин Петровка сумма":{SourceText:"1 200.00"},"Магазин Петровка валюта":{SourceText:"EUR"},
 "Требует моего подтверждения заголовок":{SourceText:"Требует моего подтверждения"},"Заявки на расход иконка":{SourcePicture:"../plans/example render.assets/expense-document.png"},"Заявки на расход название":{SourceText:"Заявки на расход"},"Заявки на расход количество":{SourceText:"5"},
