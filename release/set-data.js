@@ -1,8 +1,8 @@
 export const setData = {
   SurfaceAMessage: {
-    sourceText: "Surface A"
+    SourceText: "Surface A"
   },
   SurfaceBMessage: {
-    sourceText: "Surface B"
+    SourceText: "Surface B"
   }
 };
