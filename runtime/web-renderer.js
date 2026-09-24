@@ -139,7 +139,7 @@ function sourcesFromData(node, dataSet) {
   const item = dataSet[node.dataSlot] ?? {};
   const text = typeof item.SourceText === "string" && item.SourceText.length ? { kind: "Text", value: item.SourceText } : null;
   const picture = typeof item.SourcePicture === "string" && item.SourcePicture.length ? { kind: "Picture", value: item.SourcePicture } : null;
-  if (text && picture) return node.Orientation === "Negative" ? [text, picture] : [picture, text];
+  if (text && picture) return node.Order === "Negative" ? [text, picture] : [picture, text];
   return text ? [text] : picture ? [picture] : [];
 }
 
@@ -151,7 +151,7 @@ function renderNode(node, dataSet, renderSet, parallaxNodes, ownerShadow = 0) {
 
   const rule = node.Visual ?? {};
   element.__planeVisual = rule;
-  if (node.Orientation !== undefined) element.dataset.planeOrientation = node.Orientation;
+  if (node.Order !== undefined) element.dataset.planeOrder = node.Order;\n  if (node.Orientation !== undefined) element.dataset.planeOrientation = node.Orientation;\n  if (node.Flip !== undefined) element.dataset.planeFlip = String(node.Flip);
   const panelEffects = node.type === "SimplePanel" || node.type === "ActivePanel" || node.type === "AggregateActivePanel";
   const panelTransparency = panelEffects ? (rule.PanelTransparency ?? 0) : 0;
   element.style.setProperty("--plane-structural-opacity", structuralPercent(combinedPanelTransparency(renderSet, panelTransparency)));
@@ -174,7 +174,22 @@ function renderNode(node, dataSet, renderSet, parallaxNodes, ownerShadow = 0) {
 
   applyLayoutRule(element, rule);
   const contentShadow = panelEffects ? (rule.Shadow ?? 0) : 0;
-  for (const child of node.children ?? []) {
+  const children = node.children ?? [];
+  const containerCount = children.findIndex(child => child.type !== "Container");
+  const split = containerCount === -1 ? children.length : containerCount;
+  const containers = children.slice(0, split);
+  const rest = children.slice(split);
+  const hasContainerLayout = containers.some(child => child.Orientation !== undefined || child.Flip === true);
+
+  if (hasContainerLayout && containers.length) {
+    const defaultDirection = rule.Direction ?? "Vertical";
+    element.append(renderContainerSequence(containers, 0, defaultDirection, dataSet, renderSet, parallaxNodes, contentShadow, rule.Gap ?? 0));
+  } else {
+    for (const child of containers) {
+      element.append(renderNode(child, dataSet, renderSet, parallaxNodes, contentShadow));
+    }
+  }
+  for (const child of rest) {
     element.append(renderNode(child, dataSet, renderSet, parallaxNodes, child.type === "Container" ? contentShadow : 0));
   }
 
@@ -191,6 +206,36 @@ function renderNode(node, dataSet, renderSet, parallaxNodes, ownerShadow = 0) {
     element.addEventListener("lostpointercapture", release);
   }
   return element;
+}
+
+function renderContainerSequence(containers, index, inheritedDirection, dataSet, renderSet, parallaxNodes, ownerShadow, gap) {
+  const current = containers[index];
+  const direction = current.Orientation ?? inheritedDirection;
+  const wrapper = document.createElement("div");
+  wrapper.dataset.planeLayoutRun = "";
+  wrapper.style.display = "flex";
+  wrapper.style.flexDirection = direction === "Horizontal" ? "row" : "column";
+  wrapper.style.alignItems = "stretch";
+  wrapper.style.minWidth = "0";
+  wrapper.style.minHeight = "0";
+  if (gap) wrapper.style.gap = px(gap);
+
+  const currentElement = renderNode(current, dataSet, renderSet, parallaxNodes, ownerShadow);
+  if (current.Flip) {
+    currentElement.style.flex = "1 1 0";
+    currentElement.style.minWidth = "0";
+    currentElement.style.minHeight = "0";
+  } else {
+    currentElement.style.flex = "0 0 auto";
+  }
+  wrapper.append(currentElement);
+
+  if (index + 1 < containers.length) {
+    const tail = renderContainerSequence(containers, index + 1, direction, dataSet, renderSet, parallaxNodes, ownerShadow, gap);
+    tail.style.flex = "0 0 auto";
+    wrapper.append(tail);
+  }
+  return wrapper;
 }
 
 function bindParallax(root, nodes) {
@@ -254,7 +299,7 @@ export function patchSetData(root, nextData, renderSet) {
     const slot = element.dataset.planeDataSlot;
     const content = element.querySelector(":scope > [data-plane-container-content]");
     if (!content) continue;
-    const node = { type: "Container", dataSlot: slot, Orientation: element.dataset.planeOrientation };
+    const node = { type: "Container", dataSlot: slot, Order: element.dataset.planeOrder ?? "Positive" };
     const rule = {};
     const visual = element.__planeVisual ?? rule;
     const owner = element.parentElement;
