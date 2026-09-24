@@ -9,6 +9,46 @@ function isCanonicalPngFile(value) {
     && /\.png$/i.test(value);
 }
 
+function isFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isNonNegativeNumber(value) {
+  return isFiniteNumber(value) && value >= 0;
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+const ALIGNMENTS = new Set(["Start", "Center", "End", "Stretch"]);
+const DISTRIBUTIONS = new Set(["Start", "Center", "End", "Between", "Around", "Evenly"]);
+const DIRECTIONS = new Set(["Horizontal", "Vertical"]);
+
+const STRING_RULES = [
+  "Background",
+  "BorderColor",
+  "BorderLeftColor",
+  "BorderRightColor",
+  "BorderTopColor",
+  "BorderBottomColor",
+  "TextColor",
+  "PictureTint"
+];
+
+const NON_NEGATIVE_RULES = [
+  "BorderWidth",
+  "BorderLeftWidth",
+  "BorderRightWidth",
+  "BorderTopWidth",
+  "BorderBottomWidth",
+  "Width",
+  "Height",
+  "Padding",
+  "Gap",
+  "FontSize"
+];
+
 export function validatePLang(pLang, data = {}) {
   const logins = new Set();
 
@@ -51,6 +91,10 @@ export function validateSetRender(pLang, renderSet = {}) {
     }
   }
 
+  if (renderSet.Parallax !== undefined && !isFiniteNumber(renderSet.Parallax)) {
+    throw new Error("Validator: SetRender.Parallax must be a finite number when present");
+  }
+
   if (renderSet.Elements !== undefined && (!renderSet.Elements || typeof renderSet.Elements !== "object" || Array.isArray(renderSet.Elements))) {
     throw new Error("Validator: SetRender.Elements must be an object when present");
   }
@@ -70,8 +114,37 @@ export function validateSetRender(pLang, renderSet = {}) {
     if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
       throw new Error(`Validator: render rule for "${login}" must be an object`);
     }
-    if (rule.Background !== undefined && (typeof rule.Background !== "string" || rule.Background.length === 0)) {
-      throw new Error(`Validator: Background for "${login}" must be a non-empty string when present`);
+
+    for (const property of STRING_RULES) {
+      if (rule[property] !== undefined && !isNonEmptyString(rule[property])) {
+        throw new Error(`Validator: ${property} for "${login}" must be a non-empty string when present`);
+      }
+    }
+
+    for (const property of NON_NEGATIVE_RULES) {
+      if (rule[property] !== undefined && !isNonNegativeNumber(rule[property])) {
+        throw new Error(`Validator: ${property} for "${login}" must be a non-negative number when present`);
+      }
+    }
+
+    if (rule.FontWeight !== undefined && (!Number.isInteger(rule.FontWeight) || rule.FontWeight < 1 || rule.FontWeight > 1000)) {
+      throw new Error(`Validator: FontWeight for "${login}" must be an integer from 1 to 1000 when present`);
+    }
+
+    if (rule.Alignment !== undefined && !ALIGNMENTS.has(rule.Alignment)) {
+      throw new Error(`Validator: Alignment for "${login}" must be Start, Center, End or Stretch`);
+    }
+
+    if (rule.Distribution !== undefined && !DISTRIBUTIONS.has(rule.Distribution)) {
+      throw new Error(`Validator: Distribution for "${login}" must be Start, Center, End, Between, Around or Evenly`);
+    }
+
+    if (rule.Direction !== undefined && !DIRECTIONS.has(rule.Direction)) {
+      throw new Error(`Validator: Direction for "${login}" must be Horizontal or Vertical`);
+    }
+
+    if (rule.Parallax !== undefined && !isFiniteNumber(rule.Parallax)) {
+      throw new Error(`Validator: Parallax for "${login}" must be a finite number when present`);
     }
   }
 

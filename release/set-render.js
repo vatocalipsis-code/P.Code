@@ -9,6 +9,7 @@ export const setRender = {
   Transparency: 0,
   TextTransparency: 0,
   PictureTransparency: 0,
+  Parallax: 0,
 
   Elements: {
     SurfaceA: { Background: "#f2f2f2" },
