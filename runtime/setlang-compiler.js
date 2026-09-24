@@ -7,7 +7,23 @@
  */
 
 function compileContainer(node) {
-  return Object.freeze({ type: "Container", Login: node.Login, Visual: Object.freeze({ ...(node.Properties ?? {}) }), dataSlot: node.Login, children: Object.freeze([]) });
+  const p = { ...(node.Properties ?? {}) };
+  const Order = p.Order ?? "Positive";
+  const Orientation = p.Orientation;
+  const Flip = p.Flip ?? false;
+  delete p.Order;
+  delete p.Orientation;
+  delete p.Flip;
+  return Object.freeze({
+    type: "Container",
+    Login: node.Login,
+    Visual: Object.freeze(p),
+    dataSlot: node.Login,
+    Order,
+    Orientation,
+    Flip,
+    children: Object.freeze([])
+  });
 }
 function compileActive(node, aggregate = false) {
   const p = { ...(node.Properties ?? {}) };
