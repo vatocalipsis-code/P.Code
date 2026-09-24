@@ -33,50 +33,53 @@ Container.Name = CashboxAmount
 
 ## Container properties
 
-A `Container` has the common entity property `Name` and may additionally define content properties.
+A `Container` has the common entity property `Name` and may additionally define content-source and rendering properties.
 
-Canonical Container properties:
+Canonical Container properties currently identified:
 
 ```text
 Container.Name
 Container.Type
-Container.Text
-Container.Picture
+Container.sourceText
+Container.sourcePicture
 Container.Font
 ```
 
-`Container.Type` defines the content kind and currently supports exactly:
+A Container may carry a text source, a picture source, or both at the same time.
 
-```text
-Text
-Picture
-```
-
-For a text container:
+Examples:
 
 ```text
 Container.Name = CashboxAmount
-Container.Type = Text
-Container.Text = C("87 200.00")
+Container.sourceText = "87 200.00"
 Container.Font = ...
 ```
 
-For a picture container:
-
 ```text
 Container.Name = CashboxIcon
-Container.Type = Picture
-Container.Picture = ...
+Container.sourcePicture = Picture
 ```
 
-`Container.Text` is used when `Container.Type = Text`.
-`Container.Picture` is used when `Container.Type = Picture`.
+```text
+Container.Name = CashboxSummary
+Container.sourceText = "87 200.00"
+Container.sourcePicture = Picture
+Container.Font = ...
+```
 
-The exact value grammar of `Container.Font` and `Container.Picture` is NOT YET SPECIFIED.
+`Container.sourceText` is the text source.
+`Container.sourcePicture` is the picture source.
+
+The exact representation/reference grammar of `sourcePicture` is NOT YET SPECIFIED.
+The exact value grammar of `Container.Font` is NOT YET SPECIFIED.
+
+Because text and picture may coexist in one Container, `Container.Type` is not a mutually exclusive content selector. Its exact semantics are NOT YET SPECIFIED.
 
 ## Container data
 
 Dynamic Container content may be supplied by `SetData` and addressed by the Container `id`.
+
+The data model must allow both text and picture sources to be present for the same Container.
 
 ## Validation
 
@@ -84,8 +87,8 @@ Dynamic Container content may be supplied by `SetData` and addressed by the Cont
 
 For every Container used by the composition, its SetData item must:
 - exist;
-- have type `Text` or `Picture`;
-- have a non-empty string value.
+- provide at least one non-empty source: `sourceText` or `sourcePicture`;
+- allow both sources simultaneously.
 
 Invalid SetData stops rendering.
 
@@ -103,6 +106,8 @@ Current SetRender parameters:
 Current `PanelSpacing`: **20 px**.
 
 The current web rendering uses visible borders and physical panel depth for SimplePanel and ActivePanel.
+
+The relative rendering order/placement of simultaneous text and picture sources inside one Container is NOT YET SPECIFIED.
 
 ## Multiple BasePanel surfaces
 
