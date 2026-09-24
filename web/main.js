@@ -1,12 +1,15 @@
-import { planeCode } from "./release/plane-code.js?v=1.0.0";
-import { setData } from "./release/set-data.js?v=1.0.0";
-import { setRender } from "./release/set-render.js?v=1.0.0";
-import { renderPlaneCode } from "./runtime/web-renderer.js?v=1.0.0";
-import { validateSetData } from "./runtime/validator.js?v=1.0.0";
+import { pLang } from "./release/p-lang.js?v=2.0.0";
+import { setData } from "./release/set-data.js?v=2.0.0";
+import { setRender } from "./release/set-render.js?v=2.0.0";
+import { composePLang } from "./runtime/compositor.js?v=2.0.0";
+import { validatePLang } from "./runtime/validator.js?v=2.0.0";
+import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.0.0";
 
 const root = document.querySelector("#plane-code-root");
-validateSetData(planeCode, setData);
-renderPlaneCode(root, planeCode, setData, setRender);
+
+validatePLang(pLang, setData);
+const composition = composePLang(pLang, setData);
+renderPlaneCode(root, composition, setRender);
 
 const surfaces = [...root.querySelectorAll(':scope > [data-plane-type="BasePanel"]')];
 let current = 0;
