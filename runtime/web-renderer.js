@@ -151,7 +151,9 @@ function renderNode(node, dataSet, renderSet, parallaxNodes, ownerShadow = 0) {
 
   const rule = node.Visual ?? {};
   element.__planeVisual = rule;
-  if (node.Order !== undefined) element.dataset.planeOrder = node.Order;\n  if (node.Orientation !== undefined) element.dataset.planeOrientation = node.Orientation;\n  if (node.Flip !== undefined) element.dataset.planeFlip = String(node.Flip);
+  if (node.Order !== undefined) element.dataset.planeOrder = node.Order;
+  if (node.Orientation !== undefined) element.dataset.planeOrientation = node.Orientation;
+  if (node.Flip !== undefined) element.dataset.planeFlip = String(node.Flip);
   const panelEffects = node.type === "SimplePanel" || node.type === "ActivePanel" || node.type === "AggregateActivePanel";
   const panelTransparency = panelEffects ? (rule.PanelTransparency ?? 0) : 0;
   element.style.setProperty("--plane-structural-opacity", structuralPercent(combinedPanelTransparency(renderSet, panelTransparency)));
