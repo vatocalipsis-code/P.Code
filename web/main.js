@@ -1,9 +1,9 @@
-import { pLang } from "./release/p-lang.js?v=2.1.0";
-import { setData } from "./release/set-data.js?v=2.1.0";
-import { setRender } from "./release/set-render.js?v=2.1.0";
-import { composePLang } from "./runtime/compositor.js?v=2.1.0";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.1.0";
-import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.1.0";
+import { pLang } from "./release/p-lang.js?v=2.1.1";
+import { setData } from "./release/set-data.js?v=2.1.1";
+import { setRender } from "./release/set-render.js?v=2.1.1";
+import { composePLang } from "./runtime/compositor.js?v=2.1.1";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.1.1";
+import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.1.1";
 
 const root = document.querySelector("#plane-code-root");
 

@@ -33,9 +33,15 @@ function renderNode(node, renderSet) {
   if (node.id) element.dataset.planeId = node.id;
   if (node.Login) element.dataset.planeLogin = node.Login;
 
-  const renderRule = renderSet.Elements[node.Login];
-  element.style.setProperty("--plane-background", renderRule.Background);
+  const renderRule = renderSet.Elements?.[node.Login];
   element.style.setProperty("--plane-structural-opacity", structuralPercent(renderSet.Transparency));
+
+  if (renderRule?.Background !== undefined) {
+    element.style.setProperty("--plane-background", renderRule.Background);
+    element.dataset.planeBackground = "present";
+  } else {
+    element.dataset.planeBackground = "absent";
+  }
 
   if (node.type === "Container") {
     const content = document.createElement("div");

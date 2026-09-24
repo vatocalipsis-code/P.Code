@@ -1,4 +1,4 @@
-# PlaneCode 2.1.0
+# PlaneCode 2.1.1
 
 Status: RELEASED / CURRENT
 
@@ -148,7 +148,9 @@ The Compositor does not render visual output.
 
 SetRender controls visual representation.
 
-Every structural PLang entity has its own render Background addressed by Login:
+SetRender does not create new entity types or semantic visual classes. It addresses existing PLang entities only through their Login.
+
+`SetRender.Elements` is optional. Each `Elements[Login]` entry is an optional set of explicit visual overrides.
 
 ```js
 SetRender.Elements = {
@@ -158,7 +160,13 @@ SetRender.Elements = {
 }
 ```
 
-The structural entities covered by this rule are BasePanel, SimplePanel, ActivePanel and Container.
+A PLang entity may have no SetRender entry at all.
+
+`Background` is optional. If Background is present, the entity has its own fill. If Background is absent, the entity has no fill and is visually transparent.
+
+Absence of Background is not equivalent to `Transparency = 1` and does not cause an arbitrary fill to be inherited.
+
+SetRender introduces no parallel semantic or layout type system.
 
 ## Structural transparency
 
@@ -236,7 +244,7 @@ export const setRender = {
 };
 ```
 
-`BackgroundColor`, `PanelColor`, `BorderColor` and `TextColor` remain available as current renderer-wide values. Per-entity `Elements[Login].Background` is the canonical background assignment for structural PLang entities.
+`BackgroundColor`, `PanelColor`, `BorderColor` and `TextColor` remain available as current renderer-wide values. `Elements[Login]` contains only explicit per-Login overrides. `Background`, when present, gives that entity its own fill; when absent, that entity has no fill.
 
 Current `PanelSpacing`: **20 px**.
 
@@ -248,7 +256,11 @@ Validator checks:
 - SourceText is a string when present;
 - SourcePicture is a canonical PNG file reference when present;
 - Transparency, TextTransparency and PictureTransparency are numbers from 0 to 1;
-- every structural PLang entity has a SetRender entry with Background.
+- SetRender.Elements is an object when present;
+- each SetRender.Elements key refers to an existing PLang Login;
+- Background is a non-empty string when explicitly present.
+
+Validator does not require SetRender.Elements, a render entry for every Login, or Background on every render entry.
 
 Missing SourceText or SourcePicture is valid.
 
@@ -260,7 +272,8 @@ For the current WebRenderer:
 - absent sources generate no rendered node;
 - one source is centered;
 - two sources are rendered in Compositor order;
-- every structural entity uses its Login-addressed Background;
+- an entity uses its Login-addressed Background only when that Background is explicitly present;
+- an entity without Background has no fill;
 - structural Transparency affects structure without fading Text or Picture content;
 - TextTransparency and PictureTransparency are applied independently;
 - PNG intrinsic alpha is preserved.
@@ -282,4 +295,4 @@ The current web runtime retains horizontal pointer/touch movement between adjace
 - `release/set-render.js` — released render parameters.
 - `web/` — browser entry point.
 
-This document defines PlaneCode 2.1.0.
+This document defines PlaneCode 2.1.1.

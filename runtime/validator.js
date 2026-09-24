@@ -51,18 +51,29 @@ export function validateSetRender(pLang, renderSet = {}) {
     }
   }
 
-  if (!renderSet.Elements || typeof renderSet.Elements !== "object") {
-    throw new Error("Validator: SetRender.Elements is required");
+  if (renderSet.Elements !== undefined && (!renderSet.Elements || typeof renderSet.Elements !== "object" || Array.isArray(renderSet.Elements))) {
+    throw new Error("Validator: SetRender.Elements must be an object when present");
   }
 
-  function visit(node) {
-    const rule = renderSet.Elements[node.Login];
-    if (!rule || typeof rule.Background !== "string" || rule.Background.length === 0) {
-      throw new Error(`Validator: Background is required for render element "${node.Login}"`);
+  const elements = renderSet.Elements ?? {};
+  const knownLogins = new Set();
+
+  function collect(node) {
+    knownLogins.add(node.Login);
+    for (const child of node.children ?? []) collect(child);
+  }
+
+  for (const root of Array.isArray(pLang) ? pLang : [pLang]) collect(root);
+
+  for (const [login, rule] of Object.entries(elements)) {
+    if (!knownLogins.has(login)) throw new Error(`Validator: unknown render Login "${login}"`);
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
+      throw new Error(`Validator: render rule for "${login}" must be an object`);
     }
-    for (const child of node.children ?? []) visit(child);
+    if (rule.Background !== undefined && (typeof rule.Background !== "string" || rule.Background.length === 0)) {
+      throw new Error(`Validator: Background for "${login}" must be a non-empty string when present`);
+    }
   }
 
-  for (const root of Array.isArray(pLang) ? pLang : [pLang]) visit(root);
   return true;
 }

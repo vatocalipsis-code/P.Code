@@ -5,6 +5,10 @@ body { min-height: 100dvh; background: var(--background-color); }
 #plane-code-root { position: relative; height: 100dvh; min-height: 100dvh; background: var(--background-color); touch-action: pan-y; overflow: hidden; }
 
 [data-plane-type] {
+  background: transparent;
+}
+
+[data-plane-background="present"] {
   background: color-mix(in srgb, var(--plane-background) var(--plane-structural-opacity), transparent);
 }
 
