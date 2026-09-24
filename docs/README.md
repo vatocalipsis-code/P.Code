@@ -11,11 +11,11 @@ This directory separates **current reference** from **historical release notes**
 | [RUNTIME_REFERENCE.md](RUNTIME_REFERENCE.md) | Validation, compilation, rendering, live SetData patching, parallax |
 | [PLANG_CANON.md](PLANG_CANON.md) | PLang and SetLang canonical semantics |
 | [SET_RENDER_CANON.md](SET_RENDER_CANON.md) | Scene-only SetRender contract |
-| [PLANE_CODE_2.9.0.md](PLANE_CODE_2.9.0.md) | Current release delta |
+| [PLANE_CODE_2.9.1.md](PLANE_CODE_2.9.1.md) | Current release delta |
 
 ## Historical notes
 
-Files named `PLANE_CODE_<version>.md` below 2.9.0 are release history. Earlier documents may describe structures that were later superseded. When they conflict with the current reference, the current reference and current source win.
+Files named `PLANE_CODE_<version>.md` below 2.9.1 are release history. Earlier documents may describe structures that were later superseded. When they conflict with the current reference, the current reference and current source win.
 
 ## Source map
 
