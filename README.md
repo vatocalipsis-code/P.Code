@@ -2,7 +2,7 @@
 
 PlaneCode is a standalone declarative interface engine. Applications describe an interface with an `.SPL` SetPlan; PlaneCode validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
 
-**Current release:** `2.9.0`
+**Current release:** `2.9.1`
 
 ## Start here
 
@@ -12,7 +12,7 @@ PlaneCode is a standalone declarative interface engine. Applications describe an
 - [Runtime reference](docs/RUNTIME_REFERENCE.md)
 - [PLang / SetLang canon](docs/PLANG_CANON.md)
 - [SetRender canon](docs/SET_RENDER_CANON.md)
-- [2.9.0 release contract](docs/PLANE_CODE_2.9.0.md)
+- [2.9.1 release contract](docs/PLANE_CODE_2.9.1.md)
 - [Example SetPlan](plans/example%20render.SPL)
 
 ## Runtime at a glance
