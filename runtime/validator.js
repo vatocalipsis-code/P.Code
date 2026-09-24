@@ -31,7 +31,8 @@ function isNonEmptyString(value) {
 
 const ALIGNMENTS = new Set(["Start", "Center", "End", "Stretch"]);
 const DISTRIBUTIONS = new Set(["Start", "Center", "End", "Between", "Around", "Evenly"]);
-const DIRECTIONS = new Set(["Horizontal", "Vertical"]);\nconst ORDERS = new Set(["Positive", "Negative"]);
+const DIRECTIONS = new Set(["Horizontal", "Vertical"]);
+const ORDERS = new Set(["Positive", "Negative"]);
 
 const STRING_RULES = [
   "Background", "BorderColor", "BorderLeftColor", "BorderRightColor",
