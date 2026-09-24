@@ -97,3 +97,7 @@ Inside a `.SPL` SetLang block, PLang uses nested entity blocks. Nesting is the s
 ## Runtime lifecycle
 
 SetLang is static runtime input. It is compiled into an immutable Object Plan before the hot application-data path. SetData updates MUST NOT cause SetLang parsing, composition or recompilation. A SetLang change requires a new Object Plan compilation.
+
+## Typed three-layer panel structure
+
+SetLang has exactly three physical panel layers: BasePanel, SimplePanel, ActivePanel. Generic `children` is not part of SetLang. BasePanel contains typed `Properties`, `Containers`, `SimplePanels`; SimplePanel contains typed `Properties`, `Containers`, `ActivePanels`; ActivePanel contains typed `Properties`, `Containers`. AggregateActivePanel is a special ActivePanel on the Active physical layer and is owned as an optional 0..1 item by `SimplePanel.Properties.AggregateActivePanels`.

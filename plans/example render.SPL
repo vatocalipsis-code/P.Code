@@ -3,433 +3,601 @@ SetLang {
   Version = 1
   Data {
     BasePanel "Example Render" {
-      BorderColor = "#1A405A"
-      TextColor = "#E8F2FF"
-      Background = "#031421"
-      Alignment = "Stretch"
-      Distribution = "Start"
-      Direction = "Vertical"
-      Padding = 14
-      Gap = 16
-      SimplePanel "Верхняя панель" {
-        BorderColor = "#0D2B3D"
+      Properties {
+        BorderColor = "#1A405A"
         TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
-        Alignment = "Center"
-        Distribution = "Between"
-        Direction = "Horizontal"
-        BorderWidth = 1
-        ActivePanel "Кэш" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 6
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          Height = 44
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Название приложения" {
-            BorderColor = "#1A405A"
-            TextColor = "#E8F2FF"
-            FontSize = 18
-            FontWeight = 600
-          }
-        }
-        ActivePanel "Меню" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 8
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Center"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          Width = 44
-          Height = 44
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Иконка меню" {
-            BorderColor = "#1A405A"
-            TextColor = "#E8F2FF"
-            Width = 28
-            Height = 28
-            PictureTint = "#00DCA0"
-          }
-        }
-      }
-      SimplePanel "Мои кассы" {
-        BorderColor = "#0D2B3D"
-        TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
+        Background = "#031421"
         Alignment = "Stretch"
         Distribution = "Start"
         Direction = "Vertical"
-        BorderWidth = 1
-        AggregateActivePanel "Мои кассы агрегат" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 4
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Мои кассы заголовок" {
-            BorderColor = "#1A405A"
-            TextColor = "#E8F2FF"
-            FontSize = 17
-            FontWeight = 600
-          }
-        }
-        ActivePanel "Основная касса" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 10
-          Gap = 2
-          Alignment = "Start"
-          Distribution = "Center"
-          Direction = "Vertical"
-          BorderWidth = 1
-          Height = 74
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Основная касса название" {
-            BorderColor = "#1A405A"
-            TextColor = "#E8F2FF"
-            FontSize = 15
-            FontWeight = 400
-          }
-          Container "Основная касса сумма" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
-          Container "Основная касса валюта" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
-        }
+        Padding = 14
+        Gap = 16
       }
-      SimplePanel "Подчинённые кассы" {
-        BorderColor = "#0D2B3D"
-        TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
-        Alignment = "Stretch"
-        Distribution = "Start"
-        Direction = "Vertical"
-        BorderWidth = 1
-        AggregateActivePanel "Подчинённые кассы агрегат" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 4
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Подчинённые кассы заголовок" {
-            BorderColor = "#1A405A"
+      Containers [
+      ]
+      SimplePanels [
+        SimplePanel "Верхняя панель" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            FontSize = 17
-            FontWeight = 600
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Center"
+            Distribution = "Between"
+            Direction = "Horizontal"
+            BorderWidth = 1
           }
+          AggregateActivePanels [
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Кэш" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 6
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                Height = 44
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Название приложения" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 18
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+            ActivePanel "Меню" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 8
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Center"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                Width = 44
+                Height = 44
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Иконка меню" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    Width = 28
+                    Height = 28
+                    PictureTint = "#00DCA0"
+                  }
+                }
+              ]
+            }
+          ]
         }
-        ActivePanel "Офис Киев" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 10
-          Gap = 2
-          Alignment = "Start"
-          Distribution = "Center"
-          Direction = "Vertical"
-          BorderWidth = 1
-          Height = 74
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Офис Киев название" {
-            BorderColor = "#1A405A"
+        SimplePanel "Мои кассы" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            FontSize = 15
-            FontWeight = 400
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+            BorderWidth = 1
           }
-          Container "Офис Киев сумма" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
-          Container "Офис Киев валюта" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
+          AggregateActivePanels [
+            AggregateActivePanel "Мои кассы агрегат" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 4
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Мои кассы заголовок" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 17
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Основная касса" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 10
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                BorderWidth = 1
+                Height = 74
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Основная касса название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 15
+                    FontWeight = 400
+                  }
+                }
+                Container "Основная касса сумма" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+                Container "Основная касса валюта" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+              ]
+            }
+          ]
         }
-        ActivePanel "Магазин Петровка" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 10
-          Gap = 2
-          Alignment = "Start"
-          Distribution = "Center"
-          Direction = "Vertical"
-          BorderWidth = 1
-          Height = 74
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Магазин Петровка название" {
-            BorderColor = "#1A405A"
+        SimplePanel "Подчинённые кассы" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            FontSize = 15
-            FontWeight = 400
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+            BorderWidth = 1
           }
-          Container "Магазин Петровка сумма" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
-          Container "Магазин Петровка валюта" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
+          AggregateActivePanels [
+            AggregateActivePanel "Подчинённые кассы агрегат" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 4
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Подчинённые кассы заголовок" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 17
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Офис Киев" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 10
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                BorderWidth = 1
+                Height = 74
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Офис Киев название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 15
+                    FontWeight = 400
+                  }
+                }
+                Container "Офис Киев сумма" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+                Container "Офис Киев валюта" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+              ]
+            }
+            ActivePanel "Магазин Петровка" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 10
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                BorderWidth = 1
+                Height = 74
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Магазин Петровка название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 15
+                    FontWeight = 400
+                  }
+                }
+                Container "Магазин Петровка сумма" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+                Container "Магазин Петровка валюта" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+              ]
+            }
+          ]
         }
-      }
-      SimplePanel "Требует моего подтверждения" {
-        BorderColor = "#0D2B3D"
-        TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
-        Alignment = "Stretch"
-        Distribution = "Start"
-        Direction = "Vertical"
-        BorderWidth = 1
-        AggregateActivePanel "Требует моего подтверждения агрегат" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 4
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Требует моего подтверждения заголовок" {
-            BorderColor = "#1A405A"
+        SimplePanel "Требует моего подтверждения" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            FontSize = 17
-            FontWeight = 600
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+            BorderWidth = 1
           }
+          AggregateActivePanels [
+            AggregateActivePanel "Требует моего подтверждения агрегат" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 4
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Требует моего подтверждения заголовок" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 17
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Заявки на расход" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 10
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                BorderWidth = 1
+                Height = 66
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Заявки на расход иконка" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    Width = 32
+                    Height = 32
+                    PictureTint = "#9BC8FF"
+                  }
+                }
+                Container "Заявки на расход название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 15
+                    FontWeight = 400
+                  }
+                }
+                Container "Заявки на расход количество" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
         }
-        ActivePanel "Заявки на расход" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 10
-          Gap = 2
-          Alignment = "Start"
-          Distribution = "Center"
-          Direction = "Vertical"
-          BorderWidth = 1
-          Height = 66
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Заявки на расход иконка" {
-            BorderColor = "#1A405A"
+        SimplePanel "Операции в работе" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            Width = 32
-            Height = 32
-            PictureTint = "#9BC8FF"
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+            BorderWidth = 1
           }
-          Container "Заявки на расход название" {
-            BorderColor = "#1A405A"
+          AggregateActivePanels [
+            AggregateActivePanel "Операции в работе агрегат" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 4
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Операции в работе заголовок" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 17
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "В обработке" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 10
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                BorderWidth = 1
+                Height = 66
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "В обработке иконка" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    Width = 32
+                    Height = 32
+                    PictureTint = "#9BC8FF"
+                  }
+                }
+                Container "В обработке название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#E8F2FF"
+                    FontSize = 15
+                    FontWeight = 400
+                  }
+                }
+                Container "В обработке количество" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
+        }
+        SimplePanel "Нам должны" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            FontSize = 15
-            FontWeight = 400
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+            BorderWidth = 1
           }
-          Container "Заявки на расход количество" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
+          AggregateActivePanels [
+            AggregateActivePanel "Нам должны агрегат" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 4
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Нам должны название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+                Container "Нам должны сумма" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+                Container "Нам должны валюта" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+          ]
         }
-      }
-      SimplePanel "Операции в работе" {
-        BorderColor = "#0D2B3D"
-        TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
-        Alignment = "Stretch"
-        Distribution = "Start"
-        Direction = "Vertical"
-        BorderWidth = 1
-        AggregateActivePanel "Операции в работе агрегат" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 4
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Операции в работе заголовок" {
-            BorderColor = "#1A405A"
+        SimplePanel "Мы должны" {
+          Properties {
+            BorderColor = "#0D2B3D"
             TextColor = "#E8F2FF"
-            FontSize = 17
-            FontWeight = 600
+            Background = "#061824"
+            Padding = 10
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+            BorderWidth = 1
           }
+          AggregateActivePanels [
+            AggregateActivePanel "Мы должны агрегат" {
+              Properties {
+                BorderColor = "#15384D"
+                TextColor = "#E8F2FF"
+                Background = "#0D2D43"
+                Padding = 4
+                Gap = 2
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                BorderWidth = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Мы должны название" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+                Container "Мы должны сумма" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 600
+                  }
+                }
+                Container "Мы должны валюта" {
+                  Properties {
+                    BorderColor = "#1A405A"
+                    TextColor = "#A9C4E8"
+                    FontSize = 14
+                    FontWeight = 400
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+          ]
         }
-        ActivePanel "В обработке" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 10
-          Gap = 2
-          Alignment = "Start"
-          Distribution = "Center"
-          Direction = "Vertical"
-          BorderWidth = 1
-          Height = 66
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "В обработке иконка" {
-            BorderColor = "#1A405A"
-            TextColor = "#E8F2FF"
-            Width = 32
-            Height = 32
-            PictureTint = "#9BC8FF"
-          }
-          Container "В обработке название" {
-            BorderColor = "#1A405A"
-            TextColor = "#E8F2FF"
-            FontSize = 15
-            FontWeight = 400
-          }
-          Container "В обработке количество" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
-        }
-      }
-      SimplePanel "Нам должны" {
-        BorderColor = "#0D2B3D"
-        TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
-        Alignment = "Stretch"
-        Distribution = "Start"
-        Direction = "Vertical"
-        BorderWidth = 1
-        AggregateActivePanel "Нам должны агрегат" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 4
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Нам должны название" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
-          Container "Нам должны сумма" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
-          Container "Нам должны валюта" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
-        }
-      }
-      SimplePanel "Мы должны" {
-        BorderColor = "#0D2B3D"
-        TextColor = "#E8F2FF"
-        Background = "#061824"
-        Padding = 10
-        Gap = 6
-        Alignment = "Stretch"
-        Distribution = "Start"
-        Direction = "Vertical"
-        BorderWidth = 1
-        AggregateActivePanel "Мы должны агрегат" {
-          BorderColor = "#15384D"
-          TextColor = "#E8F2FF"
-          Background = "#0D2D43"
-          Padding = 4
-          Gap = 2
-          Alignment = "Center"
-          Distribution = "Start"
-          Direction = "Horizontal"
-          BorderWidth = 1
-          OnPress = NOT_YET_SPECIFIED
-          OffPress = NOT_YET_SPECIFIED
-          Container "Мы должны название" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
-          Container "Мы должны сумма" {
-            BorderColor = "#1A405A"
-            TextColor = "#FFFFFF"
-            FontSize = 22
-            FontWeight = 600
-          }
-          Container "Мы должны валюта" {
-            BorderColor = "#1A405A"
-            TextColor = "#A9C4E8"
-            FontSize = 14
-            FontWeight = 400
-          }
-        }
-      }
+      ]
     }
   }
 }

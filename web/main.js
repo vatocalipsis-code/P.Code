@@ -1,13 +1,13 @@
-import { setLang } from "./release/set-lang.js?v=2.8.0";
-import { setData } from "./release/set-data.js?v=2.8.0";
-import { setRender } from "./release/set-render.js?v=2.8.0";
-import { compileSetLang } from "./runtime/setlang-compiler.js?v=2.8.0";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.8.0";
-import { renderPlaneCode, patchSetData } from "./runtime/web-renderer.js?v=2.8.0";
+import { setLang } from "./release/set-lang.js?v=2.9.0";
+import { setData } from "./release/set-data.js?v=2.9.0";
+import { setRender } from "./release/set-render.js?v=2.9.0";
+import { compileSetLang } from "./runtime/setlang-compiler.js?v=2.9.0";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.9.0";
+import { renderPlaneCode, patchSetData } from "./runtime/web-renderer.js?v=2.9.0";
 
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js?v=2.8.0", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+  navigator.serviceWorker.register("./sw.js?v=2.9.0", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
 }
 
 const root = document.querySelector("#plane-code-root");

@@ -35,39 +35,15 @@ const NON_NEGATIVE_RULES = [
   "BorderBottomWidth", "Width", "Height", "Padding", "Gap", "FontSize"
 ];
 
-export function validatePLang(pLang, data = {}) {
+export function validatePLang(pLang, setData = {}) {
+  if (!Array.isArray(pLang)) throw new Error("Validator: SetLang.Data must be BasePanel[]");
   const logins = new Set();
-  function visit(node) {
-    if (!node || typeof node !== "object") throw new Error("Validator: invalid PLang entity");
-    if (typeof node.Login !== "string" || node.Login.length === 0) {
-      throw new Error(`Validator: missing Login for ${node.type ?? "entity"}`);
-    }
-    if (logins.has(node.Login)) throw new Error(`Validator: duplicate Login "${node.Login}"`);
-    logins.add(node.Login);
-    const directVisual = {};
-    for (const [key, value] of Object.entries(node)) {
-      if (!["type", "Login", "id", "Orientation", "OnPress", "OffPress", "children"].includes(key)) directVisual[key] = value;
-    }
-    validateVisualRule(directVisual, `SetLang object "${node.Login}"`);
-
-    if (node.type === "Container") {
-      if (node.Orientation !== undefined && node.Orientation !== "Positive" && node.Orientation !== "Negative") {
-        throw new Error(`Validator: invalid Orientation "${node.Orientation}" for Container "${node.Login}"`);
-      }
-      const item = data[node.Login];
-      if (item !== undefined) {
-        if (!item || typeof item !== "object") throw new Error(`Validator: invalid data for Container "${node.Login}"`);
-        if (item.SourceText !== undefined && typeof item.SourceText !== "string") {
-          throw new Error(`Validator: invalid SourceText for Container "${node.Login}"`);
-        }
-        if (item.SourcePicture !== undefined && !isCanonicalPngFile(item.SourcePicture)) {
-          throw new Error(`Validator: SourcePicture for Container "${node.Login}" must reference a PNG file`);
-        }
-      }
-    }
-    for (const child of node.children ?? []) visit(child);
-  }
-  for (const root of Array.isArray(pLang) ? pLang : [pLang]) visit(root);
+  const add = (login, label) => { if (!isNonEmptyString(login)) throw new Error(`Validator: ${label}.Login required`); if (logins.has(login)) throw new Error(`Validator: duplicate Login "${login}"`); logins.add(login); };
+  const checkContainer = c => { add(c.Login,"Container"); validateVisualRule(c.Properties ?? {},`Container "${c.Login}"`); };
+  const checkActive = (a, aggregate=false) => { add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel"); validateVisualRule(a.Properties ?? {},`${aggregate?"AggregateActivePanel":"ActivePanel"} "${a.Login}"`); if (!Array.isArray(a.Containers)) throw new Error(`Validator: ${a.Login}.Containers must be Container[]`); a.Containers.forEach(checkContainer); };
+  const checkSimple = sp => { add(sp.Login,"SimplePanel"); const p={...(sp.Properties??{})}; const ag=p.AggregateActivePanels??[]; delete p.AggregateActivePanels; validateVisualRule(p,`SimplePanel "${sp.Login}"`); if(!Array.isArray(ag)||ag.length>1) throw new Error(`Validator: ${sp.Login}.Properties.AggregateActivePanels must contain 0..1 item`); ag.forEach(x=>checkActive(x,true)); if(!Array.isArray(sp.Containers)||!Array.isArray(sp.ActivePanels)) throw new Error(`Validator: ${sp.Login} typed arrays required`); sp.Containers.forEach(checkContainer); sp.ActivePanels.forEach(x=>checkActive(x,false)); };
+  for (const bp of pLang) { add(bp.Login,"BasePanel"); validateVisualRule(bp.Properties??{},`BasePanel "${bp.Login}"`); if(!Array.isArray(bp.Containers)||!Array.isArray(bp.SimplePanels)) throw new Error(`Validator: ${bp.Login} typed arrays required`); bp.Containers.forEach(checkContainer); bp.SimplePanels.forEach(checkSimple); }
+  for (const login of Object.keys(setData)) if (!logins.has(login)) throw new Error(`Validator: SetData references unknown Login "${login}"`);
   return true;
 }
 
