@@ -87,7 +87,7 @@ body { min-height: 100dvh; background: var(--background-color); }
 }
 
 [data-plane-active] {
-  box-shadow: 4px 4px 4px .6px #666;
+  box-shadow: 1px 7px 10px -3px rgba(0, 12, 22, .62);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -96,5 +96,5 @@ body { min-height: 100dvh; background: var(--background-color); }
 
 [data-plane-active][data-plane-pressed] {
   transform: translate(2px, 2px);
-  box-shadow: 1px 1px 2px .3px #666;
+  box-shadow: 0 3px 5px -2px rgba(0, 12, 22, .72);
 }
