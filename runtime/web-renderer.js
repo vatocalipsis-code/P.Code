@@ -185,7 +185,11 @@ function renderNode(node, dataSet, renderSet, parallaxNodes, ownerShadow = 0) {
 
   if (hasContainerLayout && containers.length) {
     const defaultDirection = rule.Direction ?? "Vertical";
-    element.append(renderContainerSequence(containers, 0, defaultDirection, dataSet, renderSet, parallaxNodes, contentShadow, rule.Gap ?? 0));
+    const sequence = renderContainerSequence(containers, 0, defaultDirection, dataSet, renderSet, parallaxNodes, contentShadow, rule.Gap ?? 0);
+    sequence.style.flex = "1 1 auto";
+    sequence.style.minWidth = "0";
+    sequence.style.minHeight = "0";
+    element.append(sequence);
   } else {
     for (const child of containers) {
       element.append(renderNode(child, dataSet, renderSet, parallaxNodes, contentShadow));
