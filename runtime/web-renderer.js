@@ -135,6 +135,19 @@ function renderNode(node, renderSet, parallaxNodes) {
 
   applyLayoutRule(element, rule);
   for (const child of node.children ?? []) element.append(renderNode(child, renderSet, parallaxNodes));
+
+  if (node.type === "ActivePanel" || node.type === "AggregateActivePanel") {
+    element.dataset.planeActive = "";
+    const release = () => element.removeAttribute("data-plane-pressed");
+    element.addEventListener("pointerdown", event => {
+      if (event.button !== undefined && event.button !== 0) return;
+      element.setAttribute("data-plane-pressed", "");
+      element.setPointerCapture?.(event.pointerId);
+    });
+    element.addEventListener("pointerup", release);
+    element.addEventListener("pointercancel", release);
+    element.addEventListener("lostpointercapture", release);
+  }
   return element;
 }
 

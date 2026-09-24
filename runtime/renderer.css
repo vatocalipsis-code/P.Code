@@ -88,3 +88,15 @@ body { min-height: 100dvh; background: var(--background-color); }
   mask-size: contain;
   -webkit-mask-size: contain;
 }
+
+[data-plane-active] {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 70ms ease, box-shadow 70ms ease;
+}
+
+[data-plane-active][data-plane-pressed] {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 2px .3px #666;
+}
