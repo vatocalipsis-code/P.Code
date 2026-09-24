@@ -1,31 +1,9 @@
 export const setData = {
-  Name: "reference data",
+  Name: "diagnostic-data-2.9.1",
   Version: 1,
   Data: {
-    "PlaneCode Mark": { SourcePicture: "./assets/processing-sync.png" },
-    "PlaneCode Name": { SourceText: "PlaneCode · Reference" },
-    "Reference Menu Icon": { SourcePicture: "./assets/menu-grid.png" },
-    "Hierarchy Aggregate Icon": { SourcePicture: "./assets/processing-sync.png" },
-    "Hierarchy Aggregate Text": { SourceText: "Hierarchy · AggregateActivePanel" },
-    "Horizontal Icon": { SourcePicture: "./assets/expense-document.png" },
-    "Horizontal Text": { SourceText: "Horizontal ActivePanel" },
-    "Horizontal Value": { SourceText: "128" },
-    "Vertical Label": { SourceText: "Vertical · side borders · typography" },
-    "Vertical Value": { SourceText: "42 560.00" },
-    "Media Aggregate Text": { SourceText: "Picture · tint · source binding" },
-    "Media Picture": { SourcePicture: "./assets/expense-document.png" },
-    "Media Text": { SourceText: "PNG + PictureTint" },
-    "Layout Title": { SourceText: "Layout & motion" },
-    "Layout Page": { SourceText: "2 / 2" },
-    "Distribution Title": { SourceText: "Distribution · Alignment · Gap" },
-    "Between A": { SourceText: "START" },
-    "Between B": { SourceText: "CENTER" },
-    "Between C": { SourceText: "END" },
-    "Center Picture": { SourcePicture: "./assets/processing-sync.png" },
-    "Center Text": { SourceText: "Centered content" },
-    "Typography Title": { SourceText: "Typography" },
-    "Type Small": { SourceText: "12 / 400 · secondary" },
-    "Type Medium": { SourceText: "16 / 600 · interface" },
-    "Type Large": { SourceText: "22 / 800 · value" }
+    "Diagnostic Picture": { SourcePicture: "./assets/menu-grid.png" },
+    "Diagnostic Title": { SourceText: "PlaneCode 2.9.1" },
+    "Diagnostic Subtitle": { SourceText: "transparent surface + alpha shadow" }
   }
 };
