@@ -4,6 +4,8 @@ Status: RELEASED / CURRENT
 
 PlaneCode 2.2.1 restores the strict boundary between PLang and SetRender while preserving the complete render feature set introduced in 2.2.0.
 
+Renderer does not inspect or interpret reference images. It receives an already composed structure and an independent SetRender description. SetRender provides the physical and visual environment in which that composition is rendered.
+
 ```text
 PLang + SetData
       ↓

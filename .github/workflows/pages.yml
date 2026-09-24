@@ -33,6 +33,7 @@ jobs:
           cp runtime/compositor.js _site/runtime/compositor.js
           cp runtime/web-renderer.js _site/runtime/web-renderer.js
           cp runtime/validator.js _site/runtime/validator.js
+          cp runtime/render-bindings.js _site/runtime/render-bindings.js
           cp release/p-lang.js _site/release/p-lang.js
           cp release/set-data.js _site/release/set-data.js
           cp release/set-render.js _site/release/set-render.js

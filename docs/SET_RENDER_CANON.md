@@ -6,7 +6,7 @@ SetRender is an independent render description used by PlaneCode.
 
 SetRender does not define PLang entities, hierarchy, parent/child relations, source presence or source order. It does not extend PLang grammar.
 
-Its job is only physical and visual rendering.
+Its job is only physical and visual rendering. SetRender describes the render environment; it does not inspect reference images or derive structure/content from them.
 
 ## Addressing
 
