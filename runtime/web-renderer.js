@@ -1,31 +1,47 @@
-function renderNode(node, data) {
+function renderSource(source) {
+  if (source.kind === "Text") {
+    const text = document.createElement("span");
+    text.dataset.planeSource = "Text";
+    text.textContent = source.value;
+    return text;
+  }
+
+  if (source.kind === "Picture") {
+    const image = document.createElement("img");
+    image.dataset.planeSource = "Picture";
+    image.src = source.value;
+    image.alt = "";
+    return image;
+  }
+
+  throw new Error(`WebRenderer: unsupported source kind "${source.kind}"`);
+}
+
+function renderNode(node) {
   const element = document.createElement("div");
   element.dataset.planeType = node.type;
   if (node.id) element.dataset.planeId = node.id;
-  if (node.name) element.dataset.planeName = node.name;
+  if (node.login) element.dataset.planeLogin = node.login;
 
   if (node.type === "Container") {
-    const item = data[node.id];
-    if (item.type === "Text") element.textContent = item.value;
-    if (item.type === "Picture") {
-      const image = document.createElement("img");
-      image.src = item.value;
-      image.alt = "";
-      element.append(image);
-    }
+    const content = document.createElement("div");
+    content.dataset.planeContainerContent = "";
+    if (node.singleSource) content.dataset.planeSingleSource = "";
+    for (const source of node.sources ?? []) content.append(renderSource(source));
+    element.append(content);
     return element;
   }
 
-  for (const child of node.children ?? []) element.append(renderNode(child, data));
+  for (const child of node.children ?? []) element.append(renderNode(child));
   return element;
 }
 
-export function renderPlaneCode(root, planeCode, data, renderSet) {
+export function renderPlaneCode(root, composition, renderSet) {
   root.style.setProperty("--panel-spacing", `${renderSet.PanelSpacing}px`);
   root.style.setProperty("--background-color", renderSet.BackgroundColor);
   root.style.setProperty("--panel-color", renderSet.PanelColor);
   root.style.setProperty("--border-color", renderSet.BorderColor);
   root.style.setProperty("--text-color", renderSet.TextColor);
-  const roots = Array.isArray(planeCode) ? planeCode : [planeCode];
-  root.replaceChildren(...roots.map(node => renderNode(node, data)));
+  const roots = Array.isArray(composition) ? composition : [composition];
+  root.replaceChildren(...roots.map(renderNode));
 }
