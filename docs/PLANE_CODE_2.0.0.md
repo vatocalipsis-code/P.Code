@@ -146,8 +146,8 @@ Container.Login = CashboxSummary
 ```js
 setData = {
   CashboxSummary: {
-    sourceText: "87 200.00",
-    sourcePicture: "..."
+    SourceText: "87 200.00",
+    SourcePicture: "..."
   }
 }
 ```
