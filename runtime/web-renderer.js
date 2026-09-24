@@ -124,9 +124,9 @@ function renderNode(node, renderSet, parallaxNodes) {
   if (parallax !== 0) parallaxNodes.push({ element, parallax });
 
   if (node.type === "Container") {
+    applyLayoutRule(element, rule);
     const content = document.createElement("div");
     content.dataset.planeContainerContent = "";
-    if (node.singleSource) content.dataset.planeSingleSource = "";
     applyLayoutRule(content, rule);
     for (const source of node.sources ?? []) content.append(renderSource(source, renderSet, rule));
     element.append(content);
