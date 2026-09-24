@@ -1,0 +1,108 @@
+SetLang {
+  Name = "diagnostic-2.9.1"
+  Version = 1
+  Data {
+    BasePanel "Diagnostic Base" {
+      Properties {
+        Background = "#031421"
+        TextColor = "#E8F2FF"
+        Alignment = "Center"
+        Distribution = "Center"
+        Direction = "Vertical"
+        Padding = 24
+        Gap = 16
+      }
+      Containers [
+      ]
+      SimplePanels [
+        SimplePanel "Diagnostic Simple" {
+          Properties {
+            Background = "#0D2D43"
+            PanelTransparency = 1
+            Alignment = "Center"
+            Distribution = "Center"
+            Direction = "Vertical"
+            Padding = 16
+            Gap = 14
+          }
+          AggregateActivePanels [
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Diagnostic Floating" {
+              Properties {
+                Background = "#0D2D43"
+                PanelTransparency = 1
+                Shadow = 10
+                Alignment = "Center"
+                Distribution = "Center"
+                Direction = "Vertical"
+                Padding = 12
+                Gap = 12
+                Width = 280
+                Height = 220
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Diagnostic Picture" {
+                  Properties {
+                    Width = 72
+                    Height = 72
+                  }
+                }
+                Container "Diagnostic Title" {
+                  Properties {
+                    TextColor = "#FFFFFF"
+                    FontSize = 28
+                    FontWeight = 700
+                  }
+                }
+                Container "Diagnostic Subtitle" {
+                  Properties {
+                    TextColor = "#A9C4E8"
+                    FontSize = 15
+                    FontWeight = 400
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+SetData {
+  Name = "diagnostic-data-2.9.1"
+  Version = 1
+  Data {
+    "Diagnostic Picture" {
+      SourcePicture = "./assets/menu-grid.png"
+    }
+    "Diagnostic Title" {
+      SourceText = "PlaneCode 2.9.1"
+    }
+    "Diagnostic Subtitle" {
+      SourceText = "transparent surface + alpha shadow"
+    }
+  }
+}
+
+SetRender {
+  Name = "diagnostic-scene-2.9.1"
+  Version = 1
+  Data {
+    PanelSpacing = 11
+    BackgroundColor = "#031421"
+    PanelColor = "#0D2D43"
+    BorderColor = "#1A405A"
+    TextColor = "#E8F2FF"
+    Transparency = 0
+    TextTransparency = 0
+    PictureTransparency = 0
+    Parallax = 0
+  }
+}
