@@ -1,10 +1,10 @@
-import { pLang } from "./release/p-lang.js?v=2.5.4r1";
-import { setData } from "./release/set-data.js?v=2.5.4r1";
-import { setRender } from "./release/set-render.js?v=2.5.4r1";
-import { composePLang } from "./runtime/compositor.js?v=2.5.4r1";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.4r1";
-import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.4r1";
-import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.4r1";
+import { pLang } from "./release/p-lang.js?v=2.5.4r2";
+import { setData } from "./release/set-data.js?v=2.5.4r2";
+import { setRender } from "./release/set-render.js?v=2.5.4r2";
+import { composePLang } from "./runtime/compositor.js?v=2.5.4r2";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.4r2";
+import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.4r2";
+import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.4r2";
 
 const root = document.querySelector("#plane-code-root");
 
@@ -98,5 +98,50 @@ root.addEventListener("pointercancel", () => {
   setRefreshPull(0);
   positionSurfaces(0, true);
 });
+
+// iOS Safari / standalone: native scrolling can consume Pointer Events.
+// A non-passive touch path owns only a downward pull that starts while already at the top.
+let touchStartX = 0;
+let touchStartY = 0;
+let touchPull = 0;
+let touchRefresh = false;
+
+root.addEventListener("touchstart", event => {
+  if (event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchPull = 0;
+  touchRefresh = window.scrollY <= 0 && document.documentElement.scrollTop <= 0;
+}, { passive: true });
+
+root.addEventListener("touchmove", event => {
+  if (!touchRefresh || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  const dx = touch.clientX - touchStartX;
+  const dy = touch.clientY - touchStartY;
+  if (dy <= 0 || Math.abs(dx) >= Math.abs(dy)) {
+    if (Math.abs(dx) > Math.abs(dy)) touchRefresh = false;
+    return;
+  }
+  event.preventDefault();
+  touchPull = dy;
+  setRefreshPull(touchPull);
+}, { passive: false });
+
+root.addEventListener("touchend", () => {
+  if (!touchRefresh) return;
+  const reload = touchPull >= refreshThreshold;
+  touchRefresh = false;
+  touchPull = 0;
+  setRefreshPull(0);
+  if (reload) location.reload();
+}, { passive: true });
+
+root.addEventListener("touchcancel", () => {
+  touchRefresh = false;
+  touchPull = 0;
+  setRefreshPull(0);
+}, { passive: true });
 
 positionSurfaces();
