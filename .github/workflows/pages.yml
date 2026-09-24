@@ -1,5 +1,4 @@
 name: Deploy PlaneCode
-# Redeploy trigger after switching GitHub Pages source to GitHub Actions.
 
 on:
   push:
@@ -31,9 +30,10 @@ jobs:
           cp web/index.html _site/index.html
           cp web/main.js _site/main.js
           cp runtime/renderer.css _site/runtime/renderer.css
+          cp runtime/compositor.js _site/runtime/compositor.js
           cp runtime/web-renderer.js _site/runtime/web-renderer.js
           cp runtime/validator.js _site/runtime/validator.js
-          cp release/plane-code.js _site/release/plane-code.js
+          cp release/p-lang.js _site/release/p-lang.js
           cp release/set-data.js _site/release/set-data.js
           cp release/set-render.js _site/release/set-render.js
 
