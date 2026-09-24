@@ -35,10 +35,11 @@ jobs:
           cp web/icons/*.png _site/icons/
           cp runtime/renderer.css _site/runtime/renderer.css
           cp runtime/compositor.js _site/runtime/compositor.js
+          cp runtime/setlang-compiler.js _site/runtime/setlang-compiler.js
           cp runtime/web-renderer.js _site/runtime/web-renderer.js
           cp runtime/validator.js _site/runtime/validator.js
           cp runtime/render-bindings.js _site/runtime/render-bindings.js
-          cp release/p-lang.js _site/release/p-lang.js
+          cp release/set-lang.js _site/release/set-lang.js
           cp release/set-data.js _site/release/set-data.js
           cp release/set-render.js _site/release/set-render.js
 
