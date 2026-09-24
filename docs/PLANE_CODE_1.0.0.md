@@ -17,16 +17,66 @@ The implementation supports one or more root `BasePanel` surfaces.
 
 Every element may have an `id`.
 
-## Container data
+## Entity names
 
-Container content is supplied by `SetData` and addressed by the Container `id`.
+Every PlaneCode entity has a `Name` property.
 
-Supported data types:
+`Name` identifies the concrete entity in the application model. It does not create a new PlaneCode entity type.
+
+Examples:
+
+```text
+SimplePanel.Name = Operations
+ActivePanel.Name = AllOperations
+Container.Name = CashboxAmount
+```
+
+## Container properties
+
+A `Container` has the common entity property `Name` and may additionally define content properties.
+
+Canonical Container properties:
+
+```text
+Container.Name
+Container.Type
+Container.Text
+Container.Picture
+Container.Font
+```
+
+`Container.Type` defines the content kind and currently supports exactly:
 
 ```text
 Text
-Image
+Picture
 ```
+
+For a text container:
+
+```text
+Container.Name = CashboxAmount
+Container.Type = Text
+Container.Text = C("87 200.00")
+Container.Font = ...
+```
+
+For a picture container:
+
+```text
+Container.Name = CashboxIcon
+Container.Type = Picture
+Container.Picture = ...
+```
+
+`Container.Text` is used when `Container.Type = Text`.
+`Container.Picture` is used when `Container.Type = Picture`.
+
+The exact value grammar of `Container.Font` and `Container.Picture` is NOT YET SPECIFIED.
+
+## Container data
+
+Dynamic Container content may be supplied by `SetData` and addressed by the Container `id`.
 
 ## Validation
 
@@ -34,7 +84,7 @@ Image
 
 For every Container used by the composition, its SetData item must:
 - exist;
-- have type `Text` or `Image`;
+- have type `Text` or `Picture`;
 - have a non-empty string value.
 
 Invalid SetData stops rendering.
