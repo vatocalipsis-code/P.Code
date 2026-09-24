@@ -39,36 +39,47 @@ Canonical Container properties currently identified:
 
 ```text
 Container.Name
-Container.Type
 Container.sourceText
 Container.sourcePicture
+Container.Orientation
 Container.Font
 ```
 
-A Container may carry a text source, a picture source, or both at the same time.
+A Container may carry text, a picture, or both at the same time.
+
+`Container.Type` is removed because content kind is already expressed by the presence of `sourceText` and/or `sourcePicture`.
+
+`Container.Orientation` controls which source is placed first when both are present:
+
+```text
+Container.Orientation = Positive
+Picture → Text
+
+Container.Orientation = Negative
+Text → Picture
+```
 
 Examples:
-
-```text
-Container.Name = CashboxAmount
-Container.sourceText = "87 200.00"
-Container.Font = ...
-```
-
-```text
-Container.Name = CashboxIcon
-Container.sourcePicture = Picture
-```
 
 ```text
 Container.Name = CashboxSummary
 Container.sourceText = "87 200.00"
 Container.sourcePicture = Picture
-Container.Font = ...
+Container.Orientation = Positive
 ```
 
-`Container.sourceText` is the text source.
-`Container.sourcePicture` is the picture source.
+renders the picture first and the text after it.
+
+```text
+Container.Name = CashboxSummary
+Container.sourceText = "87 200.00"
+Container.sourcePicture = Picture
+Container.Orientation = Negative
+```
+
+renders the text first and the picture after it.
+
+If only one source exists, Orientation does not change the visible content.
 
 The exact representation/reference grammar of `sourcePicture` is NOT YET SPECIFIED.
 The exact value grammar of `Container.Font` is NOT YET SPECIFIED.
