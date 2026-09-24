@@ -1,0 +1,631 @@
+SetLang {
+  Name = "reference model"
+  Version = 1
+  Data {
+    BasePanel "Reference Surface" {
+      Properties {
+        Background = "#07131D"
+        BorderColor = "#21465D"
+        BorderWidth = 1
+        TextColor = "#EAF4FA"
+        Padding = 12
+        Gap = 10
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+      }
+      Containers [
+      ]
+      SimplePanels [
+        SimplePanel "Reference Header" {
+          Properties {
+            Background = "#0C2130"
+            BorderColor = "#28536C"
+            BorderWidth = 1
+            Padding = 8
+            Gap = 8
+            Alignment = "Center"
+            Distribution = "Between"
+            Direction = "Horizontal"
+          }
+          AggregateActivePanels [
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "PlaneCode Title" {
+              Properties {
+                Background = "#123249"
+                BorderColor = "#34708F"
+                BorderWidth = 1
+                Height = 44
+                Padding = 8
+                Gap = 6
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                Parallax = 1.5
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "PlaneCode Mark" {
+                  Properties {
+                    Width = 26
+                    Height = 26
+                    PictureTint = "#59E1C4"
+                  }
+                }
+                Container "PlaneCode Name" {
+                  Properties {
+                    TextColor = "#F3FAFD"
+                    FontSize = 18
+                    FontWeight = 700
+                  }
+                }
+              ]
+            }
+            ActivePanel "Reference Menu" {
+              Properties {
+                Background = "#123249"
+                BorderColor = "#34708F"
+                BorderWidth = 1
+                Width = 44
+                Height = 44
+                Padding = 8
+                Alignment = "Center"
+                Distribution = "Center"
+                Direction = "Horizontal"
+                Parallax = 2
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Reference Menu Icon" {
+                  Properties {
+                    Width = 26
+                    Height = 26
+                    PictureTint = "#F3C96B"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+        SimplePanel "Hierarchy Lab" {
+          Properties {
+            Background = "#0A1C29"
+            BorderColor = "#234A61"
+            BorderWidth = 1
+            Padding = 9
+            Gap = 7
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+          }
+          AggregateActivePanels [
+            AggregateActivePanel "Hierarchy Aggregate" {
+              Properties {
+                Background = "#163B50"
+                BorderColor = "#3B7896"
+                BorderWidth = 1
+                Padding = 6
+                Gap = 6
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                Parallax = 1
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Hierarchy Aggregate Icon" {
+                  Properties {
+                    Width = 22
+                    Height = 22
+                    PictureTint = "#72D8FF"
+                  }
+                }
+                Container "Hierarchy Aggregate Text" {
+                  Properties {
+                    TextColor = "#DDF5FF"
+                    FontSize = 15
+                    FontWeight = 650
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Horizontal Active" {
+              Properties {
+                Background = "#103047"
+                BorderColor = "#2D6685"
+                BorderWidth = 1
+                Height = 62
+                Padding = 8
+                Gap = 8
+                Alignment = "Center"
+                Distribution = "Between"
+                Direction = "Horizontal"
+                Parallax = 2.5
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Horizontal Icon" {
+                  Properties {
+                    Width = 30
+                    Height = 30
+                    PictureTint = "#8CE8B9"
+                  }
+                }
+                Container "Horizontal Text" {
+                  Properties {
+                    TextColor = "#EAFBF2"
+                    FontSize = 15
+                    FontWeight = 600
+                  }
+                }
+                Container "Horizontal Value" {
+                  Properties {
+                    TextColor = "#FFFFFF"
+                    FontSize = 20
+                    FontWeight = 750
+                  }
+                }
+              ]
+            }
+            ActivePanel "Vertical Active" {
+              Properties {
+                Background = "#132D42"
+                BorderColor = "#345E7B"
+                BorderLeftColor = "#68D6FF"
+                BorderLeftWidth = 3
+                BorderRightWidth = 1
+                BorderTopWidth = 1
+                BorderBottomWidth = 1
+                Height = 72
+                Padding = 8
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                Parallax = 3
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Vertical Label" {
+                  Properties {
+                    TextColor = "#9FC4D8"
+                    FontSize = 13
+                    FontWeight = 500
+                  }
+                }
+                Container "Vertical Value" {
+                  Properties {
+                    TextColor = "#FFFFFF"
+                    FontSize = 23
+                    FontWeight = 750
+                  }
+                }
+              ]
+            }
+          ]
+        }
+        SimplePanel "Media Lab" {
+          Properties {
+            Background = "#0A1C29"
+            BorderColor = "#234A61"
+            BorderWidth = 1
+            Padding = 9
+            Gap = 7
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+          }
+          AggregateActivePanels [
+            AggregateActivePanel "Media Aggregate" {
+              Properties {
+                Background = "#163B50"
+                BorderColor = "#3B7896"
+                BorderWidth = 1
+                Padding = 6
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Media Aggregate Text" {
+                  Properties {
+                    TextColor = "#DDF5FF"
+                    FontSize = 15
+                    FontWeight = 650
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Media Active" {
+              Properties {
+                Background = "#103047"
+                BorderColor = "#2D6685"
+                BorderWidth = 1
+                Height = 62
+                Padding = 8
+                Gap = 10
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                Parallax = 2
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Media Picture" {
+                  Properties {
+                    Width = 34
+                    Height = 34
+                    PictureTint = "#FFB66E"
+                  }
+                }
+                Container "Media Text" {
+                  Properties {
+                    TextColor = "#FFF0E1"
+                    FontSize = 15
+                    FontWeight = 600
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+    BasePanel "Layout Surface" {
+      Properties {
+        Background = "#10141B"
+        BorderColor = "#3A4654"
+        BorderWidth = 1
+        TextColor = "#F0F3F6"
+        Padding = 12
+        Gap = 10
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+      }
+      Containers [
+      ]
+      SimplePanels [
+        SimplePanel "Layout Header" {
+          Properties {
+            Background = "#1B232D"
+            BorderColor = "#46586A"
+            BorderWidth = 1
+            Padding = 9
+            Gap = 6
+            Alignment = "Center"
+            Distribution = "Between"
+            Direction = "Horizontal"
+          }
+          AggregateActivePanels [
+          ]
+          Containers [
+            Container "Layout Title" {
+              Properties {
+                TextColor = "#FFFFFF"
+                FontSize = 18
+                FontWeight = 700
+              }
+            }
+            Container "Layout Page" {
+              Properties {
+                TextColor = "#9FB1C3"
+                FontSize = 13
+                FontWeight = 600
+              }
+            }
+          ]
+          ActivePanels [
+          ]
+        }
+        SimplePanel "Distribution Lab" {
+          Properties {
+            Background = "#181F28"
+            BorderColor = "#3B4A59"
+            BorderWidth = 1
+            Padding = 9
+            Gap = 8
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+          }
+          AggregateActivePanels [
+            AggregateActivePanel "Distribution Aggregate" {
+              Properties {
+                Background = "#263342"
+                BorderColor = "#526A80"
+                BorderWidth = 1
+                Padding = 6
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Distribution Title" {
+                  Properties {
+                    TextColor = "#EAF1F7"
+                    FontSize = 15
+                    FontWeight = 650
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Between Active" {
+              Properties {
+                Background = "#202B36"
+                BorderColor = "#526578"
+                BorderWidth = 1
+                Height = 58
+                Padding = 8
+                Gap = 6
+                Alignment = "Center"
+                Distribution = "Between"
+                Direction = "Horizontal"
+                Parallax = 1.5
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Between A" {
+                  Properties {
+                    TextColor = "#7EE7D0"
+                    FontSize = 14
+                    FontWeight = 700
+                  }
+                }
+                Container "Between B" {
+                  Properties {
+                    TextColor = "#FFD47E"
+                    FontSize = 14
+                    FontWeight = 700
+                  }
+                }
+                Container "Between C" {
+                  Properties {
+                    TextColor = "#8FC5FF"
+                    FontSize = 14
+                    FontWeight = 700
+                  }
+                }
+              ]
+            }
+            ActivePanel "Centered Active" {
+              Properties {
+                Background = "#202B36"
+                BorderColor = "#526578"
+                BorderWidth = 1
+                Height = 58
+                Padding = 8
+                Gap = 12
+                Alignment = "Center"
+                Distribution = "Center"
+                Direction = "Horizontal"
+                Parallax = 2.5
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Center Picture" {
+                  Properties {
+                    Width = 28
+                    Height = 28
+                    PictureTint = "#D79BFF"
+                  }
+                }
+                Container "Center Text" {
+                  Properties {
+                    TextColor = "#F1DEFF"
+                    FontSize = 15
+                    FontWeight = 650
+                  }
+                }
+              ]
+            }
+          ]
+        }
+        SimplePanel "Typography Lab" {
+          Properties {
+            Background = "#181F28"
+            BorderColor = "#3B4A59"
+            BorderWidth = 1
+            Padding = 9
+            Gap = 6
+            Alignment = "Stretch"
+            Distribution = "Start"
+            Direction = "Vertical"
+          }
+          AggregateActivePanels [
+            AggregateActivePanel "Typography Aggregate" {
+              Properties {
+                Background = "#263342"
+                BorderColor = "#526A80"
+                BorderWidth = 1
+                Padding = 6
+                Alignment = "Center"
+                Distribution = "Start"
+                Direction = "Horizontal"
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Typography Title" {
+                  Properties {
+                    TextColor = "#EAF1F7"
+                    FontSize = 15
+                    FontWeight = 650
+                  }
+                }
+              ]
+            }
+          ]
+          Containers [
+          ]
+          ActivePanels [
+            ActivePanel "Typography Active" {
+              Properties {
+                Background = "#202B36"
+                BorderColor = "#526578"
+                BorderWidth = 1
+                Height = 74
+                Padding = 8
+                Gap = 2
+                Alignment = "Start"
+                Distribution = "Center"
+                Direction = "Vertical"
+                Parallax = 2
+                OnPress = null
+                OffPress = null
+              }
+              Containers [
+                Container "Type Small" {
+                  Properties {
+                    TextColor = "#A9B8C6"
+                    FontSize = 12
+                    FontWeight = 400
+                  }
+                }
+                Container "Type Medium" {
+                  Properties {
+                    TextColor = "#F1F5F8"
+                    FontSize = 16
+                    FontWeight = 600
+                  }
+                }
+                Container "Type Large" {
+                  Properties {
+                    TextColor = "#FFFFFF"
+                    FontSize = 22
+                    FontWeight = 800
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+SetData {
+  Name = "reference data"
+  Version = 1
+  Data {
+    "PlaneCode Mark" {
+      SourcePicture = "./assets/processing-sync.png"
+    }
+    "PlaneCode Name" {
+      SourceText = "PlaneCode · Reference"
+    }
+    "Reference Menu Icon" {
+      SourcePicture = "./assets/menu-grid.png"
+    }
+    "Hierarchy Aggregate Icon" {
+      SourcePicture = "./assets/processing-sync.png"
+    }
+    "Hierarchy Aggregate Text" {
+      SourceText = "Hierarchy · AggregateActivePanel"
+    }
+    "Horizontal Icon" {
+      SourcePicture = "./assets/expense-document.png"
+    }
+    "Horizontal Text" {
+      SourceText = "Horizontal ActivePanel"
+    }
+    "Horizontal Value" {
+      SourceText = "128"
+    }
+    "Vertical Label" {
+      SourceText = "Vertical · side borders · typography"
+    }
+    "Vertical Value" {
+      SourceText = "42 560.00"
+    }
+    "Media Aggregate Text" {
+      SourceText = "Picture · tint · source binding"
+    }
+    "Media Picture" {
+      SourcePicture = "./assets/expense-document.png"
+    }
+    "Media Text" {
+      SourceText = "PNG + PictureTint"
+    }
+    "Layout Title" {
+      SourceText = "Layout & motion"
+    }
+    "Layout Page" {
+      SourceText = "2 / 2"
+    }
+    "Distribution Title" {
+      SourceText = "Distribution · Alignment · Gap"
+    }
+    "Between A" {
+      SourceText = "START"
+    }
+    "Between B" {
+      SourceText = "CENTER"
+    }
+    "Between C" {
+      SourceText = "END"
+    }
+    "Center Picture" {
+      SourcePicture = "./assets/processing-sync.png"
+    }
+    "Center Text" {
+      SourceText = "Centered content"
+    }
+    "Typography Title" {
+      SourceText = "Typography"
+    }
+    "Type Small" {
+      SourceText = "12 / 400 · secondary"
+    }
+    "Type Medium" {
+      SourceText = "16 / 600 · interface"
+    }
+    "Type Large" {
+      SourceText = "22 / 800 · value"
+    }
+  }
+}
+
+SetRender {
+  Name = "reference scene"
+  Version = 1
+  Data {
+    PanelSpacing = 10
+    BackgroundColor = "#07131D"
+    PanelColor = "#102B3D"
+    BorderColor = "#2B5870"
+    TextColor = "#EAF4FA"
+    Transparency = 0
+    TextTransparency = 0
+    PictureTransparency = 0
+    Parallax = 0
+  }
+}
