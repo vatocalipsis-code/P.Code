@@ -1,7 +1,44 @@
 SetLang {
+  BasePanel {
+    Login = "Example Render"
+    SimplePanel {
+      Login = "Мои кассы"
+      AggregateActivePanel { Login = "Мои кассы агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Мои кассы заголовок" } }
+      ActivePanel { Login = "Основная касса" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Основная касса данные" } }
+    }
+    SimplePanel {
+      Login = "Подчинённые кассы"
+      AggregateActivePanel { Login = "Подчинённые кассы агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Подчинённые кассы заголовок" } }
+      ActivePanel { Login = "Офис Киев" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Офис Киев данные" } }
+      ActivePanel { Login = "Магазин Петровка" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Магазин Петровка данные" } }
+    }
+    SimplePanel {
+      Login = "Требует моего подтверждения"
+      AggregateActivePanel { Login = "Требует моего подтверждения агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Требует моего подтверждения заголовок" } }
+      ActivePanel { Login = "Заявки на расход" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Заявки на расход данные" Orientation = Positive } }
+    }
+    SimplePanel {
+      Login = "Операции в работе"
+      AggregateActivePanel { Login = "Операции в работе агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Операции в работе заголовок" } }
+      ActivePanel { Login = "В обработке" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "В обработке данные" Orientation = Positive } }
+    }
+    SimplePanel { Login = "Нам должны" AggregateActivePanel { Login = "Нам должны агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Нам должны данные" } } }
+    SimplePanel { Login = "Мы должны" AggregateActivePanel { Login = "Мы должны агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Мы должны данные" } } }
+  }
 }
 
 SetData {
+  "Мои кассы заголовок" { SourceText = "Мои кассы" }
+  "Основная касса данные" { SourceText = "Основная касса\n125 000.00\nUAH" }
+  "Подчинённые кассы заголовок" { SourceText = "Подчинённые кассы" }
+  "Офис Киев данные" { SourceText = "Офис Киев\n3 420.00\nUSD" }
+  "Магазин Петровка данные" { SourceText = "Магазин Петровка\n1 200.00\nEUR" }
+  "Требует моего подтверждения заголовок" { SourceText = "Требует моего подтверждения" }
+  "Заявки на расход данные" { SourceText = "Заявки на расход\n5" SourcePicture = "example render.assets/expense-document.png" }
+  "Операции в работе заголовок" { SourceText = "Операции в работе" }
+  "В обработке данные" { SourceText = "В обработке\n8" SourcePicture = "example render.assets/processing-sync.png" }
+  "Нам должны данные" { SourceText = "Нам должны\n312 400.00\nUSD" }
+  "Мы должны данные" { SourceText = "Мы должны\n87 200.00\nUSD" }
 }
 
 SetRender {

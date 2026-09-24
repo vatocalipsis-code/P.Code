@@ -25,7 +25,14 @@ Every PLang entity has a required unique `Login`.
 
 ## AggregateActivePanel
 
-AggregateActivePanel is a child of SimplePanel and may contain Container. It represents an aggregate action or aggregate state of its parent SimplePanel, while ActivePanel represents an individual item within that SimplePanel. No additional AggregateActivePanel properties are specified.
+AggregateActivePanel is a child of SimplePanel and may contain Container. It represents an aggregate action or aggregate state of its parent SimplePanel, while ActivePanel represents an individual item within that SimplePanel. ActivePanel and AggregateActivePanel expose the same two event properties:
+
+```text
+OnPress
+OffPress
+```
+
+When an event property exists but its value has not yet been defined, its canonical value is `NOT_YET_SPECIFIED`. Procedure binding and business-action semantics remain NOT YET SPECIFIED. No additional AggregateActivePanel properties are specified.
 
 ## Container
 
@@ -57,3 +64,8 @@ Text → Picture
 SourcePicture references a PNG file only. Intrinsic PNG alpha is preserved.
 
 This canon intentionally contains no SetRender properties.
+
+
+## SetLang serialization in SPL
+
+Inside a `.SPL` SetLang block, PLang uses nested entity blocks. Nesting is the structural parent-child relation; no duplicate Parent/Child property is required. Properties use `Name = Value` syntax. Strings are quoted. `NOT_YET_SPECIFIED` is the canonical token for an existing property whose value is not yet defined.
