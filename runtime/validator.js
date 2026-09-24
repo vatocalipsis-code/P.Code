@@ -31,7 +31,7 @@ function isNonEmptyString(value) {
 
 const ALIGNMENTS = new Set(["Start", "Center", "End", "Stretch"]);
 const DISTRIBUTIONS = new Set(["Start", "Center", "End", "Between", "Around", "Evenly"]);
-const DIRECTIONS = new Set(["Horizontal", "Vertical"]);
+const DIRECTIONS = new Set(["Horizontal", "Vertical"]);\nconst ORDERS = new Set(["Positive", "Negative"]);
 
 const STRING_RULES = [
   "Background", "BorderColor", "BorderLeftColor", "BorderRightColor",
@@ -47,7 +47,14 @@ export function validatePLang(pLang, setData = {}) {
   if (!Array.isArray(pLang)) throw new Error("Validator: SetLang.Data must be BasePanel[]");
   const logins = new Set();
   const add = (login, label) => { if (!isNonEmptyString(login)) throw new Error(`Validator: ${label}.Login required`); if (logins.has(login)) throw new Error(`Validator: duplicate Login "${login}"`); logins.add(login); };
-  const checkContainer = c => { add(c.Login,"Container"); validateVisualRule(c.Properties ?? {},`Container "${c.Login}"`, false); };
+  const checkContainer = c => {
+    add(c.Login,"Container");
+    const p = c.Properties ?? {};
+    validateVisualRule(p,`Container "${c.Login}"`, false);
+    if (p.Order !== undefined && !ORDERS.has(p.Order)) throw new Error(`Validator: invalid Order for Container "${c.Login}"`);
+    if (p.Orientation !== undefined && !DIRECTIONS.has(p.Orientation)) throw new Error(`Validator: invalid Orientation for Container "${c.Login}"`);
+    if (p.Flip !== undefined && typeof p.Flip !== "boolean") throw new Error(`Validator: Flip for Container "${c.Login}" must be boolean`);
+  };
   const checkActive = (a, aggregate=false) => { add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel"); validateVisualRule(a.Properties ?? {},`${aggregate?"AggregateActivePanel":"ActivePanel"} "${a.Login}"`, true); if (!Array.isArray(a.Containers)) throw new Error(`Validator: ${a.Login}.Containers must be Container[]`); a.Containers.forEach(checkContainer); };
   const checkSimple = sp => { add(sp.Login,"SimplePanel"); const p={...(sp.Properties??{})}; const ag=p.AggregateActivePanels??[]; delete p.AggregateActivePanels; validateVisualRule(p,`SimplePanel "${sp.Login}"`, true); if(!Array.isArray(ag)||ag.length>1) throw new Error(`Validator: ${sp.Login}.Properties.AggregateActivePanels must contain 0..1 item`); ag.forEach(x=>checkActive(x,true)); if(!Array.isArray(sp.Containers)||!Array.isArray(sp.ActivePanels)) throw new Error(`Validator: ${sp.Login} typed arrays required`); sp.Containers.forEach(checkContainer); sp.ActivePanels.forEach(x=>checkActive(x,false)); };
   for (const bp of pLang) { add(bp.Login,"BasePanel"); validateVisualRule(bp.Properties??{},`BasePanel "${bp.Login}"`, false); if(!Array.isArray(bp.Containers)||!Array.isArray(bp.SimplePanels)) throw new Error(`Validator: ${bp.Login} typed arrays required`); bp.Containers.forEach(checkContainer); bp.SimplePanels.forEach(checkSimple); }
