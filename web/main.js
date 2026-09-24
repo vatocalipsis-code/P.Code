@@ -1,21 +1,21 @@
 /**
- * PlaneCode 2.9.0 browser/PWA integration entry point.
+ * PlaneCode 2.9.1 browser/PWA integration entry point.
  *
  * Validates released Sets, compiles SetLang once, renders the Object Plan,
  * and exposes live SetData patching. Gesture/PWA wiring is integration logic,
  * not PLang, SetData, or SetRender semantics.
  */
 
-import { setLang } from "./release/set-lang.js?v=2.9.0";
-import { setData } from "./release/set-data.js?v=2.9.0";
-import { setRender } from "./release/set-render.js?v=2.9.0";
-import { compileSetLang } from "./runtime/setlang-compiler.js?v=2.9.0";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.9.0";
-import { renderPlaneCode, patchSetData } from "./runtime/web-renderer.js?v=2.9.0";
+import { setLang } from "./release/set-lang.js?v=2.9.1";
+import { setData } from "./release/set-data.js?v=2.9.1";
+import { setRender } from "./release/set-render.js?v=2.9.1";
+import { compileSetLang } from "./runtime/setlang-compiler.js?v=2.9.1";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.9.1";
+import { renderPlaneCode, patchSetData } from "./runtime/web-renderer.js?v=2.9.1";
 
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js?v=2.9.0", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+  navigator.serviceWorker.register("./sw.js?v=2.9.1", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
 }
 
 const root = document.querySelector("#plane-code-root");
