@@ -2,7 +2,7 @@
 
 PlaneCode is a standalone visual and tactile interface project that can be used by any application.
 
-Current version: **2.7.0**
+Current version: **2.8.0**
 
 PlaneCode 2.5.1 adds native nested SetLang serialization plus common OnPress/OffPress event slots for active panels.
 

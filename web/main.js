@@ -1,24 +1,24 @@
-import { pLang } from "./release/p-lang.js?v=2.7.0";
-import { setData } from "./release/set-data.js?v=2.7.0";
-import { setRender } from "./release/set-render.js?v=2.7.0";
-import { compileSetLang } from "./runtime/setlang-compiler.js?v=2.7.0";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.7.0";
-import { renderPlaneCode, patchSetData } from "./runtime/web-renderer.js?v=2.7.0";
+import { setLang } from "./release/set-lang.js?v=2.8.0";
+import { setData } from "./release/set-data.js?v=2.8.0";
+import { setRender } from "./release/set-render.js?v=2.8.0";
+import { compileSetLang } from "./runtime/setlang-compiler.js?v=2.8.0";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.8.0";
+import { renderPlaneCode, patchSetData } from "./runtime/web-renderer.js?v=2.8.0";
 
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js?v=2.7.0", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+  navigator.serviceWorker.register("./sw.js?v=2.8.0", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
 }
 
 const root = document.querySelector("#plane-code-root");
 
-validatePLang(pLang, setData);
-validateSetRender(setRender);
-const objectPlan = compileSetLang(pLang);
-renderPlaneCode(root, objectPlan, setData, setRender);
+validatePLang(setLang.Data, setData.Data);
+validateSetRender(setRender.Data);
+const objectPlan = compileSetLang(setLang.Data);
+renderPlaneCode(root, objectPlan, setData.Data, setRender.Data);
 
 // Runtime data updates patch only bound Container slots; SetLang is not re-read.
-window.PlaneCodeSetData = nextData => patchSetData(root, nextData, setRender);
+window.PlaneCodeSetData = nextData => patchSetData(root, nextData, setRender.Data);
 
 const surfaces = [...root.querySelectorAll(':scope > [data-plane-type="BasePanel"]')];
 let current = 0;

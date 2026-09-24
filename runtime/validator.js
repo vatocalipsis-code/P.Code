@@ -44,7 +44,11 @@ export function validatePLang(pLang, data = {}) {
     }
     if (logins.has(node.Login)) throw new Error(`Validator: duplicate Login "${node.Login}"`);
     logins.add(node.Login);
-    if (node.Visual !== undefined) validateVisualRule(node.Visual, `SetLang object "${node.Login}"`);
+    const directVisual = {};
+    for (const [key, value] of Object.entries(node)) {
+      if (!["type", "Login", "id", "Orientation", "OnPress", "OffPress", "children"].includes(key)) directVisual[key] = value;
+    }
+    validateVisualRule(directVisual, `SetLang object "${node.Login}"`);
 
     if (node.type === "Container") {
       if (node.Orientation !== undefined && node.Orientation !== "Positive" && node.Orientation !== "Negative") {

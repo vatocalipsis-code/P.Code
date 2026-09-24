@@ -1,9 +1,11 @@
+const STRUCTURAL = new Set(["type", "Login", "id", "Orientation", "OnPress", "OffPress", "children"]);
+
 function compileNode(node) {
-  const compiled = {
-    type: node.type,
-    Login: node.Login,
-    Visual: Object.freeze({ ...(node.Visual ?? {}) })
-  };
+  const visual = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (!STRUCTURAL.has(key)) visual[key] = value;
+  }
+  const compiled = { type: node.type, Login: node.Login, Visual: Object.freeze(visual) };
   if (node.id !== undefined) compiled.id = node.id;
   if (node.Orientation !== undefined) compiled.Orientation = node.Orientation;
   if (node.OnPress !== undefined) compiled.OnPress = node.OnPress;
@@ -13,7 +15,6 @@ function compileNode(node) {
   return Object.freeze(compiled);
 }
 
-export function compileSetLang(pLang) {
-  const roots = (Array.isArray(pLang) ? pLang : [pLang]).map(compileNode);
-  return Object.freeze(roots);
+export function compileSetLang(setLangData) {
+  return Object.freeze((Array.isArray(setLangData) ? setLangData : [setLangData]).map(compileNode));
 }

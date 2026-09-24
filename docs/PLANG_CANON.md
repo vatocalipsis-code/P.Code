@@ -69,7 +69,7 @@ SourcePicture references a PNG file only. Intrinsic PNG alpha is preserved.
 
 ## Object visual properties
 
-A SetLang entity may carry a `Visual` rule. Supported object properties are:
+A SetLang entity carries its object properties directly. There is no `Visual` wrapper. Supported object properties are:
 
 ```text
 Background
@@ -87,7 +87,7 @@ Alignment / Distribution / Direction
 Parallax
 ```
 
-Type defaults and inheritance are SetLang semantics. AggregateActivePanel inherits ActivePanel visual defaults; only placement and dimensions may differ, per its existing parity rule. Concrete object Visual values override inherited type defaults.
+Type defaults and inheritance are SetLang semantics. AggregateActivePanel inherits ActivePanel visual defaults; only placement and dimensions may differ, per its existing parity rule. Concrete object property values override inherited type defaults.
 
 
 ## SetLang serialization in SPL
