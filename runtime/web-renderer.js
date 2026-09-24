@@ -234,7 +234,9 @@ function renderContainerSequence(containers, index, inheritedDirection, dataSet,
 
   if (index + 1 < containers.length) {
     const tail = renderContainerSequence(containers, index + 1, direction, dataSet, renderSet, parallaxNodes, ownerShadow, gap);
-    tail.style.flex = "1 1 auto";\n    tail.style.minWidth = "0";\n    tail.style.minHeight = "0";
+    tail.style.flex = "1 1 auto";
+    tail.style.minWidth = "0";
+    tail.style.minHeight = "0";
     wrapper.append(tail);
   }
   return wrapper;
