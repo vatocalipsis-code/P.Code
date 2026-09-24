@@ -2,11 +2,12 @@
 
 PlaneCode is a standalone visual and tactile interface project that can be used by any application.
 
-Current version: **2.4.0**
+Current version: **2.5.0**
 
-PlaneCode 2.4.0 adds the SPL Compiler for directed per-set assembly of portable `.SPL` SetPlan files while preserving the strict separation of PLang, SetData and SetRender.
+PlaneCode 2.5.0 restores AggregateActivePanel and defines raw-source SetLang→SetData mapping plus text/picture resource preservation for the SPL Compiler.
 
-- Integration canon: `docs/PLANE_CODE_2.4.0.md`
+- Integration canon: `docs/PLANE_CODE_2.5.0.md`
+- Previous integration canon: `docs/PLANE_CODE_2.4.0.md`
 - Previous integration canon: `docs/PLANE_CODE_2.3.1.md`
 - Previous integration canon: `docs/PLANE_CODE_2.2.1.md`
 - PLang canon: `docs/PLANG_CANON.md`

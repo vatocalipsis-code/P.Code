@@ -11,6 +11,8 @@ PLang defines interface entities, their identity and their structural relations.
 ```text
 BasePanel
 └── SimplePanel
+    ├── AggregateActivePanel
+    │   └── Container
     └── ActivePanel
         └── Container
 ```
@@ -19,11 +21,15 @@ No Row, Column, Card, Section or renderer-specific entity type is part of PLang.
 
 Every PLang entity has a required unique `Login`.
 
-`Login` is stable identity. Other PlaneCode subsystems may reference that identity, but their rules do not become PLang rules.
+`Login` is stable identity. It is never visible content and is never rendered by itself. Other PlaneCode subsystems may reference that identity, but their rules do not become PLang rules.
+
+## AggregateActivePanel
+
+AggregateActivePanel is a child of SimplePanel and may contain Container. It represents an aggregate action or aggregate state of its parent SimplePanel, while ActivePanel represents an individual item within that SimplePanel. No additional AggregateActivePanel properties are specified.
 
 ## Container
 
-Container may resolve independent data sources through SetData:
+Visible content is emitted only through Container. Container may resolve independent data sources through SetData:
 
 ```text
 SourceText
