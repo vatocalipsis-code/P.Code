@@ -93,7 +93,7 @@ body { min-height: 100dvh; background: #031421; padding-bottom: env(safe-area-in
 }
 
 [data-plane-active] {
-  box-shadow: 1px 7px 10px -3px rgba(0, 12, 22, .62);
+  box-shadow: 1px 7px 10px -3px rgba(0, 12, 22, calc(.62 * var(--plane-panel-surface-opacity, 1)));
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -102,7 +102,7 @@ body { min-height: 100dvh; background: #031421; padding-bottom: env(safe-area-in
 
 [data-plane-active][data-plane-pressed] {
   transform: translate(2px, 2px);
-  box-shadow: 0 3px 5px -2px rgba(0, 12, 22, .72);
+  box-shadow: 0 3px 5px -2px rgba(0, 12, 22, calc(.72 * var(--plane-panel-surface-opacity, 1)));
 }
 
 [data-plane-refresh] {
