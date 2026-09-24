@@ -231,6 +231,19 @@ function renderContainerSequence(containers, index, inheritedDirection, dataSet,
     currentElement.style.flex = "1 1 0";
     currentElement.style.minWidth = "0";
     currentElement.style.minHeight = "0";
+    currentElement.style.overflow = "hidden";
+    const content = currentElement.querySelector(":scope > [data-plane-container-content]");
+    if (content) {
+      content.style.minWidth = "0";
+      content.style.overflow = "hidden";
+      for (const text of content.querySelectorAll('[data-plane-source="Text"]')) {
+        text.style.minWidth = "0";
+        text.style.maxWidth = "100%";
+        text.style.overflow = "hidden";
+        text.style.textOverflow = "ellipsis";
+        text.style.whiteSpace = "nowrap";
+      }
+    }
   } else {
     currentElement.style.flex = "0 0 auto";
   }
