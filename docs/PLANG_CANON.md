@@ -95,9 +95,21 @@ Width / Height
 Padding / Gap
 Alignment / Distribution / Direction
 Parallax
+PanelTransparency
+Shadow
 ```
 
 Type defaults and inheritance are SetLang semantics. AggregateActivePanel inherits ActivePanel visual defaults; only placement and dimensions may differ, per its existing parity rule. Concrete object property values override inherited type defaults.
+
+### PanelTransparency
+
+`PanelTransparency` is defined only for `SimplePanel`, `ActivePanel`, and `AggregateActivePanel`. Its value is a finite number in `0..1`: `0` is an opaque panel surface and `1` is a fully transparent panel surface. The property affects only the panel's own surface (`Background`, borders, and the panel-surface shadow). It MUST NOT change the opacity of child panels, Containers, `SourceText`, `SourcePicture`, PNG alpha, interaction, geometry, layout, Parallax, or content shadows. It is not subtree opacity. Container remains a transparent content slot and has no `PanelTransparency` property.
+
+### Shadow
+
+`Shadow` is defined only for `SimplePanel`, `ActivePanel`, and `AggregateActivePanel`. It is a finite non-negative number representing content-shadow depth/strength. `0` means no content shadow; increasing positive values increase the renderer's shadow depth/strength. The exact physical blur/offset mapping is renderer-private and is not PLang CSS syntax.
+
+`Shadow` follows the visible alpha shape of content owned directly by that panel: text shadows follow glyphs and PNG shadows follow intrinsic PNG alpha. Transparent PNG pixels cast no content shadow. The panel bounding rectangle MUST NOT define the content-shadow shape. Container has no `Shadow` property.
 
 
 ## SetLang serialization in SPL
