@@ -1,10 +1,10 @@
-import { pLang } from "./release/p-lang.js?v=2.5.4r2";
-import { setData } from "./release/set-data.js?v=2.5.4r2";
-import { setRender } from "./release/set-render.js?v=2.5.4r2";
-import { composePLang } from "./runtime/compositor.js?v=2.5.4r2";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.4r2";
-import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.4r2";
-import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.4r2";
+import { pLang } from "./release/p-lang.js?v=2.5.4u1";
+import { setData } from "./release/set-data.js?v=2.5.4u1";
+import { setRender } from "./release/set-render.js?v=2.5.4u1";
+import { composePLang } from "./runtime/compositor.js?v=2.5.4u1";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.4u1";
+import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.4u1";
+import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.4u1";
 
 const root = document.querySelector("#plane-code-root");
 
@@ -80,7 +80,7 @@ root.addEventListener("pointerup", event => {
     setRefreshPull(0);
     pointerId = null;
     gesture = null;
-    if (reload) location.reload();
+    if (reload) location.replace(`${location.pathname}?refresh=${Date.now()}`);
     return;
   }
   if (gesture === "horizontal") {
@@ -135,7 +135,7 @@ root.addEventListener("touchend", () => {
   touchRefresh = false;
   touchPull = 0;
   setRefreshPull(0);
-  if (reload) location.reload();
+  if (reload) location.replace(`${location.pathname}?refresh=${Date.now()}`);
 }, { passive: true });
 
 root.addEventListener("touchcancel", () => {

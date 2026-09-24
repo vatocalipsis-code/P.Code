@@ -26,9 +26,12 @@ jobs:
 
       - name: Prepare Pages artifact
         run: |
-          mkdir -p _site/runtime _site/release
+          mkdir -p _site/runtime _site/release _site/assets _site/icons
           cp web/index.html _site/index.html
           cp web/main.js _site/main.js
+          cp web/manifest.webmanifest _site/manifest.webmanifest
+          cp web/assets/*.png _site/assets/
+          cp web/icons/*.png _site/icons/
           cp runtime/renderer.css _site/runtime/renderer.css
           cp runtime/compositor.js _site/runtime/compositor.js
           cp runtime/web-renderer.js _site/runtime/web-renderer.js
