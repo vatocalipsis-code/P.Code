@@ -1,9 +1,9 @@
-:root { font-family: system-ui, sans-serif; color-scheme: light; }
+:root { font-family: system-ui, sans-serif; color-scheme: dark; background: #031421; }
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; background: var(--background-color); color: var(--text-color); }
+html, body { margin: 0; min-height: 100%; background: #031421; color: var(--text-color); }
 #plane-code-safe { display:none; }
-body { min-height: 100dvh; background: var(--background-color); }
-#plane-code-root { position: relative; height: 100dvh; min-height: 100dvh; background: var(--background-color); touch-action: pan-y; overflow: hidden; }
+body { min-height: 100dvh; background: #031421; padding-bottom: env(safe-area-inset-bottom); }
+#plane-code-root { position: relative; height: 100dvh; min-height: 100dvh; background: #031421; touch-action: pan-y; overflow: hidden; }
 
 [data-plane-type] {
   display: flex;
