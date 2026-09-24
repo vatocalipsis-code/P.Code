@@ -1,3 +1,11 @@
+/**
+ * PlaneCode 2.9.0 browser/PWA integration entry point.
+ *
+ * Validates released Sets, compiles SetLang once, renders the Object Plan,
+ * and exposes live SetData patching. Gesture/PWA wiring is integration logic,
+ * not PLang, SetData, or SetRender semantics.
+ */
+
 import { setLang } from "./release/set-lang.js?v=2.9.0";
 import { setData } from "./release/set-data.js?v=2.9.0";
 import { setRender } from "./release/set-render.js?v=2.9.0";

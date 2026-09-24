@@ -1,3 +1,11 @@
+/**
+ * Browser renderer for a compiled PlaneCode Object Plan.
+ *
+ * Receives structure already compiled from SetLang, live values from SetData,
+ * and scene defaults from SetRender. SetData patches update bound Containers
+ * without recompiling SetLang.
+ */
+
 const activeParallax = new WeakMap();
 
 function opacityFromTransparency(value) {

@@ -1,25 +1,50 @@
 # PlaneCode
 
-PlaneCode is a standalone visual and tactile interface project that can be used by any application.
+PlaneCode is a standalone declarative interface engine. Applications describe an interface with an `.SPL` SetPlan; PlaneCode validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
 
-Current version: **2.9.0**
+**Current release:** `2.9.0`
 
-PlaneCode 2.5.1 adds native nested SetLang serialization plus common OnPress/OffPress event slots for active panels.
+## Start here
 
-- Integration canon: `docs/PLANE_CODE_2.5.4.md`
-- Previous integration canon: `docs/PLANE_CODE_2.5.3.md`
-- Previous integration canon: `docs/PLANE_CODE_2.5.2.md`
-- Previous integration canon: `docs/PLANE_CODE_2.5.1.md`
-- Previous integration canon: `docs/PLANE_CODE_2.5.0.md`
-- Previous integration canon: `docs/PLANE_CODE_2.4.0.md`
-- Previous integration canon: `docs/PLANE_CODE_2.3.1.md`
-- Previous integration canon: `docs/PLANE_CODE_2.2.1.md`
-- PLang canon: `docs/PLANG_CANON.md`
-- SetRender canon: `docs/SET_RENDER_CANON.md`
-- PLang release: `release/p-lang.js`
-- Compositor: `runtime/compositor.js`
-- Runtime: `runtime/`
-- Released data/render sets: `release/`
-- Web entry point: `web/`
+- [Documentation index](docs/README.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [SPL reference](docs/SPL_REFERENCE.md)
+- [Runtime reference](docs/RUNTIME_REFERENCE.md)
+- [PLang / SetLang canon](docs/PLANG_CANON.md)
+- [SetRender canon](docs/SET_RENDER_CANON.md)
+- [2.9.0 release contract](docs/PLANE_CODE_2.9.0.md)
+- [Example SetPlan](plans/example%20render.SPL)
 
-Run the released working state with GitHub Pages.
+## Runtime at a glance
+
+```text
+SetLang.Data --validate--> compile once --> immutable Object Plan --┐
+SetData.Data ----------------------------------------------live-----> Renderer
+SetRender.Data --------------------------------------------scene---> Renderer
+```
+
+PlaneCode has exactly three physical panel layers:
+
+```text
+BasePanel -> SimplePanel -> ActivePanel
+```
+
+`AggregateActivePanel` is a special ActivePanel on the Active layer, not a fourth layer. Visible text and pictures are emitted through `Container` objects.
+
+## Repository layout
+
+```text
+release/   Released Set objects used by the working web build
+runtime/   Compiler, validators, renderer, and runtime helpers
+plans/     Example .SPL SetPlans
+docs/      Current reference, canons, and historical release notes
+web/       Browser/PWA entry point and service worker
+```
+
+## Run
+
+The released browser build is served as a static web application (including GitHub Pages). `web/main.js` is the current integration entry point.
+
+## Documentation rule
+
+Current behavior is described by the reference documents above and by comments beside the implementation. Historical `PLANE_CODE_*.md` files record earlier releases; they are not a substitute for the current reference.

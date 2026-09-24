@@ -1,3 +1,11 @@
+/**
+ * PlaneCode contract validators.
+ *
+ * SetLang/SetData validation and SetRender validation stay separate. Object
+ * properties belong to SetLang; SetRender is scene-only. Validation must not
+ * invent defaults or semantics for unspecified values.
+ */
+
 function isTransparency(value) {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
 }

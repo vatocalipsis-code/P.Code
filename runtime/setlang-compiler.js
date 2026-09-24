@@ -1,3 +1,11 @@
+/**
+ * SetLang compiler.
+ *
+ * Converts typed SetLang.Data into the immutable internal Object Plan used by
+ * the renderer. SetLang has no generic children[]; children below exist only
+ * in the compiled runtime plan. This module does not read SetData or SetRender.
+ */
+
 function compileContainer(node) {
   return Object.freeze({ type: "Container", Login: node.Login, Visual: Object.freeze({ ...(node.Properties ?? {}) }), dataSlot: node.Login, children: Object.freeze([]) });
 }

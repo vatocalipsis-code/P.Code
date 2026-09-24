@@ -10,24 +10,34 @@ SetLang owns object-specific geometry, layout, padding, gap, colors, borders, tr
 
 ## Canonical hierarchy
 
+PLang has exactly three physical panel layers and typed collections; generic `children` is not part of SetLang.
+
 ```text
 BasePanel
-└── SimplePanel
-    ├── AggregateActivePanel
-    │   └── Container
-    └── ActivePanel
-        └── Container
+├── Properties
+├── Containers
+└── SimplePanels
+
+SimplePanel
+├── Properties
+│   └── AggregateActivePanels [0..1]
+├── Containers
+└── ActivePanels
+
+ActivePanel
+├── Properties
+└── Containers
 ```
+
+AggregateActivePanel is a special ActivePanel on the Active physical layer, not a fourth layer. Containers may be owned directly by any of the three panel levels and by AggregateActivePanel.
 
 No Row, Column, Card, Section or renderer-specific entity type is part of PLang.
 
-Every PLang entity has a required unique `Login`.
-
-`Login` is stable identity. It is never visible content and is never rendered by itself. Other PlaneCode subsystems may reference that identity, but their rules do not become PLang rules.
+Every PLang entity has a required unique `Login`. `Login` is stable identity and is never visible content.
 
 ## AggregateActivePanel
 
-AggregateActivePanel is a child of SimplePanel and may contain Container. It represents an aggregate action or aggregate state of its parent SimplePanel, while ActivePanel represents an individual item within that SimplePanel. ActivePanel and AggregateActivePanel expose the same two event properties:
+AggregateActivePanel is owned as the optional `SimplePanel.Properties.AggregateActivePanels[0..1]` value and may contain Containers. It represents an aggregate action or aggregate state of its parent SimplePanel, while ordinary ActivePanels represent individual items within that SimplePanel. ActivePanel and AggregateActivePanel expose the same two event properties:
 
 ```text
 OnPress
@@ -69,7 +79,7 @@ SourcePicture references a PNG file only. Intrinsic PNG alpha is preserved.
 
 ## Object visual properties
 
-A SetLang entity carries its object properties directly. There is no `Visual` wrapper. Supported object properties are:
+A SetLang entity carries its object properties in its typed `Properties` block. There is no `Visual` wrapper in SetLang or SPL. Supported object properties are:
 
 ```text
 Background
@@ -92,7 +102,7 @@ Type defaults and inheritance are SetLang semantics. AggregateActivePanel inheri
 
 ## SetLang serialization in SPL
 
-Inside a `.SPL` SetLang block, PLang uses nested entity blocks. Nesting is the structural parent-child relation; no duplicate Parent/Child property is required. Properties use `Name = Value` syntax. Strings are quoted. `NOT_YET_SPECIFIED` is the canonical token for an existing property whose value is not yet defined.
+Inside a `.SPL` SetLang block, PLang uses typed `Properties`, `Containers`, `SimplePanels`, and `ActivePanels` collections. No duplicate Parent/Child property is required. Properties use `Name = Value` syntax. Strings are quoted. `NOT_YET_SPECIFIED` is the canonical token for an existing property whose value is not yet defined.
 
 ## Runtime lifecycle
 
