@@ -7,7 +7,7 @@ body { min-height: 100dvh; background: var(--background-color); }
 [data-plane-type] {
   display: flex;
   flex-direction: column;
-  background: transparent;
+  background: color-mix(in srgb, var(--panel-color) var(--plane-structural-opacity), transparent);
   border-style: solid;
   border-width: 0;
 }
