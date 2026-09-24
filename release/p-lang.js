@@ -2,20 +2,20 @@ export const pLang = [
   {
     type: "BasePanel",
     id: "surface-a",
-    login: "SurfaceA",
+    Login: "SurfaceA",
     children: [{
       type: "SimplePanel",
       id: "surface-a-simple",
-      login: "SurfaceASimple",
+      Login: "SurfaceASimple",
       children: [{
         type: "ActivePanel",
         id: "surface-a-active",
-        login: "SurfaceAActive",
+        Login: "SurfaceAActive",
         children: [{
           type: "Container",
           id: "surface-a-message",
-          login: "SurfaceAMessage",
-          orientation: "Positive"
+          Login: "SurfaceAMessage",
+          Orientation: "Positive"
         }]
       }]
     }]
@@ -23,20 +23,20 @@ export const pLang = [
   {
     type: "BasePanel",
     id: "surface-b",
-    login: "SurfaceB",
+    Login: "SurfaceB",
     children: [{
       type: "SimplePanel",
       id: "surface-b-simple",
-      login: "SurfaceBSimple",
+      Login: "SurfaceBSimple",
       children: [{
         type: "ActivePanel",
         id: "surface-b-active",
-        login: "SurfaceBActive",
+        Login: "SurfaceBActive",
         children: [{
           type: "Container",
           id: "surface-b-message",
-          login: "SurfaceBMessage",
-          orientation: "Positive"
+          Login: "SurfaceBMessage",
+          Orientation: "Positive"
         }]
       }]
     }]
