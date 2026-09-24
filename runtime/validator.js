@@ -44,6 +44,7 @@ export function validatePLang(pLang, data = {}) {
     }
     if (logins.has(node.Login)) throw new Error(`Validator: duplicate Login "${node.Login}"`);
     logins.add(node.Login);
+    if (node.Visual !== undefined) validateVisualRule(node.Visual, `SetLang object "${node.Login}"`);
 
     if (node.type === "Container") {
       if (node.Orientation !== undefined && node.Orientation !== "Positive" && node.Orientation !== "Negative") {
@@ -66,53 +67,20 @@ export function validatePLang(pLang, data = {}) {
   return true;
 }
 
-export function validateSetRender(renderSet = {}) {
-  for (const property of ["Transparency", "TextTransparency", "PictureTransparency"]) {
-    if (!isTransparency(renderSet[property])) {
-      throw new Error(`Validator: SetRender.${property} must be a number from 0 to 1`);
-    }
-  }
-  if (renderSet.Parallax !== undefined && !isFiniteNumber(renderSet.Parallax)) {
-    throw new Error("Validator: SetRender.Parallax must be a finite number when present");
-  }
-  if (renderSet.Elements !== undefined && (!renderSet.Elements || typeof renderSet.Elements !== "object" || Array.isArray(renderSet.Elements))) {
-    throw new Error("Validator: SetRender.Elements must be an object when present");
-  }
+function validateVisualRule(rule, label) {
+  if (!rule || typeof rule !== "object" || Array.isArray(rule)) throw new Error(`Validator: Visual for ${label} must be an object`);
+  for (const property of STRING_RULES) if (rule[property] !== undefined && !isNonEmptyString(rule[property])) throw new Error(`Validator: ${property} for ${label} must be a non-empty string`);
+  for (const property of NON_NEGATIVE_RULES) if (rule[property] !== undefined && !isNonNegativeNumber(rule[property])) throw new Error(`Validator: ${property} for ${label} must be non-negative`);
+  if (rule.FontWeight !== undefined && (!Number.isInteger(rule.FontWeight) || rule.FontWeight < 1 || rule.FontWeight > 1000)) throw new Error(`Validator: FontWeight for ${label} must be 1..1000`);
+  if (rule.Alignment !== undefined && !ALIGNMENTS.has(rule.Alignment)) throw new Error(`Validator: invalid Alignment for ${label}`);
+  if (rule.Distribution !== undefined && !DISTRIBUTIONS.has(rule.Distribution)) throw new Error(`Validator: invalid Distribution for ${label}`);
+  if (rule.Direction !== undefined && !DIRECTIONS.has(rule.Direction)) throw new Error(`Validator: invalid Direction for ${label}`);
+  if (rule.Parallax !== undefined && !isFiniteNumber(rule.Parallax)) throw new Error(`Validator: invalid Parallax for ${label}`);
+}
 
-  if (renderSet.Global !== undefined && (!renderSet.Global || typeof renderSet.Global !== "object" || Array.isArray(renderSet.Global))) throw new Error("Validator: SetRender.Global must be an object when present");
-  if (renderSet.Types !== undefined && (!renderSet.Types || typeof renderSet.Types !== "object" || Array.isArray(renderSet.Types))) throw new Error("Validator: SetRender.Types must be an object when present");
-  const typedRules = Object.entries(renderSet.Types ?? {}).map(([key, rule]) => [`Types.${key}`, rule]);
-  const allRules = [["Global", renderSet.Global ?? {}], ...typedRules, ...Object.entries(renderSet.Elements ?? {})];
-  for (const [login, rule] of allRules) {
-    if (!isNonEmptyString(login)) throw new Error("Validator: SetRender rule key must be a non-empty string");
-    if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
-      throw new Error(`Validator: render rule for "${login}" must be an object`);
-    }
-    for (const property of STRING_RULES) {
-      if (rule[property] !== undefined && !isNonEmptyString(rule[property])) {
-        throw new Error(`Validator: ${property} for "${login}" must be a non-empty string when present`);
-      }
-    }
-    for (const property of NON_NEGATIVE_RULES) {
-      if (rule[property] !== undefined && !isNonNegativeNumber(rule[property])) {
-        throw new Error(`Validator: ${property} for "${login}" must be a non-negative number when present`);
-      }
-    }
-    if (rule.FontWeight !== undefined && (!Number.isInteger(rule.FontWeight) || rule.FontWeight < 1 || rule.FontWeight > 1000)) {
-      throw new Error(`Validator: FontWeight for "${login}" must be an integer from 1 to 1000 when present`);
-    }
-    if (rule.Alignment !== undefined && !ALIGNMENTS.has(rule.Alignment)) {
-      throw new Error(`Validator: Alignment for "${login}" must be Start, Center, End or Stretch`);
-    }
-    if (rule.Distribution !== undefined && !DISTRIBUTIONS.has(rule.Distribution)) {
-      throw new Error(`Validator: Distribution for "${login}" must be Start, Center, End, Between, Around or Evenly`);
-    }
-    if (rule.Direction !== undefined && !DIRECTIONS.has(rule.Direction)) {
-      throw new Error(`Validator: Direction for "${login}" must be Horizontal or Vertical`);
-    }
-    if (rule.Parallax !== undefined && !isFiniteNumber(rule.Parallax)) {
-      throw new Error(`Validator: Parallax for "${login}" must be a finite number when present`);
-    }
-  }
+export function validateSetRender(renderSet = {}) {
+  for (const forbidden of ["Elements", "Types", "Global"]) if (renderSet[forbidden] !== undefined) throw new Error(`Validator: SetRender.${forbidden} is forbidden; object visuals belong to SetLang`);
+  for (const property of ["Transparency", "TextTransparency", "PictureTransparency"]) if (!isTransparency(renderSet[property])) throw new Error(`Validator: SetRender.${property} must be 0..1`);
+  if (renderSet.Parallax !== undefined && !isFiniteNumber(renderSet.Parallax)) throw new Error("Validator: SetRender.Parallax must be finite");
   return true;
 }

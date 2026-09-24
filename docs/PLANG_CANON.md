@@ -4,7 +4,9 @@ Status: CURRENT
 
 PLang is the declarative language inside PlaneCode.
 
-PLang defines interface entities, their identity and their structural relations. It does not define visual appearance, geometry, motion, colors, borders, typography, parallax or renderer layout rules.
+PLang defines interface entities, their identity, structural relations, and the physical/visual properties of those concrete objects. In SPL this object contract is carried by SetLang.
+
+SetLang owns object-specific geometry, layout, padding, gap, colors, borders, transparency, typography, text color, picture tint and other visual properties of concrete objects. SetRender does not own or address these object properties.
 
 ## Canonical hierarchy
 
@@ -65,7 +67,27 @@ Text → Picture
 
 SourcePicture references a PNG file only. Intrinsic PNG alpha is preserved.
 
-This canon intentionally contains no SetRender properties.
+## Object visual properties
+
+A SetLang entity may carry a `Visual` rule. Supported object properties are:
+
+```text
+Background
+BorderColor / BorderWidth
+BorderLeftColor / BorderLeftWidth
+BorderRightColor / BorderRightWidth
+BorderTopColor / BorderTopWidth
+BorderBottomColor / BorderBottomWidth
+TextColor
+FontSize / FontWeight
+PictureTint
+Width / Height
+Padding / Gap
+Alignment / Distribution / Direction
+Parallax
+```
+
+Type defaults and inheritance are SetLang semantics. AggregateActivePanel inherits ActivePanel visual defaults; only placement and dimensions may differ, per its existing parity rule. Concrete object Visual values override inherited type defaults.
 
 
 ## SetLang serialization in SPL

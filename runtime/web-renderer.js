@@ -116,11 +116,7 @@ function renderNode(node, renderSet, parallaxNodes) {
   if (node.id) element.dataset.planeId = node.id;
   if (node.Login) element.dataset.planeLogin = node.Login;
 
-  const globalRule = renderSet.Global ?? {};
-  const activeBase = node.type === "AggregateActivePanel" ? (renderSet.Types?.ActivePanel ?? {}) : {};
-  const typeRule = renderSet.Types?.[node.type] ?? {};
-  const elementRule = renderSet.Elements?.[node.Login] ?? {};
-  const rule = { ...globalRule, ...activeBase, ...typeRule, ...elementRule };
+  const rule = node.Visual ?? {};
   element.style.setProperty("--plane-structural-opacity", structuralPercent(renderSet.Transparency));
   applyBoxRule(element, rule, renderSet);
 

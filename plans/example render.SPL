@@ -1,48 +1,617 @@
 SetLang {
-  BasePanel {
-    Login = "Example Render"
-    SimplePanel {
-      Login = "Мои кассы"
-      AggregateActivePanel { Login = "Мои кассы агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Мои кассы заголовок" } }
-      ActivePanel { Login = "Основная касса" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Основная касса данные" } }
+  BasePanel "Example Render" {
+    Visual {
+      BorderColor = "#1A405A"
+      TextColor = "#E8F2FF"
+      Background = "#031421"
+      Alignment = "Stretch"
+      Distribution = "Start"
+      Direction = "Vertical"
+      Padding = 14
+      Gap = 16
     }
-    SimplePanel {
-      Login = "Подчинённые кассы"
-      AggregateActivePanel { Login = "Подчинённые кассы агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Подчинённые кассы заголовок" } }
-      ActivePanel { Login = "Офис Киев" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Офис Киев данные" } }
-      ActivePanel { Login = "Магазин Петровка" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Магазин Петровка данные" } }
+    SimplePanel "Верхняя панель" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Center"
+        Distribution = "Between"
+        Direction = "Horizontal"
+        BorderWidth = 1
+      }
+      ActivePanel "Кэш" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 6
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+          Height = 44
+        }
+        Container "Название приложения" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 18
+            FontWeight = 600
+          }
+        }
+      }
+      ActivePanel "Меню" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 8
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Center"
+          Direction = "Horizontal"
+          BorderWidth = 1
+          Width = 44
+          Height = 44
+        }
+        Container "Иконка меню" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            Width = 28
+            Height = 28
+            PictureTint = "#00DCA0"
+          }
+        }
+      }
     }
-    SimplePanel {
-      Login = "Требует моего подтверждения"
-      AggregateActivePanel { Login = "Требует моего подтверждения агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Требует моего подтверждения заголовок" } }
-      ActivePanel { Login = "Заявки на расход" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Заявки на расход данные" Orientation = Positive } }
+    SimplePanel "Мои кассы" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+        BorderWidth = 1
+      }
+      AggregateActivePanel "Мои кассы агрегат" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 4
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+        }
+        Container "Мои кассы заголовок" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 17
+            FontWeight = 600
+          }
+        }
+      }
+      ActivePanel "Основная касса" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 10
+          Gap = 2
+          Alignment = "Start"
+          Distribution = "Center"
+          Direction = "Vertical"
+          BorderWidth = 1
+          Height = 74
+        }
+        Container "Основная касса название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 15
+            FontWeight = 400
+          }
+        }
+        Container "Основная касса сумма" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+        Container "Основная касса валюта" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+      }
     }
-    SimplePanel {
-      Login = "Операции в работе"
-      AggregateActivePanel { Login = "Операции в работе агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Операции в работе заголовок" } }
-      ActivePanel { Login = "В обработке" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "В обработке данные" Orientation = Positive } }
+    SimplePanel "Подчинённые кассы" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+        BorderWidth = 1
+      }
+      AggregateActivePanel "Подчинённые кассы агрегат" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 4
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+        }
+        Container "Подчинённые кассы заголовок" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 17
+            FontWeight = 600
+          }
+        }
+      }
+      ActivePanel "Офис Киев" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 10
+          Gap = 2
+          Alignment = "Start"
+          Distribution = "Center"
+          Direction = "Vertical"
+          BorderWidth = 1
+          Height = 74
+        }
+        Container "Офис Киев название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 15
+            FontWeight = 400
+          }
+        }
+        Container "Офис Киев сумма" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+        Container "Офис Киев валюта" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+      }
+      ActivePanel "Магазин Петровка" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 10
+          Gap = 2
+          Alignment = "Start"
+          Distribution = "Center"
+          Direction = "Vertical"
+          BorderWidth = 1
+          Height = 74
+        }
+        Container "Магазин Петровка название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 15
+            FontWeight = 400
+          }
+        }
+        Container "Магазин Петровка сумма" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+        Container "Магазин Петровка валюта" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+      }
     }
-    SimplePanel { Login = "Нам должны" AggregateActivePanel { Login = "Нам должны агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Нам должны данные" } } }
-    SimplePanel { Login = "Мы должны" AggregateActivePanel { Login = "Мы должны агрегат" OnPress = NOT_YET_SPECIFIED OffPress = NOT_YET_SPECIFIED Container { Login = "Мы должны данные" } } }
+    SimplePanel "Требует моего подтверждения" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+        BorderWidth = 1
+      }
+      AggregateActivePanel "Требует моего подтверждения агрегат" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 4
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+        }
+        Container "Требует моего подтверждения заголовок" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 17
+            FontWeight = 600
+          }
+        }
+      }
+      ActivePanel "Заявки на расход" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 10
+          Gap = 2
+          Alignment = "Start"
+          Distribution = "Center"
+          Direction = "Vertical"
+          BorderWidth = 1
+          Height = 66
+        }
+        Container "Заявки на расход иконка" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            Width = 32
+            Height = 32
+            PictureTint = "#9BC8FF"
+          }
+        }
+        Container "Заявки на расход название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 15
+            FontWeight = 400
+          }
+        }
+        Container "Заявки на расход количество" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+      }
+    }
+    SimplePanel "Операции в работе" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+        BorderWidth = 1
+      }
+      AggregateActivePanel "Операции в работе агрегат" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 4
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+        }
+        Container "Операции в работе заголовок" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 17
+            FontWeight = 600
+          }
+        }
+      }
+      ActivePanel "В обработке" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 10
+          Gap = 2
+          Alignment = "Start"
+          Distribution = "Center"
+          Direction = "Vertical"
+          BorderWidth = 1
+          Height = 66
+        }
+        Container "В обработке иконка" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            Width = 32
+            Height = 32
+            PictureTint = "#9BC8FF"
+          }
+        }
+        Container "В обработке название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#E8F2FF"
+            FontSize = 15
+            FontWeight = 400
+          }
+        }
+        Container "В обработке количество" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+      }
+    }
+    SimplePanel "Нам должны" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+        BorderWidth = 1
+      }
+      AggregateActivePanel "Нам должны агрегат" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 4
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+        }
+        Container "Нам должны название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+        Container "Нам должны сумма" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+        Container "Нам должны валюта" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+      }
+    }
+    SimplePanel "Мы должны" {
+      Visual {
+        BorderColor = "#0D2B3D"
+        TextColor = "#E8F2FF"
+        Background = "#061824"
+        Padding = 10
+        Gap = 6
+        Alignment = "Stretch"
+        Distribution = "Start"
+        Direction = "Vertical"
+        BorderWidth = 1
+      }
+      AggregateActivePanel "Мы должны агрегат" {
+        OnPress = NOT_YET_SPECIFIED
+        OffPress = NOT_YET_SPECIFIED
+        Visual {
+          BorderColor = "#15384D"
+          TextColor = "#E8F2FF"
+          Background = "#0D2D43"
+          Padding = 4
+          Gap = 2
+          Alignment = "Center"
+          Distribution = "Start"
+          Direction = "Horizontal"
+          BorderWidth = 1
+        }
+        Container "Мы должны название" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+        Container "Мы должны сумма" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#FFFFFF"
+            FontSize = 22
+            FontWeight = 600
+          }
+        }
+        Container "Мы должны валюта" {
+          Visual {
+            BorderColor = "#1A405A"
+            TextColor = "#A9C4E8"
+            FontSize = 14
+            FontWeight = 400
+          }
+        }
+      }
+    }
   }
 }
 
 SetData {
-  "Мои кассы заголовок" { SourceText = "Мои кассы" }
-  "Основная касса данные" { SourceText = "Основная касса\n125 000.00\nUAH" }
-  "Подчинённые кассы заголовок" { SourceText = "Подчинённые кассы" }
-  "Офис Киев данные" { SourceText = "Офис Киев\n3 420.00\nUSD" }
-  "Магазин Петровка данные" { SourceText = "Магазин Петровка\n1 200.00\nEUR" }
-  "Требует моего подтверждения заголовок" { SourceText = "Требует моего подтверждения" }
-  "Заявки на расход данные" { SourceText = "Заявки на расход\n5" SourcePicture = "example render.assets/expense-document.png" }
-  "Операции в работе заголовок" { SourceText = "Операции в работе" }
-  "В обработке данные" { SourceText = "В обработке\n8" SourcePicture = "example render.assets/processing-sync.png" }
-  "Нам должны данные" { SourceText = "Нам должны\n312 400.00\nUSD" }
-  "Мы должны данные" { SourceText = "Мы должны\n87 200.00\nUSD" }
+  "Название приложения" {
+    SourceText = "Кэш"
+  }
+  "Иконка меню" {
+    SourcePicture = "./assets/menu-grid.png"
+  }
+  "Мои кассы заголовок" {
+    SourceText = "Мои кассы"
+  }
+  "Основная касса название" {
+    SourceText = "Основная касса"
+  }
+  "Основная касса сумма" {
+    SourceText = "125 000.00"
+  }
+  "Основная касса валюта" {
+    SourceText = "UAH"
+  }
+  "Подчинённые кассы заголовок" {
+    SourceText = "Подчинённые кассы"
+  }
+  "Офис Киев название" {
+    SourceText = "Офис Киев"
+  }
+  "Офис Киев сумма" {
+    SourceText = "3 420.00"
+  }
+  "Офис Киев валюта" {
+    SourceText = "USD"
+  }
+  "Магазин Петровка название" {
+    SourceText = "Магазин Петровка"
+  }
+  "Магазин Петровка сумма" {
+    SourceText = "1 200.00"
+  }
+  "Магазин Петровка валюта" {
+    SourceText = "EUR"
+  }
+  "Требует моего подтверждения заголовок" {
+    SourceText = "Требует моего подтверждения"
+  }
+  "Заявки на расход иконка" {
+    SourcePicture = "./assets/expense-document.png"
+  }
+  "Заявки на расход название" {
+    SourceText = "Заявки на расход"
+  }
+  "Заявки на расход количество" {
+    SourceText = "5"
+  }
+  "Операции в работе заголовок" {
+    SourceText = "Операции в работе"
+  }
+  "В обработке иконка" {
+    SourcePicture = "./assets/processing-sync.png"
+  }
+  "В обработке название" {
+    SourceText = "В обработке"
+  }
+  "В обработке количество" {
+    SourceText = "8"
+  }
+  "Нам должны название" {
+    SourceText = "Нам должны"
+  }
+  "Нам должны сумма" {
+    SourceText = "312 400.00"
+  }
+  "Нам должны валюта" {
+    SourceText = "USD"
+  }
+  "Мы должны название" {
+    SourceText = "Мы должны"
+  }
+  "Мы должны сумма" {
+    SourceText = "87 200.00"
+  }
+  "Мы должны валюта" {
+    SourceText = "USD"
+  }
 }
 
 SetRender {
-  PanelSpacing = 14
+  PanelSpacing = 11
   BackgroundColor = "#031421"
   PanelColor = "#0D2D43"
   BorderColor = "#1A405A"
@@ -50,50 +619,5 @@ SetRender {
   Transparency = 0
   TextTransparency = 0
   PictureTransparency = 0
-  Parallax = NOT_YET_SPECIFIED
-  Elements {
-    "Example Render" { Padding = 14 Gap = 16 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" }
-    "Мои кассы" { Background = "#071B2A" Padding = 12 Gap = 8 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" BorderColor = "#16384F" BorderWidth = 1 }
-    "Подчинённые кассы" { Background = "#071B2A" Padding = 12 Gap = 8 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" BorderColor = "#16384F" BorderWidth = 1 }
-    "Требует моего подтверждения" { Background = "#071B2A" Padding = 12 Gap = 8 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" BorderColor = "#16384F" BorderWidth = 1 }
-    "Операции в работе" { Background = "#071B2A" Padding = 12 Gap = 8 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" BorderColor = "#16384F" BorderWidth = 1 }
-    "Нам должны" { Background = "#071B2A" Padding = 12 Gap = 8 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" BorderColor = "#16384F" BorderWidth = 1 }
-    "Мы должны" { Background = "#071B2A" Padding = 12 Gap = 8 Alignment = "Stretch" Distribution = "Start" Direction = "Vertical" BorderColor = "#16384F" BorderWidth = 1 }
-    "Мои кассы агрегат" { Background = "#0C2A3E" Height = 34 Padding = 6 Alignment = "Center" Distribution = "Start" Direction = "Horizontal" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Подчинённые кассы агрегат" { Background = "#0C2A3E" Height = 34 Padding = 6 Alignment = "Center" Distribution = "Start" Direction = "Horizontal" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Требует моего подтверждения агрегат" { Background = "#0C2A3E" Height = 34 Padding = 6 Alignment = "Center" Distribution = "Start" Direction = "Horizontal" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Операции в работе агрегат" { Background = "#0C2A3E" Height = 34 Padding = 6 Alignment = "Center" Distribution = "Start" Direction = "Horizontal" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Нам должны агрегат" { Background = "#0C2A3E" Height = 34 Padding = 6 Alignment = "Center" Distribution = "Start" Direction = "Horizontal" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Мы должны агрегат" { Background = "#0C2A3E" Height = 34 Padding = 6 Alignment = "Center" Distribution = "Start" Direction = "Horizontal" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Основная касса" { Background = "#0D2D43" Height = 74 Padding = 10 Gap = 2 Alignment = "Start" Distribution = "Center" Direction = "Vertical" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Офис Киев" { Background = "#0D2D43" Height = 74 Padding = 10 Gap = 2 Alignment = "Start" Distribution = "Center" Direction = "Vertical" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Магазин Петровка" { Background = "#0D2D43" Height = 74 Padding = 10 Gap = 2 Alignment = "Start" Distribution = "Center" Direction = "Vertical" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Заявки на расход" { Background = "#0D2D43" Height = 74 Padding = 10 Gap = 2 Alignment = "Start" Distribution = "Center" Direction = "Vertical" BorderColor = "#1A405A" BorderWidth = 1 }
-    "В обработке" { Background = "#0D2D43" Height = 74 Padding = 10 Gap = 2 Alignment = "Start" Distribution = "Center" Direction = "Vertical" BorderColor = "#1A405A" BorderWidth = 1 }
-    "Мои кассы заголовок" { TextColor = "#E8F2FF" FontSize = 18 FontWeight = 600 }
-    "Подчинённые кассы заголовок" { TextColor = "#E8F2FF" FontSize = 18 FontWeight = 600 }
-    "Требует моего подтверждения заголовок" { TextColor = "#E8F2FF" FontSize = 18 FontWeight = 600 }
-    "Операции в работе заголовок" { TextColor = "#E8F2FF" FontSize = 18 FontWeight = 600 }
-    "Основная касса название" { TextColor = "#E8F2FF" FontSize = 15 FontWeight = 400 }
-    "Основная касса сумма" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "Основная касса валюта" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-    "Офис Киев название" { TextColor = "#E8F2FF" FontSize = 15 FontWeight = 400 }
-    "Офис Киев сумма" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "Офис Киев валюта" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-    "Магазин Петровка название" { TextColor = "#E8F2FF" FontSize = 15 FontWeight = 400 }
-    "Магазин Петровка сумма" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "Магазин Петровка валюта" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-    "Заявки на расход иконка" { Width = 32 Height = 32 PictureTint = "#9BC8FF" }
-    "Заявки на расход название" { TextColor = "#E8F2FF" FontSize = 15 FontWeight = 400 }
-    "Заявки на расход количество" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "В обработке иконка" { Width = 32 Height = 32 PictureTint = "#9BC8FF" }
-    "В обработке название" { TextColor = "#E8F2FF" FontSize = 15 FontWeight = 400 }
-    "В обработке количество" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "Нам должны название" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-    "Нам должны сумма" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "Нам должны валюта" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-    "Мы должны название" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-    "Мы должны сумма" { TextColor = "#FFFFFF" FontSize = 22 FontWeight = 600 }
-    "Мы должны валюта" { TextColor = "#A9C4E8" FontSize = 14 FontWeight = 400 }
-  }
+  Parallax = 0
 }
