@@ -79,8 +79,12 @@ export function validateSetRender(renderSet = {}) {
     throw new Error("Validator: SetRender.Elements must be an object when present");
   }
 
-  for (const [login, rule] of Object.entries(renderSet.Elements ?? {})) {
-    if (!isNonEmptyString(login)) throw new Error("Validator: SetRender element key must be a non-empty string");
+  if (renderSet.Global !== undefined && (!renderSet.Global || typeof renderSet.Global !== "object" || Array.isArray(renderSet.Global))) throw new Error("Validator: SetRender.Global must be an object when present");
+  if (renderSet.Types !== undefined && (!renderSet.Types || typeof renderSet.Types !== "object" || Array.isArray(renderSet.Types))) throw new Error("Validator: SetRender.Types must be an object when present");
+  const typedRules = Object.entries(renderSet.Types ?? {}).map(([key, rule]) => [`Types.${key}`, rule]);
+  const allRules = [["Global", renderSet.Global ?? {}], ...typedRules, ...Object.entries(renderSet.Elements ?? {})];
+  for (const [login, rule] of allRules) {
+    if (!isNonEmptyString(login)) throw new Error("Validator: SetRender rule key must be a non-empty string");
     if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
       throw new Error(`Validator: render rule for "${login}" must be an object`);
     }
