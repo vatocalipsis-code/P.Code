@@ -1,10 +1,10 @@
-import { pLang } from "./release/p-lang.js?v=2.5.1";
-import { setData } from "./release/set-data.js?v=2.5.1";
-import { setRender } from "./release/set-render.js?v=2.5.1";
-import { composePLang } from "./runtime/compositor.js?v=2.5.1";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.1";
-import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.1";
-import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.1";
+import { pLang } from "./release/p-lang.js?v=2.5.1p1";
+import { setData } from "./release/set-data.js?v=2.5.1p1";
+import { setRender } from "./release/set-render.js?v=2.5.1p1";
+import { composePLang } from "./runtime/compositor.js?v=2.5.1p1";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.1p1";
+import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.1p1";
+import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.1p1";
 
 const root = document.querySelector("#plane-code-root");
 
@@ -31,7 +31,6 @@ root.addEventListener("pointerdown", event => {
   pointerId = event.pointerId;
   startX = event.clientX;
   dragX = 0;
-  root.setPointerCapture?.(pointerId);
   positionSurfaces(0, false);
 });
 
@@ -47,7 +46,6 @@ root.addEventListener("pointerup", event => {
   if (dragX <= -40 && current < surfaces.length - 1) current += 1;
   else if (dragX >= 40 && current > 0) current -= 1;
   positionSurfaces(0, true);
-  if (root.hasPointerCapture?.(pointerId)) root.releasePointerCapture(pointerId);
   pointerId = null;
 });
 
