@@ -75,6 +75,7 @@ body { min-height: 100dvh; background: var(--background-color); }
 }
 
 [data-plane-active] {
+  box-shadow: 4px 4px 4px .6px #666;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;

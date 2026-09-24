@@ -43,10 +43,10 @@ SetData {
 
 SetRender {
   PanelSpacing = 12
-  BackgroundColor = "#F3F4F6"
-  PanelColor = "#FFFFFF"
-  BorderColor = "#DDE1E6"
-  TextColor = "#202124"
+  BackgroundColor = "#EEF4F8"
+  PanelColor = "#F7FBFE"
+  BorderColor = "#D5E0E8"
+  TextColor = "#25313B"
   Transparency = 0
   TextTransparency = 0
   PictureTransparency = 0
@@ -54,37 +54,37 @@ SetRender {
 
   Elements {
     "Example Render" { Padding = 12 Gap = 10 Alignment = Stretch Distribution = Start Direction = Vertical }
-    "Мои кассы" { Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
-    "Мои кассы агрегат" { Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
+    "Мои кассы" { Background = "#EAF4FA" Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
+    "Мои кассы агрегат" { Background = "#F8FCFF" Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
     "Мои кассы заголовок" { FontSize = 16 FontWeight = 700 Alignment = Center Distribution = Start Direction = Horizontal }
-    "Основная касса" { Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
+    "Основная касса" { Background = "#F8FCFF" Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
     "Основная касса данные" { FontSize = 14 FontWeight = 500 Gap = 6 Alignment = Center Distribution = Start Direction = Horizontal }
 
-    "Подчинённые кассы" { Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
-    "Подчинённые кассы агрегат" { Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
+    "Подчинённые кассы" { Background = "#EAF4FA" Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
+    "Подчинённые кассы агрегат" { Background = "#F8FCFF" Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
     "Подчинённые кассы заголовок" { FontSize = 16 FontWeight = 700 Alignment = Center Distribution = Start Direction = Horizontal }
-    "Офис Киев" { Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
+    "Офис Киев" { Background = "#F8FCFF" Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
     "Офис Киев данные" { FontSize = 14 FontWeight = 500 Gap = 6 Alignment = Center Distribution = Start Direction = Horizontal }
-    "Магазин Петровка" { Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
+    "Магазин Петровка" { Background = "#F8FCFF" Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
     "Магазин Петровка данные" { FontSize = 14 FontWeight = 500 Gap = 6 Alignment = Center Distribution = Start Direction = Horizontal }
 
-    "Требует моего подтверждения" { Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
-    "Требует моего подтверждения агрегат" { Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
+    "Требует моего подтверждения" { Background = "#EAF4FA" Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
+    "Требует моего подтверждения агрегат" { Background = "#F8FCFF" Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
     "Требует моего подтверждения заголовок" { FontSize = 16 FontWeight = 700 Alignment = Center Distribution = Start Direction = Horizontal }
-    "Заявки на расход" { Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
+    "Заявки на расход" { Background = "#F8FCFF" Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
     "Заявки на расход данные" { FontSize = 14 FontWeight = 500 Gap = 8 Alignment = Center Distribution = Start Direction = Horizontal PictureTint = "#9FD2FF" }
 
-    "Операции в работе" { Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
-    "Операции в работе агрегат" { Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
+    "Операции в работе" { Background = "#EAF4FA" Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
+    "Операции в работе агрегат" { Background = "#F8FCFF" Height = 34 Padding = 6 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
     "Операции в работе заголовок" { FontSize = 16 FontWeight = 700 Alignment = Center Distribution = Start Direction = Horizontal }
-    "В обработке" { Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
+    "В обработке" { Background = "#F8FCFF" Height = 58 Padding = 8 BorderWidth = 1 Alignment = Center Distribution = Start Direction = Horizontal }
     "В обработке данные" { FontSize = 14 FontWeight = 500 Gap = 8 Alignment = Center Distribution = Start Direction = Horizontal PictureTint = "#9FD2FF" }
 
-    "Нам должны" { Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
-    "Нам должны агрегат" { Height = 58 Padding = 8 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
+    "Нам должны" { Background = "#EAF4FA" Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
+    "Нам должны агрегат" { Background = "#F8FCFF" Height = 58 Padding = 8 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
     "Нам должны данные" { FontSize = 14 FontWeight = 600 Gap = 6 Alignment = Center Distribution = Start Direction = Horizontal }
-    "Мы должны" { Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
-    "Мы должны агрегат" { Height = 58 Padding = 8 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
+    "Мы должны" { Background = "#EAF4FA" Padding = 12 Gap = 8 Alignment = Stretch Distribution = Start Direction = Vertical BorderWidth = 1 }
+    "Мы должны агрегат" { Background = "#F8FCFF" Height = 58 Padding = 8 Alignment = Center Distribution = Start Direction = Horizontal BorderWidth = 0 }
     "Мы должны данные" { FontSize = 14 FontWeight = 600 Gap = 6 Alignment = Center Distribution = Start Direction = Horizontal }
   }
 }

@@ -32,7 +32,9 @@ OnPress
 OffPress
 ```
 
-When an event property exists but its value has not yet been defined, its canonical value is `NOT_YET_SPECIFIED`. Procedure binding and business-action semantics remain NOT YET SPECIFIED. No additional AggregateActivePanel properties are specified.
+When an event property exists but its value has not yet been defined, its canonical value is `NOT_YET_SPECIFIED`. Procedure binding and business-action semantics remain NOT YET SPECIFIED. AggregateActivePanel and ActivePanel share the same visual/render behavior and the same visual property capabilities. They may differ only in placement and dimensions. This parity does not merge their PLang roles or hierarchy.
+
+No additional AggregateActivePanel properties are specified.
 
 ## Container
 
