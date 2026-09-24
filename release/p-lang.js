@@ -1,44 +1,8 @@
-export const pLang = [
-  {
-    type: "BasePanel",
-    id: "surface-a",
-    Login: "SurfaceA",
-    children: [{
-      type: "SimplePanel",
-      id: "surface-a-simple",
-      Login: "SurfaceASimple",
-      children: [{
-        type: "ActivePanel",
-        id: "surface-a-active",
-        Login: "SurfaceAActive",
-        children: [{
-          type: "Container",
-          id: "surface-a-message",
-          Login: "SurfaceAMessage",
-          Orientation: "Positive"
-        }]
-      }]
-    }]
-  },
-  {
-    type: "BasePanel",
-    id: "surface-b",
-    Login: "SurfaceB",
-    children: [{
-      type: "SimplePanel",
-      id: "surface-b-simple",
-      Login: "SurfaceBSimple",
-      children: [{
-        type: "ActivePanel",
-        id: "surface-b-active",
-        Login: "SurfaceBActive",
-        children: [{
-          type: "Container",
-          id: "surface-b-message",
-          Login: "SurfaceBMessage",
-          Orientation: "Positive"
-        }]
-      }]
-    }]
-  }
-];
+export const pLang = [{type:"BasePanel",Login:"Example Render",children:[
+{type:"SimplePanel",Login:"Мои кассы",children:[{type:"AggregateActivePanel",Login:"Мои кассы агрегат",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Мои кассы заголовок"}]},{type:"ActivePanel",Login:"Основная касса",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Основная касса данные"}]}]},
+{type:"SimplePanel",Login:"Подчинённые кассы",children:[{type:"AggregateActivePanel",Login:"Подчинённые кассы агрегат",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Подчинённые кассы заголовок"}]},{type:"ActivePanel",Login:"Офис Киев",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Офис Киев данные"}]},{type:"ActivePanel",Login:"Магазин Петровка",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Магазин Петровка данные"}]}]},
+{type:"SimplePanel",Login:"Требует моего подтверждения",children:[{type:"AggregateActivePanel",Login:"Требует моего подтверждения агрегат",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Требует моего подтверждения заголовок"}]},{type:"ActivePanel",Login:"Заявки на расход",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Заявки на расход данные",Orientation:"Positive"}]}]},
+{type:"SimplePanel",Login:"Операции в работе",children:[{type:"AggregateActivePanel",Login:"Операции в работе агрегат",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Операции в работе заголовок"}]},{type:"ActivePanel",Login:"В обработке",OnPress:null,OffPress:null,children:[{type:"Container",Login:"В обработке данные",Orientation:"Positive"}]}]},
+{type:"SimplePanel",Login:"Нам должны",children:[{type:"AggregateActivePanel",Login:"Нам должны агрегат",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Нам должны данные"}]}]},
+{type:"SimplePanel",Login:"Мы должны",children:[{type:"AggregateActivePanel",Login:"Мы должны агрегат",OnPress:null,OffPress:null,children:[{type:"Container",Login:"Мы должны данные"}]}]}
+]}];
