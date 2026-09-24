@@ -1,14 +1,14 @@
-import { pLang } from "./release/p-lang.js?v=2.5.4u2";
-import { setData } from "./release/set-data.js?v=2.5.4u2";
-import { setRender } from "./release/set-render.js?v=2.5.4u2";
-import { composePLang } from "./runtime/compositor.js?v=2.5.4u2";
-import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.4u2";
-import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.4u2";
-import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.4u2";
+import { pLang } from "./release/p-lang.js?v=2.5.4u3";
+import { setData } from "./release/set-data.js?v=2.5.4u3";
+import { setRender } from "./release/set-render.js?v=2.5.4u3";
+import { composePLang } from "./runtime/compositor.js?v=2.5.4u3";
+import { validatePLang, validateSetRender } from "./runtime/validator.js?v=2.5.4u3";
+import { validateRenderBindings } from "./runtime/render-bindings.js?v=2.5.4u3";
+import { renderPlaneCode } from "./runtime/web-renderer.js?v=2.5.4u3";
 
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js?v=2.5.4u2", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
+  navigator.serviceWorker.register("./sw.js?v=2.5.4u3", { updateViaCache: "none" }).then(registration => registration.update()).catch(() => {});
 }
 
 const root = document.querySelector("#plane-code-root");
