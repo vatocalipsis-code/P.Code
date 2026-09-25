@@ -30,6 +30,7 @@ jobs:
 
   deploy:
     needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/container-layout-trial'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
