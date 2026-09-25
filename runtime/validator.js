@@ -10,6 +10,10 @@ const DIRECTIONS=new Set(["Horizontal","Vertical"]);
 const ORDERS=new Set(["Positive","Negative"]);
 const H_ALIGN=new Set(["Left","Center","Right"]);
 const V_ALIGN=new Set(["Top","Center","Bottom"]);
+const INPUT_TYPES=new Set(["Text","Secret","Number","Date"]);
+const INPUT_MODES=new Set(["text","decimal","numeric","email","tel","url","search"]);
+const VALIDATION_STATES=new Set(["None","Valid","Invalid"]);
+const EDITABLE_INPUT_CAPABILITY="pcode.editable-input.v1";
 const STRING_RULES=["Background","BorderColor","BorderLeftColor","BorderRightColor","BorderTopColor","BorderBottomColor","TextColor","PictureTint"];
 const NON_NEGATIVE_RULES=["BorderWidth","BorderLeftWidth","BorderRightWidth","BorderTopWidth","BorderBottomWidth","Width","Height","Padding","Gap","FontSize"];
 
@@ -56,24 +60,60 @@ export function isCanonicalPngFile(value){
   return !value.split("/").includes("..");
 }
 
-export function validateSetData(data,pLang){
+function collectEditableLogins(pLang){
+  const result=new Set();
+  const visit=value=>{
+    if(Array.isArray(value)){for(const item of value)visit(item);return}
+    if(!value||typeof value!=="object")return;
+    if(value.Type==="EditableInput"&&isNonEmptyString(value.Login))result.add(value.Login);
+    for(const [key,item] of Object.entries(value))if(key!=="Properties")visit(item);
+  };
+  visit(pLang);return result;
+}
+function validateValidationState(value,label){
+  if(!value||typeof value!=="object"||Array.isArray(value))fail("ValidationState for "+label+" must be an object");
+  if(!VALIDATION_STATES.has(value.Status))fail("ValidationState.Status for "+label+" must be None, Valid, or Invalid");
+  if(value.Message!==undefined&&typeof value.Message!=="string")fail("ValidationState.Message for "+label+" must be a string");
+}
+export function validateSetData(data,pLang,capabilities=[]){
   if(!data||typeof data!=="object"||Array.isArray(data))fail("SetData.Data must be an object");
-  validatePLang(pLang,data);
+  validatePLang(pLang,data,capabilities);
+  const editable=collectEditableLogins(pLang);
   for(const [login,item] of Object.entries(data)){
     if(!item||typeof item!=="object"||Array.isArray(item))fail("SetData entry for "+login+" must be an object");
-    if(item.SourceText!==undefined&&typeof item.SourceText!=="string")fail("SourceText for "+login+" must be a string");
-    if(item.SourcePicture!==undefined&&!isCanonicalPngFile(item.SourcePicture))fail("SourcePicture for "+login+" must reference a local PNG file");
+    if(editable.has(login)){
+      if(item.SourceText!==undefined||item.SourcePicture!==undefined)fail("editable input data for "+login+" must use InputValue");
+      if(item.InputValue!==undefined&&typeof item.InputValue!=="string")fail("InputValue for "+login+" must be a string");
+      if(item.ValidationState!==undefined)validateValidationState(item.ValidationState,login);
+    }else{
+      if(item.InputValue!==undefined||item.ValidationState!==undefined)fail("input state for "+login+" requires EditableInput");
+      if(item.SourceText!==undefined&&typeof item.SourceText!=="string")fail("SourceText for "+login+" must be a string");
+      if(item.SourcePicture!==undefined&&!isCanonicalPngFile(item.SourcePicture))fail("SourcePicture for "+login+" must reference a local PNG file");
+    }
   }
   return true;
 }
 
-export function validatePLang(pLang,setData={}){
+export function validatePLang(pLang,setData={},capabilities=[]){
   if(!Array.isArray(pLang))fail("SetLang.Data must be BasePanel[]");
+  const capabilitySet=new Set(capabilities);
   const logins=new Set();
   const add=(login,label)=>{if(!isNonEmptyString(login))fail(label+".Login required");if(logins.has(login))fail("duplicate Login "+login);logins.add(login)};
   const checkFill=(p,label)=>{for(const key of ["FillHorizontal","FillVertical"])if(p[key]!==undefined&&typeof p[key]!=="boolean")fail(key+" for "+label+" must be boolean")};
   const checkContainer=c=>{add(c.Login,"Container");const p=c.Properties??{};validateVisualRule(p,"Container "+c.Login,false);checkFill(p,"Container "+c.Login);if(p.Order!==undefined&&!ORDERS.has(p.Order))fail("invalid Order for Container "+c.Login);if(p.HorizontalAlignment!==undefined&&!H_ALIGN.has(p.HorizontalAlignment))fail("invalid HorizontalAlignment for Container "+c.Login);if(p.VerticalAlignment!==undefined&&!V_ALIGN.has(p.VerticalAlignment))fail("invalid VerticalAlignment for Container "+c.Login);if(p.Flip!==undefined||p.Orientation!==undefined)fail("Container "+c.Login+" uses obsolete Flip/Orientation layout properties")};
-  const checkLayout=(items,label)=>{if(!Array.isArray(items))fail(label+".Layout must be an array");for(const item of items){if(item?.Type==="Group")checkGroup(item);else if(item?.Type==="Container"||item?.Login!==undefined)checkContainer(item);else fail(label+".Layout accepts only Group or Container")}};
+  const checkInput=input=>{
+    if(!capabilitySet.has(EDITABLE_INPUT_CAPABILITY))fail("EditableInput requires negotiated "+EDITABLE_INPUT_CAPABILITY);
+    add(input.Login,"EditableInput");const p={...(input.Properties??{})};
+    for(const key of ["InputType","Placeholder","Disabled","Required","AriaLabel","InputMode","OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])delete p[key];
+    validateVisualRule(p,"EditableInput "+input.Login,false);checkFill(p,"EditableInput "+input.Login);
+    const source=input.Properties??{};
+    if(source.InputType!==undefined&&!INPUT_TYPES.has(source.InputType))fail("invalid InputType for EditableInput "+input.Login);
+    for(const key of ["Placeholder","AriaLabel"])if(source[key]!==undefined&&typeof source[key]!=="string")fail(key+" for EditableInput "+input.Login+" must be a string");
+    for(const key of ["Disabled","Required"])if(source[key]!==undefined&&typeof source[key]!=="boolean")fail(key+" for EditableInput "+input.Login+" must be boolean");
+    if(source.InputMode!==undefined&&!INPUT_MODES.has(source.InputMode))fail("invalid InputMode for EditableInput "+input.Login);
+    for(const key of ["OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])validateEventToken(source[key],"EditableInput "+input.Login+"."+key);
+  };
+  const checkLayout=(items,label)=>{if(!Array.isArray(items))fail(label+".Layout must be an array");for(const item of items){if(item?.Type==="Group")checkGroup(item);else if(item?.Type==="EditableInput")checkInput(item);else if(item?.Type==="Container"||item?.Login!==undefined)checkContainer(item);else fail(label+".Layout accepts only Group, Container, or EditableInput")}};
   const checkGroup=g=>{const p=g.Properties??{};const allowed=new Set(["Orientation","Width","Height","FillHorizontal","FillVertical","Gap"]);for(const k of Object.keys(p))if(!allowed.has(k))fail("Group property "+k+" is not allowed");for(const k of ["Width","Height","Gap"])if(p[k]!==undefined&&!isNonNegativeNumber(p[k]))fail("Group."+k+" must be non-negative");checkFill(p,"Group");if(!DIRECTIONS.has(p.Orientation))fail("Group.Properties.Orientation must be Horizontal or Vertical");if(g.Login!==undefined)fail("Group must not have Login");checkLayout(g.Layout??[],"Group")};
   const panelLayout=(node,label)=>{if(node.Layout!==undefined&&node.Containers!==undefined)fail(label+" cannot define both Layout and legacy Containers");if(node.Layout!==undefined)checkLayout(node.Layout,label);else{if(!Array.isArray(node.Containers))fail(label+".Layout or legacy Containers required");node.Containers.forEach(checkContainer)}};
   const checkActive=(a,aggregate=false)=>{add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel");validateVisualRule(a.Properties??{},(aggregate?"AggregateActivePanel ":"ActivePanel ")+a.Login,true,true);panelLayout(a,a.Login)};

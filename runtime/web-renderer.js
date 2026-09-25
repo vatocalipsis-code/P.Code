@@ -67,6 +67,36 @@ function sourcesFromData(node,dataSet){
   return text?[text]:picture?[picture]:[];
 }
 
+function applyEditableState(el,item={}){
+  const value=typeof item.InputValue==="string"?item.InputValue:"";
+  if(el.value!==value)el.value=value;
+  const validation=item.ValidationState??{Status:"None"};
+  el.dataset.planeValidation=validation.Status??"None";
+  if(validation.Status==="Invalid")el.setAttribute("aria-invalid","true");else el.removeAttribute("aria-invalid");
+  if(typeof validation.Message==="string"&&validation.Message)el.setAttribute("title",validation.Message);else el.removeAttribute("title");
+}
+function renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers){
+  const rule=node.Visual??{},config=node.Input??{},events=node.Events??{};
+  const el=document.createElement("input");el.dataset.planeType="EditableInput";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.__planeVisual=rule;
+  el.type={Secret:"password",Number:"text",Date:"date",Text:"text"}[config.InputType]??"text";
+  if(config.InputType==="Number")el.inputMode=config.InputMode??"decimal";else if(config.InputMode)el.inputMode=config.InputMode;
+  el.placeholder=config.Placeholder??"";el.disabled=config.Disabled===true;el.required=config.Required===true;el.setAttribute("aria-label",config.AriaLabel??node.Login);
+  applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);applyEditableState(el,dataSet[node.dataSlot]);
+  let composing=false;
+  const emit=(type,event)=>{
+    if(!interaction||!interaction.isEnabled()||events[type]===undefined||events[type]===null)return;
+    interaction.emit(type,node.Login,events[type],{Value:el.value,InputType:config.InputType??"Text",IsComposing:Boolean(event?.isComposing||composing)});
+  };
+  el.addEventListener("compositionstart",()=>{composing=true});
+  el.addEventListener("compositionend",event=>{composing=false;emit("OnInput",event)});
+  el.addEventListener("focus",event=>emit("OnFocus",event));
+  el.addEventListener("blur",event=>emit("OnBlur",event));
+  el.addEventListener("input",event=>{if(!event.isComposing)emit("OnInput",event)});
+  el.addEventListener("change",event=>emit("OnChange",event));
+  el.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.isComposing&&!composing){emit("OnSubmit",event);if(events.OnSubmit)event.preventDefault?.()}});
+  cancellers.push(()=>{composing=false;el.blur?.()});
+  return el;
+}
 function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers){
   if(node.type==="Group"){
     const rule=node.Layout??{};const el=document.createElement("div");el.dataset.planeType="Group";el.dataset.planeGroup="";el.style.display="flex";el.style.flexDirection=rule.Orientation==="Horizontal"?"row":"column";
@@ -74,6 +104,7 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
     for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers));
     return el;
   }
+  if(node.type==="EditableInput")return renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers);
   return renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow);
 }
 function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow){
@@ -147,6 +178,7 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
 }
 export function patchSetData(root,nextData,renderSet){
   for(const el of root.querySelectorAll("[data-plane-data-slot]")){
+    if(el.dataset.planeType==="EditableInput"){applyEditableState(el,nextData[el.dataset.planeDataSlot]);continue}
     const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
     const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive"};const visual=el.__planeVisual??{};
     let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;

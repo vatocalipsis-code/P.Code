@@ -11,9 +11,19 @@ let nextConnectionId=1;
 function hasEventToken(plan){
   const visit=node=>{
     if(node&&(node.OnPress!==undefined&&node.OnPress!==null||node.OffPress!==undefined&&node.OffPress!==null))return true;
+    if(node?.Events&&Object.values(node.Events).some(value=>value!==undefined&&value!==null))return true;
     return [...(node?.layout??[]),...(node?.children??[])].some(visit);
   };
   return plan.some(visit);
+}
+function editableValues(plan,setData){
+  const values=new Map();
+  const visit=node=>{
+    if(node?.type==="EditableInput")values.set(node.Login,setData?.[node.dataSlot]?.InputValue??"");
+    for(const child of [...(node?.layout??[]),...(node?.children??[])])visit(child);
+  };
+  for(const node of plan)visit(node);
+  return values;
 }
 
 export function createPlaneCodeEngine(dependencies){
@@ -31,6 +41,7 @@ export function createPlaneCodeEngine(dependencies){
       this.setData=setData;this.setRender=setRender;this.state="PREPARED";
       this.target=null;this.sink=null;this.tail=Promise.resolve();this.eventCounter=0;
       this.requiresSink=hasEventToken(objectPlan);
+      this.inputValues=editableValues(objectPlan,setData.Data);
     }
     _enqueue(operation){
       const run=()=>Promise.resolve().then(operation);
@@ -48,9 +59,14 @@ export function createPlaneCodeEngine(dependencies){
       try{if(target)dependencies.renderer.dispose(target)}catch{}
       return failed("runtime-preparation",code,diagnostic(error));
     }
-    _emit(EventType,ObjectLogin,OpaqueValue){
+    _emit(EventType,ObjectLogin,OpaqueValue,Details=null){
       if(this.state!=="ACTIVE"||!this.sink)return;
       const event={EventId:"pcevent:"+this.connection.id+":"+(++this.eventCounter),EventType,ObjectLogin,OpaqueValue};
+      if(Details&&typeof Details.Value==="string"){
+        this.inputValues.set(ObjectLogin,Details.Value);
+        event.Value=Details.Value;event.InputType=Details.InputType??"Text";
+        if(Details.IsComposing!==undefined)event.IsComposing=Boolean(Details.IsComposing);
+      }
       try{this.sink(event)}catch{}
     }
     mount(RenderTarget){
@@ -59,7 +75,7 @@ export function createPlaneCodeEngine(dependencies){
         if(!RenderTarget||(typeof RenderTarget!=="object"&&typeof RenderTarget!=="function"))return rejected("runtime-preparation","invalid-render-target");
         if(owners.has(RenderTarget))return rejected("runtime-preparation","render-target-in-use");
         try{
-          dependencies.renderer.mount(RenderTarget,this.objectPlan,this.setData.Data,this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value)=>this._emit(type,login,value)});
+          dependencies.renderer.mount(RenderTarget,this.objectPlan,this.setData.Data,this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)});
           owners.set(RenderTarget,this);this.target=RenderTarget;this.state="MOUNTED_INACTIVE";
           return completed();
         }catch(error){return this._failStop("mount-failed",error)}
@@ -76,10 +92,10 @@ export function createPlaneCodeEngine(dependencies){
       return this._enqueue(()=>{
         if(this.state==="DISPOSED")return this._rejectState("applySetData",["PREPARED","MOUNTED_INACTIVE","ACTIVE"]);
         let data;
-        try{data=dependencies.validateEnvelope(SetData,"SetData");dependencies.validateData(data,this.setLang.Data)}
+        try{data=dependencies.validateEnvelope(SetData,"SetData");dependencies.validateData(data,this.setLang.Data,this.connection.capabilities)}
         catch(error){return rejected("data-update","invalid-setdata",diagnostic(error))}
         try{
-          this.setData=SetData;
+          this.setData=SetData;this.inputValues=editableValues(this.objectPlan,data);
           if(this.target)dependencies.renderer.patchData(this.target,data,this.setRender.Data);
           return completed();
         }catch(error){return this._failStop("data-update-failed",error)}
@@ -93,9 +109,16 @@ export function createPlaneCodeEngine(dependencies){
         catch(error){return rejected("setrender","invalid-setrender",diagnostic(error))}
         try{
           this.setRender=SetRender;
-          if(this.target)dependencies.renderer.rerender(this.target,this.objectPlan,this.setData.Data,render,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value)=>this._emit(type,login,value)});
+          if(this.target)dependencies.renderer.rerender(this.target,this.objectPlan,this.setData.Data,render,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)});
           return completed();
         }catch(error){return this._failStop("render-update-failed",error)}
+      });
+    }
+    getInputState(){
+      return this._enqueue(()=>{
+        if(this.state==="DISPOSED")return this._rejectState("getInputState",["PREPARED","MOUNTED_INACTIVE","ACTIVE"]);
+        if(!this.connection.capabilities.includes("pcode.editable-input.v1"))return rejected("capability","editable-input-not-negotiated");
+        return completed({Values:Object.freeze(Object.fromEntries(this.inputValues))});
       });
     }
     enableInteraction(){
@@ -125,7 +148,7 @@ export function createPlaneCodeEngine(dependencies){
   }
 
   class ConnectionHandle{
-    constructor(){this.id=nextConnectionId++;this.closed=false;this.closing=null;this.runtimes=new Set()}
+    constructor(capabilities){this.id=nextConnectionId++;this.capabilities=Object.freeze([...capabilities]);this.closed=false;this.closing=null;this.runtimes=new Set()}
     async prepare(input){
       if(this.closed||this.closing)return rejected("runtime-preparation","connection-closed");
       if(!input||typeof input!=="object")return rejected("runtime-preparation","invalid-prepare-input");
@@ -135,14 +158,14 @@ export function createPlaneCodeEngine(dependencies){
         setDataData=dependencies.validateEnvelope(input.SetData,"SetData");
         setRenderData=dependencies.validateEnvelope(input.SetRender,"SetRender");
       }catch(error){return rejected("serialization","invalid-set-envelope",diagnostic(error))}
-      try{dependencies.validatePlan(setLangData,setDataData)}
+      try{dependencies.validatePlan(setLangData,setDataData,this.capabilities)}
       catch(error){return rejected("setlang","invalid-setlang",diagnostic(error))}
-      try{dependencies.validateData(setDataData,setLangData)}
+      try{dependencies.validateData(setDataData,setLangData,this.capabilities)}
       catch(error){return rejected("setdata","invalid-setdata",diagnostic(error))}
       try{dependencies.validateRender(setRenderData)}
       catch(error){return rejected("setrender","invalid-setrender",diagnostic(error))}
       let objectPlan;
-      try{objectPlan=dependencies.compile(setLangData)}
+      try{objectPlan=dependencies.compile(setLangData,this.capabilities)}
       catch(error){return failed("compilation","setlang-compilation-failed",diagnostic(error))}
       const runtime=new RuntimeHandle(this,objectPlan,input.SetLang,input.SetData,input.SetRender);
       this.runtimes.add(runtime);
@@ -171,7 +194,7 @@ export function createPlaneCodeEngine(dependencies){
       if(new Set(required).size!==required.length||new Set(optional).size!==optional.length||required.some(x=>optional.includes(x)))return incompatible("capability","invalid-capability-selection");
       if(required.some(x=>!descriptor.Capabilities.includes(x)))return incompatible("capability","required-capability-unsupported");
       const agreed=[...required,...optional.filter(x=>descriptor.Capabilities.includes(x))];
-      return {Acceptance:{Status:"Accepted",SerializationVersion:selection.SerializationVersion,AgreedCapabilities:agreed},Connection:new ConnectionHandle()};
+      return {Acceptance:{Status:"Accepted",SerializationVersion:selection.SerializationVersion,AgreedCapabilities:agreed},Connection:new ConnectionHandle(agreed)};
     }
   });
 }

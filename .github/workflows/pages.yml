@@ -3,7 +3,7 @@ name: Test and deploy P.Code
 
 on:
   push:
-    branches: ["main", "feature/container-layout-trial"]
+    branches: ["main", "feature/container-layout-trial", "feature/canonical-editable-input-v1"]
   workflow_dispatch:
 
 permissions:

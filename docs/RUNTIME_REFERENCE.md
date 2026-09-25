@@ -16,7 +16,7 @@ The only Host-facing JavaScript boundary is exported by runtime/public-runtime.j
 - RuntimeHandle.disableInteraction()
 - RuntimeHandle.dispose()
 
-The descriptor is fixed at ComponentVersion 2.10.0, GenerationId pcode.layout-group.v1, serialization version 1, with no capabilities. runtime/public-runtime-core.js is an internal implementation and test seam; Host code must not import it.
+The descriptor is fixed at ComponentVersion 2.11.0, GenerationId pcode.layout-group.v1, serialization version 1, with the optional capability `pcode.editable-input.v1`. runtime/public-runtime-core.js is an internal implementation and test seam; Host code must not import it.
 
 All ordinary outcomes are returned as Completed, Rejected, or Failed. A renderer failure is fail-stop and disposes that runtime. Connection close drains and disposes every prepared runtime and is idempotent.
 
@@ -47,3 +47,11 @@ web/main.js consumes the public boundary through connect, prepare, mount, and en
 ## Earlier utilities
 
 runtime/compositor.js is an earlier composition path and is not the public boundary. runtime/render-bindings.js remains an integration placeholder.
+
+## Editable input capability v1
+
+Hosts opt in by requiring `pcode.editable-input.v1` during `connect`. Legacy plans continue to prepare without it; a plan containing `Type: "EditableInput"` is rejected unless the capability was agreed.
+
+An EditableInput may declare `InputType` (`Text`, `Secret`, `Number`, or `Date`), presentation/accessibility properties, and opaque `OnFocus`, `OnBlur`, `OnInput`, `OnChange`, and `OnSubmit` tokens. SetData carries `InputValue` plus optional `ValidationState: {Status, Message}`; business validation remains Host-owned. Number is textual transport and does not create money semantics.
+
+Input events preserve the v1 event fields and add `Value`, `InputType`, and `IsComposing`. EventId remains connection-unique and monotonically ordered. Enter submits only outside IME composition. `RuntimeHandle.getInputState()` returns the current negotiated editable values; full SetData replacement resets them. Secret values are delivered only through explicit input events/state reads and are never included in validation diagnostics.
