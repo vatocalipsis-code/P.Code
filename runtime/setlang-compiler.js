@@ -27,10 +27,9 @@ function compileContainer(node) {
 }
 function compileActive(node, aggregate = false) {
   const p = { ...(node.Properties ?? {}) };
-  const Orientation = p.Orientation; const OnPress = p.OnPress; const OffPress = p.OffPress;
-  delete p.Orientation; delete p.OnPress; delete p.OffPress;
+  const OnPress = p.OnPress; const OffPress = p.OffPress;
+  delete p.OnPress; delete p.OffPress;
   const out = { type: aggregate ? "AggregateActivePanel" : "ActivePanel", Login: node.Login, Visual: Object.freeze(p), children: Object.freeze((node.Containers ?? []).map(compileContainer)) };
-  if (Orientation !== undefined) out.Orientation = Orientation;
   if (OnPress !== undefined) out.OnPress = OnPress;
   if (OffPress !== undefined) out.OffPress = OffPress;
   return Object.freeze(out);
