@@ -100,6 +100,62 @@ SetData {
 
 A Container may resolve `SourceText`, `SourcePicture`, or both. Login itself is never visible content.
 
+### Container source order and sibling layout
+
+Container source order is controlled by `Order`:
+
+```text
+Order = Positive   # Picture → Text
+Order = Negative   # Text → Picture
+```
+
+Default: `Order = Positive`.
+
+Container sibling layout uses:
+
+```text
+Orientation = Horizontal | Vertical
+Flip = true | false
+```
+
+Example:
+
+```text
+Containers [
+  Container "Cash icon" {
+    Properties {
+      Orientation = Horizontal
+      Flip = false
+    }
+  }
+
+  Container "Cash name" {
+    Properties {
+      Orientation = Horizontal
+      Flip = false
+    }
+  }
+
+  Container "Cash type" {
+    Properties {
+      Orientation = Horizontal
+      Flip = true
+    }
+  }
+
+  Container "Cash amount" {
+    Properties {
+    }
+  }
+]
+```
+
+With a horizontal parent flow, the third Container consumes the available remaining horizontal space while reserving room for the amount, so the amount is pushed toward the right boundary.
+
+If `Orientation` is absent, layout continues in the current direction. If `Flip` is absent, its default is `false`.
+
+A constrained text source uses single-line ellipsis overflow. A picture source continues to fit with contain behavior.
+
 ## Object properties
 
 Current object-property families include geometry, layout, borders, colors, typography, picture tint, parallax, panel-surface transparency, and alpha-shaped content shadow. `PanelTransparency` and `Shadow` are valid only on SimplePanel, ActivePanel, and AggregateActivePanel; Container remains a transparent content slot. See [PLANG_CANON.md](PLANG_CANON.md) for the canonical list and semantics.
