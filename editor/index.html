@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PlaneCode Editor</title>
+  <link rel="stylesheet" href="../runtime/renderer.css">
+  <link rel="stylesheet" href="./editor.css">
+</head>
+<body>
+  <header class="toolbar">
+    <strong>PlaneCode Editor</strong>
+    <button id="addGroup">+ Group</button>
+    <button id="addContainer">+ Container</button>
+    <button id="moveUp">↑</button>
+    <button id="moveDown">↓</button>
+    <button id="removeNode">Delete</button>
+    <span class="spacer"></span>
+    <button id="copySetLang">Copy SetLang</button>
+    <button id="exportProject">Export Project</button>
+    <label class="fileButton">Import Project<input id="importProject" type="file" accept="application/json"></label>
+    <span id="status">ready</span>
+  </header>
+  <main class="workspace">
+    <aside class="treePane">
+      <h2>Structure</h2>
+      <div id="tree"></div>
+    </aside>
+    <section class="previewPane">
+      <div class="previewHeader"><span>Live PlaneCode preview</span><label><input id="outlineGroups" type="checkbox" checked> Group outlines</label></div>
+      <div class="device"><div id="plane-code-root"></div></div>
+    </section>
+    <aside class="inspectorPane">
+      <h2>Properties</h2>
+      <div id="inspector" class="inspectorEmpty">Select a node</div>
+    </aside>
+  </main>
+  <script type="module" src="./editor.js"></script>
+</body>
+</html>

@@ -1,104 +1,139 @@
 # PLang Canon
 
-Status: CURRENT
+Status: CURRENT CANDIDATE on `feature/container-layout-trial`
 
-PLang is the declarative language inside PlaneCode.
+PLang is the declarative language inside PlaneCode. SetLang owns object identity, physical hierarchy, layout structure, geometry and object-specific visual properties. SetRender remains scene-only.
 
-PLang defines interface entities, their identity, structural relations, and the physical/visual properties of those concrete objects. In SPL this object contract is carried by SetLang.
+## Physical hierarchy
 
-SetLang owns object-specific geometry, layout, padding, gap, colors, borders, transparency, typography, text color, picture tint and other visual properties of concrete objects. SetRender does not own or address these object properties.
-
-## Canonical hierarchy
-
-PLang has exactly three physical panel layers and typed collections; generic `children` is not part of SetLang.
+PLang has exactly three physical panel layers:
 
 ```text
 BasePanel
-├── Properties
-├── Containers
-└── SimplePanels
-
-SimplePanel
-├── Properties
-│   └── AggregateActivePanels [0..1]
-├── Containers
-└── ActivePanels
-
-ActivePanel
-├── Properties
-└── Containers
+└── SimplePanel
+    └── ActivePanel
 ```
 
-AggregateActivePanel is a special ActivePanel on the Active physical layer, not a fourth layer. Containers may be owned directly by any of the three panel levels and by AggregateActivePanel.
+`AggregateActivePanel` is a special ActivePanel on the Active physical layer, not a fourth layer.
 
-No Row, Column, Card, Section or renderer-specific entity type is part of PLang.
-
-Every PLang entity has a required unique `Login`. `Login` is stable identity and is never visible content.
-
-## AggregateActivePanel
-
-AggregateActivePanel is owned as the optional `SimplePanel.Properties.AggregateActivePanels[0..1]` value and may contain Containers. It represents an aggregate action or aggregate state of its parent SimplePanel, while ordinary ActivePanels represent individual items within that SimplePanel. ActivePanel and AggregateActivePanel expose the same two event properties:
+Panels keep their typed physical collections:
 
 ```text
-OnPress
-OffPress
+BasePanel     -> SimplePanels[]
+SimplePanel   -> ActivePanels[]
+ActivePanel   -> no child panel layer
 ```
 
-When an event property exists but its value has not yet been defined, its canonical value is `NOT_YET_SPECIFIED`. Procedure binding and business-action semantics remain NOT YET SPECIFIED. AggregateActivePanel and ActivePanel share the same visual/render behavior and the same visual property capabilities. They may differ only in placement and dimensions. AggregateActivePanel always uses intrinsic content length on its main axis; it does not stretch to the parent length. This parity does not merge their PLang roles or hierarchy.
+Generic panel `children[]` is not part of authored SetLang.
 
-No additional AggregateActivePanel properties are specified.
+Every physical panel and every Container has a required unique `Login`. Login is stable identity and never visible content.
+
+## Panel content area
+
+Every panel content area is an implicit layout context. `Panel.Properties.Direction` defines the orientation of its direct layout items:
+
+```text
+Direction = Horizontal
+Direction = Vertical
+```
+
+Direct content is authored in one ordered `Layout[]` collection. `Layout[]` may interleave `Group` and `Container` items. Authored order is semantic and MUST be preserved.
+
+Legacy `Containers[]` remains accepted by the current compatibility layer, but new authored SetLang MUST use `Layout[]`.
+
+## Group
+
+`Group` is an invisible structural layout node. It is not a visible PLang entity, has no Login, no SetData slot, no events, no panel surface and no object shadow.
+
+A Group may contain Containers and other Groups in one ordered recursive `Layout[]` collection. Groups may be nested without depth limit imposed by the language contract.
+
+Canonical Group properties are:
+
+```text
+Orientation = Horizontal | Vertical
+Width = non-negative number        # optional
+Height = non-negative number       # optional
+FillHorizontal = true | false
+FillVertical = true | false
+Gap = non-negative number          # optional
+```
+
+`Orientation` is required. It controls only the arrangement of the Group's direct children.
+
+`FillHorizontal` and `FillVertical` are independent. Both default to `false` when absent.
+
+```text
+false / false -> intrinsic or Width/Height size
+true  / false -> fill available horizontal space only
+false / true  -> fill available vertical space only
+true  / true  -> fill available space on both axes
+```
+
+When two or more sibling layout items have Fill enabled on the parent's active axis, the free space remaining after fixed/intrinsic items and Gap is divided equally between those Fill siblings. This is PlaneCode semantics and MUST NOT depend on browser-specific flex heuristics.
 
 ## Container
 
-Visible content is emitted only through Container. Container may resolve independent data sources through SetData:
+Container is an addressable visible-content slot. SetData may provide:
 
 ```text
 SourceText
 SourcePicture
 ```
 
-An absent source does not participate and reserves no space.
+An absent source does not participate and reserves no content space. A single present source is centered by default.
 
-One present source is centered.
-
-When both are present, source order is controlled by `Order`:
+When both are present, source order is controlled by:
 
 ```text
-Order = Positive
-Picture → Text
-
-Order = Negative
-Text → Picture
+Order = Positive  # Picture -> Text
+Order = Negative  # Text -> Picture
 ```
 
-If `Order` is absent, its default is `Positive`.
+Default: `Order = Positive`.
 
-Container also participates in sibling layout through two independent properties:
+Container layout properties are:
 
 ```text
-Orientation = Horizontal | Vertical
-Flip = true | false
+Width
+Height
+FillHorizontal = true | false
+FillVertical = true | false
+HorizontalAlignment = Left | Center | Right
+VerticalAlignment = Top | Center | Bottom
+Direction = Horizontal | Vertical
+Gap
+Order = Positive | Negative
 ```
 
-`Orientation` defines the direction from the current Container to the next Container in the same typed `Containers[]` sequence. If `Orientation` is absent, layout continues in the current direction inherited from the parent panel or from the latest preceding Container orientation.
+`FillHorizontal` and `FillVertical` use exactly the same independent-axis semantics as Group and default to `false`.
 
-`Flip = false` is the default. The Container keeps its intrinsic layout size and the next Container begins after it in the current orientation.
+`HorizontalAlignment` and `VerticalAlignment` position Container content inside the Container's physical box. Both default to `Center`.
 
-`Flip = true` makes the current Container consume the available remaining space along its `Orientation`, while preserving the required space of all following Containers in that sequence. In horizontal orientation this pushes the tail toward the right boundary; in vertical orientation it pushes the tail toward the bottom boundary.
+`Direction` controls the internal arrangement of Picture/Text when both sources are present; it does not control sibling layout. Sibling layout is controlled by the parent panel or Group.
 
-Multiple orientation changes are deterministic and may form stepped two-dimensional layouts without nested panels.
+The former experimental Container routing properties `Flip` and sibling-routing `Orientation` are obsolete and MUST NOT be authored.
 
-When a Flip-constrained text value exceeds its available width, visible text is clipped with an ellipsis. SourcePicture continues to use contain behavior and preserves aspect ratio.
-
-`Container.Font` exists; its exact grammar remains NOT YET SPECIFIED.
+Text constrained by an explicit/fill width uses single-line ellipsis overflow. SourcePicture uses contain behavior and preserves intrinsic PNG alpha and aspect ratio.
 
 ## SourcePicture
 
-SourcePicture references a PNG file only. Intrinsic PNG alpha is preserved.
+SourcePicture references PNG only. Intrinsic PNG alpha is preserved.
 
-## Object visual properties
+## PanelTransparency
 
-A SetLang entity carries its object properties in its typed `Properties` block. There is no `Visual` wrapper in SetLang or SPL. Supported object properties are:
+`PanelTransparency` is defined only for SimplePanel, ActivePanel, and AggregateActivePanel. It is a finite number in `0..1` where `0` is opaque and `1` is fully transparent.
+
+It affects only the panel's own surface: Background, borders and panel-surface shadow. It MUST NOT change the opacity of child panels, Groups, Containers, SourceText, SourcePicture, PNG alpha, interaction, geometry, layout, Parallax or content shadows.
+
+## Shadow
+
+`Shadow` is defined only for SimplePanel, ActivePanel, and AggregateActivePanel. It is a finite non-negative content-shadow depth/strength.
+
+Shadow follows the visible alpha shape of text glyphs and PNG content owned through that panel's layout tree. Invisible Group nodes do not interrupt ownership. The panel rectangle MUST NOT define the content-shadow shape.
+
+## Object properties
+
+Panel/Container object-property families include:
 
 ```text
 Background
@@ -113,35 +148,54 @@ PictureTint
 Width / Height
 Padding / Gap
 Alignment / Distribution / Direction
+FillHorizontal / FillVertical
+HorizontalAlignment / VerticalAlignment
 Order
-Orientation
-Flip
 Parallax
 PanelTransparency
 Shadow
 ```
 
-Type defaults and inheritance are SetLang semantics. AggregateActivePanel inherits ActivePanel visual defaults; only placement and dimensions may differ, per its existing parity rule. Concrete object property values override inherited type defaults.
+Not every property is valid on every type. Group has only the structural property set defined in the Group section.
 
-### PanelTransparency
+## SetLang serialization
 
-`PanelTransparency` is defined only for `SimplePanel`, `ActivePanel`, and `AggregateActivePanel`. Its value is a finite number in `0..1`: `0` is an opaque panel surface and `1` is a fully transparent panel surface. The property affects only the panel's own surface (`Background`, borders, and the panel-surface shadow). It MUST NOT change the opacity of child panels, Containers, `SourceText`, `SourcePicture`, PNG alpha, interaction, geometry, layout, Parallax, or content shadows. It is not subtree opacity. Container remains a transparent content slot and has no `PanelTransparency` property.
+Inside SPL, panels expose typed panel collections plus ordered `Layout[]` content. Group and Container may interleave inside Layout. Example:
 
-### Shadow
+```text
+ActivePanel "Cash row" {
+  Properties {
+    Direction = Vertical
+  }
 
-`Shadow` is defined only for `SimplePanel`, `ActivePanel`, and `AggregateActivePanel`. It is a finite non-negative number representing content-shadow depth/strength. `0` means no content shadow; increasing positive values increase the renderer's shadow depth/strength. The exact physical blur/offset mapping is renderer-private and is not PLang CSS syntax.
+  Layout [
+    Group {
+      Properties {
+        Orientation = Horizontal
+        FillHorizontal = true
+      }
 
-`Shadow` follows the visible alpha shape of content owned directly by that panel: text shadows follow glyphs and PNG shadows follow intrinsic PNG alpha. Transparent PNG pixels cast no content shadow. The panel bounding rectangle MUST NOT define the content-shadow shape. Container has no `Shadow` property.
-
-
-## SetLang serialization in SPL
-
-Inside a `.SPL` SetLang block, PLang uses typed `Properties`, `Containers`, `SimplePanels`, and `ActivePanels` collections. No duplicate Parent/Child property is required. Properties use `Name = Value` syntax. Strings are quoted. `NOT_YET_SPECIFIED` is the canonical token for an existing property whose value is not yet defined.
+      Layout [
+        Container "Icon" { ... }
+        Group {
+          Properties {
+            Orientation = Vertical
+            FillHorizontal = true
+          }
+          Layout [
+            Container "Name" { ... }
+            Container "Meta" { ... }
+          ]
+        }
+        Container "Amount" { ... }
+      ]
+    }
+  ]
+}
+```
 
 ## Runtime lifecycle
 
-SetLang is static runtime input. It is compiled into an immutable Object Plan before the hot application-data path. SetData updates MUST NOT cause SetLang parsing, composition or recompilation. A SetLang change requires a new Object Plan compilation.
+SetLang is static runtime input. It is compiled into an immutable private Object Plan before the hot SetData path. SetData updates MUST NOT reparse or recompile SetLang. Structural or object-property edits require a new Object Plan / RuntimeHandle.
 
-## Typed three-layer panel structure
-
-SetLang has exactly three physical panel layers: BasePanel, SimplePanel, ActivePanel. Generic `children` is not part of SetLang. BasePanel contains typed `Properties`, `Containers`, `SimplePanels`; SimplePanel contains typed `Properties`, `Containers`, `ActivePanels`; ActivePanel contains typed `Properties`, `Containers`. AggregateActivePanel is a special ActivePanel on the Active physical layer and is owned as an optional 0..1 item by `SimplePanel.Properties.AggregateActivePanels`.
+An editor may keep a mutable authored model and repeatedly validate, compile and replace a preview RuntimeHandle. That editor workflow does not change production runtime immutability.

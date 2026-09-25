@@ -1,185 +1,178 @@
 # SPL reference
 
-`.SPL` is the SetPlan file format. A SetPlan packages exactly three independent Set objects: SetLang, SetData, and SetRender.
+`.SPL` is the SetPlan authored format. A SetPlan contains exactly three independent Sets: SetLang, SetData and SetRender.
 
 ## Top-level shape
 
 ```text
-SetLang {
-  Name = "модель"
-  Version = 1
-  Data { ... }
-}
-
-SetData {
-  Name = "данные"
-  Version = 1
-  Data { ... }
-}
-
-SetRender {
-  Name = "сцена"
-  Version = 1
-  Data { ... }
-}
+SetLang { Name = "model" Version = 1 Data { ... } }
+SetData { Name = "data" Version = 1 Data { ... } }
+SetRender { Name = "scene" Version = 1 Data { ... } }
 ```
 
-`Name`, `Version`, and `Data` are peer properties of each Set object.
+## Typed panel structure
 
-## Typed SetLang grammar
-
-SetLang does not use a generic `children[]` collection.
+Panel hierarchy remains typed. Panel content uses ordered `Layout[]`.
 
 ```text
 BasePanel "Application" {
   Properties {
-    Background = "#031421"
+    Direction = Vertical
     Padding = 12
   }
 
-  Containers [
-    Container "Background art" {
+  Layout [ ... Group | Container ... ]
+  SimplePanels [ ... ]
+}
+```
+
+SimplePanel uses `Layout[]` plus `ActivePanels[]`. ActivePanel and AggregateActivePanel use `Layout[]` for their visible content.
+
+## Group
+
+Group is invisible and has no Login.
+
+```text
+Group {
+  Properties {
+    Orientation = Horizontal
+    FillHorizontal = true
+    FillVertical = false
+    Gap = 8
+  }
+
+  Layout [
+    Container "Icon" { ... }
+    Group {
       Properties {
-        Transparency = 0
+        Orientation = Vertical
+        FillHorizontal = true
       }
-    }
-  ]
-
-  SimplePanels [
-    SimplePanel "Cash group" {
-      Properties {
-        AggregateActivePanels [
-          AggregateActivePanel "Cash group header" {
-            Properties {
-              Visible = "Yes"
-            }
-            Containers [ ... ]
-          }
-        ]
-      }
-
-      Containers [ ... ]
-
-      ActivePanels [
-        ActivePanel "Main cash" {
-          Properties {
-            Parallax = 4
-          }
-          Containers [ ... ]
-        }
+      Layout [
+        Container "Title" { ... }
+        Container "Subtitle" { ... }
       ]
     }
   ]
 }
 ```
-The repository's [example SetPlan](../plans/example%20render.SPL) is the concrete current-format example.
 
-## Containers and SetData
+`Layout[]` order is preserved exactly. Groups may recursively contain Group and Container siblings in any order.
 
-A Container is an addressable visible-content slot. Its `Login` is the key used by SetData.
+## Fill semantics
+
+Group and Container both support:
 
 ```text
-Container "Main cash.Amount" {
+FillHorizontal = true | false
+FillVertical = true | false
+```
+
+The axes are independent. Missing values mean `false`.
+
+On a parent's active axis, fixed/intrinsic children and gaps are reserved first. Remaining free space is divided equally among children whose matching Fill property is true.
+
+Examples:
+
+```text
+A.FillHorizontal = true
+B.FillHorizontal = true
+```
+
+-> A and B each receive one half of remaining horizontal space.
+
+```text
+A.Width = 80
+A.FillHorizontal = false
+B.FillHorizontal = true
+```
+
+-> A reserves 80, B receives the remaining horizontal space.
+
+## Container
+
+Container requires unique Login and is the SetData-addressable content slot.
+
+```text
+Container "Cash.Name" {
   Properties {
-    TextColor = "#E8F2FF"
-    FontSize = 24
+    FillHorizontal = true
+    HorizontalAlignment = Left
+    VerticalAlignment = Center
+    TextColor = "#FFFFFF"
+    FontSize = 18
   }
 }
 ```
 
 ```text
 SetData {
-  ...
   Data {
-    "Main cash.Amount" {
-      SourceText = "125 000"
+    "Cash.Name" {
+      SourceText = "Основная касса"
     }
   }
 }
 ```
 
-A Container may resolve `SourceText`, `SourcePicture`, or both. Login itself is never visible content.
-
-### Container source order and sibling layout
-
-Container source order is controlled by `Order`:
+Source order when both Picture and Text are present:
 
 ```text
-Order = Positive   # Picture → Text
-Order = Negative   # Text → Picture
+Order = Positive  # Picture -> Text
+Order = Negative  # Text -> Picture
 ```
 
-Default: `Order = Positive`.
+Default is Positive. SourcePicture is PNG with contain behavior. Constrained text uses ellipsis.
 
-Container sibling layout uses:
-
-```text
-Orientation = Horizontal | Vertical
-Flip = true | false
-```
-
-Example:
+## Transparent composition example
 
 ```text
-Containers [
-  Container "Cash icon" {
-    Properties {
-      Orientation = Horizontal
-      Flip = false
-    }
-  }
-
-  Container "Cash name" {
-    Properties {
-      Orientation = Horizontal
-      Flip = false
-    }
-  }
-
-  Container "Cash type" {
-    Properties {
-      Orientation = Horizontal
-      Flip = true
-    }
-  }
-
-  Container "Cash amount" {
-    Properties {
-    }
-  }
-]
-```
-
-With a horizontal parent flow, the third Container consumes the available remaining horizontal space while reserving room for the amount, so the amount is pushed toward the right boundary.
-
-If `Orientation` is absent, layout continues in the current direction. If `Flip` is absent, its default is `false`.
-
-A constrained text source uses single-line ellipsis overflow. A picture source continues to fit with contain behavior.
-
-## Object properties
-
-Current object-property families include geometry, layout, borders, colors, typography, picture tint, parallax, panel-surface transparency, and alpha-shaped content shadow. `PanelTransparency` and `Shadow` are valid only on SimplePanel, ActivePanel, and AggregateActivePanel; Container remains a transparent content slot. See [PLANG_CANON.md](PLANG_CANON.md) for the canonical list and semantics.
-
-Example panel properties:
-
-```text
-ActivePanel "Floating action" {
+ActivePanel "Main cash" {
   Properties {
     PanelTransparency = 1
-    Shadow = 8
+    Shadow = 7
+    Direction = Vertical
+    Height = 68
   }
-  Containers [ ... ]
+
+  Layout [
+    Group {
+      Properties {
+        Orientation = Horizontal
+        FillHorizontal = true
+        FillVertical = true
+      }
+      Layout [
+        Container "Icon" { ... }
+        Group {
+          Properties {
+            Orientation = Vertical
+            FillHorizontal = true
+            FillVertical = true
+          }
+          Layout [
+            Container "Name" { ... }
+            Container "Meta" { ... }
+          ]
+        }
+        Group {
+          Properties { Orientation = Vertical }
+          Layout [
+            Container "Amount" { ... }
+            Container "Currency" { ... }
+          ]
+        }
+        Container "Arrow" { ... }
+      ]
+    }
+  ]
 }
 ```
-
-`PanelTransparency = 1` removes the panel surface without hiding its Container content. `Shadow` follows text glyphs and PNG alpha rather than the panel rectangle.
-
-Unknown properties are ignored by an engine that does not know them. Missing known properties use the defined inheritance/default behavior. Structural types are not subject to this tolerant-property rule.
 
 ## SetRender
 
-SetRender contains scene/global values only. It must not contain object addressing or object-specific geometry/style. See [SET_RENDER_CANON.md](SET_RENDER_CANON.md).
+SetRender remains scene/global only and MUST NOT contain object addressing or object-specific geometry/style.
 
 ## Undefined semantics
 
-`NOT_YET_SPECIFIED` means the property exists but its value/semantics have not yet been defined. It must not be replaced by an inferred implementation.
+`NOT_YET_SPECIFIED` means an existing property/value contract has not yet been defined. It must not be replaced by inferred behavior.
