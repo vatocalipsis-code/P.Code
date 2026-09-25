@@ -1,6 +1,8 @@
-# PlaneCode
+# P.Code
 
-PlaneCode is a standalone declarative interface engine. Applications describe an interface with an `.SPL` SetPlan; PlaneCode validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
+P.Code is a standalone declarative interface engine. Applications describe an interface with an `.SPL` SetPlan; P.Code validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
+
+**Former name:** `PlaneCode` (retained only in historical release records and compatibility-sensitive identifiers).
 
 **Current release:** `2.9.1`
 
@@ -23,7 +25,7 @@ SetData.Data ----------------------------------------------live-----> Renderer
 SetRender.Data --------------------------------------------scene---> Renderer
 ```
 
-PlaneCode has exactly three physical panel layers:
+P.Code has exactly three physical panel layers:
 
 ```text
 BasePanel -> SimplePanel -> ActivePanel

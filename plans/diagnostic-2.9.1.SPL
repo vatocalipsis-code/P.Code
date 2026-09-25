@@ -83,7 +83,7 @@ SetData {
       SourcePicture = "./assets/menu-grid.png"
     }
     "Diagnostic Title" {
-      SourceText = "PlaneCode 2.9.1"
+      SourceText = "P.Code 2.9.1"
     }
     "Diagnostic Subtitle" {
       SourceText = "transparent surface + alpha shadow"

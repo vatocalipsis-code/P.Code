@@ -1,4 +1,4 @@
-name: Deploy PlaneCode
+name: Deploy P.Code
 
 on:
   push:

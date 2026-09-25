@@ -1,5 +1,5 @@
 /**
- * Browser renderer for a compiled PlaneCode Object Plan.
+ * Browser renderer for a compiled P.Code Object Plan.
  *
  * Receives structure already compiled from SetLang, live values from SetData,
  * and scene defaults from SetRender. SetData patches update bound Containers

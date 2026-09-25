@@ -1,6 +1,8 @@
-# PlaneCode documentation
+# P.Code documentation
 
 This directory separates **current reference** from **historical release notes**.
+
+The project's official current name is **P.Code**. `PlaneCode` is its historical former name and remains in historical release records and compatibility-sensitive identifiers where renaming could break consumers.
 
 ## Current reference
 

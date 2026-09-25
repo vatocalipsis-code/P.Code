@@ -1,8 +1,8 @@
-# PlaneCode architecture
+# P.Code architecture
 
 ## Contracts
 
-PlaneCode keeps four responsibilities separate:
+P.Code keeps four responsibilities separate:
 
 - **PLang / SetLang** describes concrete interface objects and their object-specific properties.
 - **SetData** supplies live visible values to Containers.
@@ -25,7 +25,7 @@ SetRender = { Name, Version, Data }
 
 ## Three physical panel layers
 
-There are exactly three physical panel layers in the current PlaneCode generation:
+There are exactly three physical panel layers in the current P.Code generation:
 
 ```text
 BasePanel -> SimplePanel -> ActivePanel
@@ -77,7 +77,7 @@ Do not create an intermediate `Visual` layer. Object properties live in the type
 
 ## Compatibility inside one engine generation
 
-The structural grammar is fixed for one PlaneCode engine generation. Properties may evolve independently.
+The structural grammar is fixed for one P.Code engine generation. Properties may evolve independently.
 
 ```text
 known property   -> apply it
@@ -85,7 +85,7 @@ missing property -> inherit / use its defined default
 unknown property -> ignore it
 ```
 
-A new structural object type is not a property extension. It belongs to a new PlaneCode engine generation.
+A new structural object type is not a property extension. It belongs to a new P.Code engine generation.
 
 ## Identity and visible content
 

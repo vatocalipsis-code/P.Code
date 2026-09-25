@@ -1,5 +1,5 @@
 /**
- * PlaneCode 2.9.1 browser/PWA integration entry point.
+ * P.Code 2.9.1 browser/PWA integration entry point.
  *
  * Validates released Sets, compiles SetLang once, renders the Object Plan,
  * and exposes live SetData patching. Gesture/PWA wiring is integration logic,

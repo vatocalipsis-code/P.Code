@@ -3,7 +3,7 @@ export const setData = {
   Version: 1,
   Data: {
     "Diagnostic Picture": { SourcePicture: "./assets/menu-grid.png" },
-    "Diagnostic Title": { SourceText: "PlaneCode 2.9.1" },
+    "Diagnostic Title": { SourceText: "P.Code 2.9.1" },
     "Diagnostic Subtitle": { SourceText: "transparent surface + alpha shadow" }
   }
 };

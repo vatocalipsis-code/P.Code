@@ -540,7 +540,7 @@ SetData {
       SourcePicture = "./assets/processing-sync.png"
     }
     "PlaneCode Name" {
-      SourceText = "PlaneCode · Reference"
+      SourceText = "P.Code · Reference"
     }
     "Reference Menu Icon" {
       SourcePicture = "./assets/menu-grid.png"

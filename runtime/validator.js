@@ -1,5 +1,5 @@
 /**
- * PlaneCode contract validators.
+ * P.Code contract validators.
  *
  * SetLang/SetData validation and SetRender validation stay separate. Object
  * properties belong to SetLang; SetRender is scene-only. Validation must not

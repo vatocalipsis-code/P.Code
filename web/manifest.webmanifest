@@ -1,6 +1,6 @@
 {
-  "name": "PlaneCode",
-  "short_name": "PlaneCode",
+  "name": "P.Code",
+  "short_name": "P.Code",
   "start_url": "./?app=2.9.1",
   "scope": "./",
   "display": "standalone",

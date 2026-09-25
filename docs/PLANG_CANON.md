@@ -2,7 +2,7 @@
 
 Status: CURRENT
 
-PLang is the declarative language inside PlaneCode.
+PLang is the declarative language inside P.Code.
 
 PLang defines interface entities, their identity, structural relations, and the physical/visual properties of those concrete objects. In SPL this object contract is carried by SetLang.
 
