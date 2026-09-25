@@ -1,0 +1,12 @@
+{
+  "name": "p-code",
+  "version": "2.10.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

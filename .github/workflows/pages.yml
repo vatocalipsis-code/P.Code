@@ -1,5 +1,5 @@
-name: Deploy PlaneCode
-# trial-preview
+name: Test and deploy P.Code
+# layout-group target preview
 
 on:
   push:
@@ -16,7 +16,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Contract tests
+        run: npm test
+
   deploy:
+    needs: test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -39,6 +52,8 @@ jobs:
           cp runtime/setlang-compiler.js _site/runtime/setlang-compiler.js
           cp runtime/web-renderer.js _site/runtime/web-renderer.js
           cp runtime/validator.js _site/runtime/validator.js
+          cp runtime/public-runtime-core.js _site/runtime/public-runtime-core.js
+          cp runtime/public-runtime.js _site/runtime/public-runtime.js
           cp runtime/render-bindings.js _site/runtime/render-bindings.js
           cp editor/index.html editor/editor.js editor/editor.css _site/editor/
           cp release/set-lang.js _site/release/set-lang.js

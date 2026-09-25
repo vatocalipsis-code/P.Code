@@ -1,8 +1,8 @@
-# PlaneCode
+# P.Code
 
-PlaneCode is a standalone declarative interface engine. Applications describe an interface with an `.SPL` SetPlan; PlaneCode validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
+P.Code is a standalone declarative interface engine. Applications describe an interface with an .SPL SetPlan; P.Code validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
 
-**Current release:** `2.9.1`
+Current target release: 2.10.0
 
 ## Start here
 
@@ -12,39 +12,32 @@ PlaneCode is a standalone declarative interface engine. Applications describe an
 - [Runtime reference](docs/RUNTIME_REFERENCE.md)
 - [PLang / SetLang canon](docs/PLANG_CANON.md)
 - [SetRender canon](docs/SET_RENDER_CANON.md)
-- [2.9.1 release contract](docs/PLANE_CODE_2.9.1.md)
-- [Example SetPlan](plans/example%20render.SPL)
+- [2.10.0 release delta](docs/PLANE_CODE_2.10.0.md)
 
-## Runtime at a glance
+## Public runtime
 
-```text
-SetLang.Data --validate--> compile once --> immutable Object Plan --┐
-SetData.Data ----------------------------------------------live-----> Renderer
-SetRender.Data --------------------------------------------scene---> Renderer
-```
+Host code imports only PlaneCodeEngine from runtime/public-runtime.js. The frozen v1 flow is:
 
-PlaneCode has exactly three physical panel layers:
+1. getDescriptor or connect with pcode.layout-group.v1 and serialization version 1.
+2. prepare complete SetLang, SetData, and SetRender envelopes.
+3. mount a RuntimeHandle, attach an EventSink when event tokens exist, and enable interaction.
+4. apply full SetData or SetRender replacements, then disable or dispose.
+5. close the connection to drain all runtimes.
 
-```text
-BasePanel -> SimplePanel -> ActivePanel
-```
+SetLang compiles once per RuntimeHandle. Hot SetData replacement does not reparse or recompile SetLang.
 
-`AggregateActivePanel` is a special ActivePanel on the Active layer, not a fourth layer. Visible text and pictures are emitted through `Container` objects.
+## Structure
+
+P.Code has exactly three physical panel layers: BasePanel, SimplePanel, and ActivePanel. AggregateActivePanel is a special ActivePanel, not a fourth layer. Ordered recursive Group/Layout structure stays inside SetLang. Visible text and PNG pictures are emitted through Container objects.
 
 ## Repository layout
 
-```text
-release/   Released Set objects used by the working web build
-runtime/   Compiler, validators, renderer, and runtime helpers
-plans/     Example .SPL SetPlans
-docs/      Current reference, canons, and historical release notes
-web/       Browser/PWA entry point and service worker
-```
+- release/: complete Set envelopes used by the client screen
+- runtime/: public boundary, internal lifecycle, compiler, validators, and renderer
+- tests/: Public Runtime API contract tests
+- plans/: example .SPL SetPlans
+- docs/: current reference, canons, and release history
+- web/: browser/PWA integration and packaged PNG assets
+- editor/: preserved experimental authoring surface for the target generation
 
-## Run
-
-The released browser build is served as a static web application (including GitHub Pages). `web/main.js` is the current integration entry point.
-
-## Documentation rule
-
-Current behavior is described by the reference documents above and by comments beside the implementation. Historical `PLANE_CODE_*.md` files record earlier releases; they are not a substitute for the current reference.
+The feature editor is preserved as a separate authoring workflow. It does not change production runtime immutability or the Host-facing boundary.

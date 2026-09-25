@@ -1,64 +1,49 @@
 # Runtime reference
 
-## Current browser pipeline
+## Public boundary
 
-`web/main.js` wires the current release as follows:
+The only Host-facing JavaScript boundary is exported by runtime/public-runtime.js:
 
-```text
-release Set objects
-      |
-      v
-validatePLang + validateSetRender
-      |
-      v
-compileSetLang(SetLang.Data)
-      |
-      v
-immutable Object Plan
-      |
-      + SetData.Data + SetRender.Data
-      v
-renderPlaneCode(...)
-```
+- PlaneCodeEngine.getDescriptor()
+- PlaneCodeEngine.connect(selection)
+- ConnectionHandle.prepare({SetLang, SetData, SetRender})
+- ConnectionHandle.close()
+- RuntimeHandle.mount(RenderTarget)
+- RuntimeHandle.setEventSink(sinkOrNull)
+- RuntimeHandle.applySetData(fullSetData)
+- RuntimeHandle.applySetRender(fullSetRender)
+- RuntimeHandle.enableInteraction()
+- RuntimeHandle.disableInteraction()
+- RuntimeHandle.dispose()
 
-## SetLang compiler
+The descriptor is fixed at ComponentVersion 2.10.0, GenerationId pcode.layout-group.v1, serialization version 1, with no capabilities. runtime/public-runtime-core.js is an internal implementation and test seam; Host code must not import it.
 
-`runtime/setlang-compiler.js` converts the typed SetLang model into the internal immutable Object Plan. The internal plan may use `children` for fast rendering; this does not make `children` part of SetLang or SPL grammar.
+All ordinary outcomes are returned as Completed, Rejected, or Failed. A renderer failure is fail-stop and disposes that runtime. Connection close drains and disposes every prepared runtime and is idempotent.
 
-The compiler also turns a Container Login into its runtime `dataSlot`.
+## Lifecycle and isolation
 
-## Validation
+A runtime moves through PREPARED, MOUNTED_INACTIVE, ACTIVE, and DISPOSED. A render target may have one mounted runtime. Multiple runtimes may be active on different targets and keep independent state, event counters, sinks, and data.
 
-`runtime/validator.js` validates unique Logins, typed panel arrays, AggregateActivePanels cardinality 0..1, known property value shapes, SetData references, and SetRender's scene-only boundary.
+MOUNTED_INACTIVE is physically inert. enableInteraction requires an EventSink when the compiled plan contains OnPress or OffPress tokens. disableInteraction cancels the current pointer claim before returning. Event callbacks are delivered inside the runtime's serialized operation boundary; operations requested by a callback are queued after that callback.
 
-Validation does not transfer semantics between the three Sets.
+## Validation and compilation
 
-## Rendering
+SetLang, SetData, and SetRender are full Set envelopes with non-empty Name, a positive integer Version, and Data. SetLang is validated and compiled once into an immutable Object Plan during prepare. SetData updates validate the complete replacement and patch bound Container slots without recompiling SetLang.
 
-`runtime/web-renderer.js` renders the Object Plan into DOM nodes. It reads object rules from the compiled plan, visible values from SetData, and scene defaults from SetRender.
+SourcePicture accepts local PNG references only. URI schemes, protocol-relative paths, parent traversal, backslashes, and non-PNG extensions are rejected.
 
-### Live SetData updates
+## Rendering and events
 
-`patchSetData(...)` replaces only the visible content of already-bound Container slots. It does not re-read or recompile SetLang.
+runtime/web-renderer.js reads object rules from the immutable plan, values from SetData, and scene defaults from SetRender. PNG intrinsic alpha and aspect ratio are preserved. PictureTint uses the PNG as an alpha mask.
 
-### Parallax
+Primary-pointer OnPress is emitted on a valid press. OffPress is emitted only for a same-panel successful release. Pointer cancellation, capture loss, movement into navigation, disableInteraction, and dispose cancel the claim. Each event carries a connection-unique EventId, EventType, ObjectLogin, and the opaque token.
 
-The renderer resolves parallax in this order:
+## Released demonstrator
 
-```text
-object Properties.Parallax
-        -> otherwise SetRender.Data.Parallax
-        -> otherwise 0
-```
+The released client screen is the minimum image-path demonstrator. release/set-data.js binds expense-document.png and processing-sync.png through SourcePicture. The files are packaged under web/assets, validated as local PNG paths, rendered through Container data slots, and deployed by the same Pages artifact as the runtime.
 
-In 2.9.1 the browser input is `pointermove`, normalized to the render root and applied with `requestAnimationFrame`. iPhone device-orientation input is not implemented yet.
-
-## Current integration entry point
-
-`web/main.js` is the authoritative browser wiring for 2.9.1. It also owns the current PWA service-worker registration, horizontal BasePanel navigation, and pull-to-refresh behavior.
+web/main.js consumes the public boundary through connect, prepare, mount, and enableInteraction. Client navigation, pull-to-refresh, service-worker registration, and full SetData replacement remain integration behavior outside PLang.
 
 ## Earlier utilities
 
-`runtime/compositor.js` represents an earlier composition path and is not imported by the current `web/main.js`. Do not infer the current SetLang grammar from its generic `children` traversal.
-
-`runtime/render-bindings.js` is currently a no-op integration placeholder.
+runtime/compositor.js is an earlier composition path and is not the public boundary. runtime/render-bindings.js remains an integration placeholder.
