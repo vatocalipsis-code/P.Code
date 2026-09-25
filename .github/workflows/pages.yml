@@ -2,7 +2,7 @@ name: Deploy PlaneCode
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "feature/container-layout-trial"]
   workflow_dispatch:
 
 permissions:
