@@ -1,8 +1,8 @@
 export const setRender = {
-  Name: "diagnostic-scene-2.9.1",
+  Name: "tcash-container-layout-preview-scene",
   Version: 1,
   Data: {
-    PanelSpacing: 11,
+    PanelSpacing: 8,
     BackgroundColor: "#031421",
     PanelColor: "#0D2D43",
     BorderColor: "#1A405A",
