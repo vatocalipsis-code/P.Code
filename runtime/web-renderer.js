@@ -221,7 +221,7 @@ function renderContainerSequence(containers, index, inheritedDirection, dataSet,
   wrapper.dataset.planeLayoutRun = "";
   wrapper.style.display = "flex";
   wrapper.style.flexDirection = direction === "Horizontal" ? "row" : "column";
-  wrapper.style.alignItems = "stretch";
+  wrapper.style.alignItems = "flex-start";
   wrapper.style.minWidth = "0";
   wrapper.style.minHeight = "0";
   if (gap) wrapper.style.gap = px(gap);
