@@ -61,15 +61,34 @@ An absent source does not participate and reserves no space.
 
 One present source is centered.
 
-When both are present:
+When both are present, source order is controlled by `Order`:
 
 ```text
-Orientation = Positive
+Order = Positive
 Picture → Text
 
-Orientation = Negative
+Order = Negative
 Text → Picture
 ```
+
+If `Order` is absent, its default is `Positive`.
+
+Container also participates in sibling layout through two independent properties:
+
+```text
+Orientation = Horizontal | Vertical
+Flip = true | false
+```
+
+`Orientation` defines the direction from the current Container to the next Container in the same typed `Containers[]` sequence. If `Orientation` is absent, layout continues in the current direction inherited from the parent panel or from the latest preceding Container orientation.
+
+`Flip = false` is the default. The Container keeps its intrinsic layout size and the next Container begins after it in the current orientation.
+
+`Flip = true` makes the current Container consume the available remaining space along its `Orientation`, while preserving the required space of all following Containers in that sequence. In horizontal orientation this pushes the tail toward the right boundary; in vertical orientation it pushes the tail toward the bottom boundary.
+
+Multiple orientation changes are deterministic and may form stepped two-dimensional layouts without nested panels.
+
+When a Flip-constrained text value exceeds its available width, visible text is clipped with an ellipsis. SourcePicture continues to use contain behavior and preserves aspect ratio.
 
 `Container.Font` exists; its exact grammar remains NOT YET SPECIFIED.
 
@@ -94,6 +113,9 @@ PictureTint
 Width / Height
 Padding / Gap
 Alignment / Distribution / Direction
+Order
+Orientation
+Flip
 Parallax
 PanelTransparency
 Shadow
