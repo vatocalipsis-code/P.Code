@@ -3,7 +3,7 @@ name: Test and deploy P.Code
 
 on:
   push:
-    branches: ["main", "feature/container-layout-trial", "feature/canonical-editable-input-v1"]
+    branches: ["main", "feature/container-layout-trial", "feature/canonical-editable-input-v1", "feature/theme-skin-editor-v1"]
   workflow_dispatch:
 
 permissions:
@@ -56,7 +56,7 @@ jobs:
           cp runtime/public-runtime-core.js _site/runtime/public-runtime-core.js
           cp runtime/public-runtime.js _site/runtime/public-runtime.js
           cp runtime/render-bindings.js _site/runtime/render-bindings.js
-          cp editor/index.html editor/editor.js editor/editor.css _site/editor/
+          cp editor/index.html editor/editor.js editor/editor.css editor/spl.js _site/editor/
           cp release/set-lang.js _site/release/set-lang.js
           cp release/set-data.js _site/release/set-data.js
           cp release/set-render.js _site/release/set-render.js
