@@ -6,6 +6,7 @@ import { validatePLang, validateSetRender } from '../runtime/validator.js';
 import { compileSetLang } from '../runtime/setlang-compiler.js';
 import { renderPlaneCode } from '../runtime/web-renderer.js';
 import { parseSPL, serializeSPL } from './spl.js';
+import { sliderSpecFor } from './control-specs.js';
 
 const CAPABILITIES=['pcode.editable-input.v1'];
 const clone=value=>structuredClone(value);
@@ -110,13 +111,39 @@ function setProp(node,key,value){
   else node.Properties[key]=value;
   renderAll();
 }
+function setPropLive(node,key,value){
+  node.Properties??={};
+  if(value===undefined||value==='') delete node.Properties[key];
+  else node.Properties[key]=value;
+  renderPreview();
+}
 function numberField(node,key,label=key){
   const {el,control}=row(label);
-  const input=document.createElement('input');
-  input.type='number'; input.step='any';
-  input.value=node.Properties?.[key]??'';
-  input.onchange=()=>setProp(node,key,input.value===''?undefined:Number(input.value));
-  control.append(input,clearButton(()=>setProp(node,key,undefined)));
+  const wrap=document.createElement('div');wrap.className='numericControl';
+  const slider=document.createElement('input');slider.type='range';slider.className='rangeInput';
+  const input=document.createElement('input');input.type='number';input.className='numberInput';
+  const current=node.Properties?.[key];
+  const spec=sliderSpecFor(key,current);
+  slider.min=String(spec.min);slider.max=String(spec.max);slider.step=String(spec.step);
+  slider.value=String(current??Math.max(spec.min,Math.min(spec.max,0)));
+  input.step=String(spec.step);input.value=current??'';
+  const apply=value=>{
+    node.Properties??={};
+    node.Properties[key]=value;
+    slider.value=String(value);input.value=String(value);
+    renderPreview();
+  };
+  slider.oninput=()=>apply(Number(slider.value));
+  input.oninput=()=>{
+    if(input.value==='')return;
+    const value=Number(input.value);if(!Number.isFinite(value))return;
+    const live=sliderSpecFor(key,value);slider.min=String(live.min);slider.max=String(live.max);slider.value=String(value);
+    node.Properties??={};node.Properties[key]=value;renderPreview();
+  };
+  input.onchange=()=>{if(input.value==='')setProp(node,key,undefined);else renderAll()};
+  const clear=clearButton(()=>setProp(node,key,undefined));
+  wrap.append(slider,input);
+  control.append(wrap,clear);
   inspector.append(el);
 }
 function textField(node,key,label=key){
@@ -159,9 +186,24 @@ function booleanField(node,key,label=key){
 }
 function sceneNumber(key,label=key){
   const {el,control}=row(label);
-  const input=document.createElement('input'); input.type='number'; input.step='any'; input.value=project.SetRender.Data[key]??'';
-  input.onchange=()=>{if(input.value==='')delete project.SetRender.Data[key];else project.SetRender.Data[key]=Number(input.value);renderPreview()};
-  control.append(input); inspector.append(el);
+  const wrap=document.createElement('div');wrap.className='numericControl';
+  const slider=document.createElement('input');slider.type='range';slider.className='rangeInput';
+  const input=document.createElement('input');input.type='number';input.className='numberInput';
+  const current=project.SetRender.Data[key];
+  const spec=sliderSpecFor(key,current);
+  slider.min=String(spec.min);slider.max=String(spec.max);slider.step=String(spec.step);
+  slider.value=String(current??Math.max(spec.min,Math.min(spec.max,0)));
+  input.step=String(spec.step);input.value=current??'';
+  const apply=value=>{project.SetRender.Data[key]=value;slider.value=String(value);input.value=String(value);renderPreview()};
+  slider.oninput=()=>apply(Number(slider.value));
+  input.oninput=()=>{
+    if(input.value==='')return;
+    const value=Number(input.value);if(!Number.isFinite(value))return;
+    const live=sliderSpecFor(key,value);slider.min=String(live.min);slider.max=String(live.max);slider.value=String(value);
+    project.SetRender.Data[key]=value;renderPreview();
+  };
+  input.onchange=()=>{if(input.value===''){delete project.SetRender.Data[key];renderPreview()}};
+  wrap.append(slider,input);control.append(wrap);inspector.append(el);
 }
 function sceneColor(key,label=key){
   const {el,control}=row(label);
@@ -275,7 +317,7 @@ function renderInspector(){
     numberField(node,'Shadow');
   }
   orderControls();
-  inspector.append(note('Only properties already defined by P.Code are editable. Absolute X/Y positioning is NOT YET SPECIFIED in PLang and is therefore not fabricated here.'));
+  inspector.append(note('Numeric visual properties use live sliders plus precise numeric input. Font family/resource selection is not shown because Container.Font grammar and embedded SPL resources are NOT YET SPECIFIED.'));
 }
 
 function renderSceneInspector(){
