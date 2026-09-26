@@ -1,1 +1,54 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>P.Code Theme/Skin Editor</title><link rel="stylesheet" href="../runtime/renderer.css"><link rel="stylesheet" href="./editor.css"></head><body><header class="toolbar"><strong>P.Code Theme/Skin Editor</strong><label class="mode"><input id="sceneMode" type="checkbox"> Scene / SetRender</label><span class="spacer"></span><button id="resetSkin">Reset</button><button id="exportSkin">Export Skin</button><button id="exportProject">Export Project</button><label class="fileButton">Import Skin<input id="importSkin" type="file" accept="application/json"></label><span id="status">ready</span></header><main class="workspace"><aside class="treePane"><h2>Objects</h2><p class="hint">Select an object, or enable Scene mode for global SetRender values.</p><div id="tree"></div></aside><section class="previewPane"><div class="previewHeader">Live P.Code preview · UTK.Cash starter context</div><div class="device"><div id="plane-code-root"></div></div></section><aside class="inspectorPane"><h2>Visual properties</h2><div id="inspector"></div></aside></main><script type="module" src="./editor.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>P.Code Theme/Skin Editor</title>
+  <link rel="stylesheet" href="../runtime/renderer.css">
+  <link rel="stylesheet" href="./editor.css">
+</head>
+<body>
+  <header class="toolbar">
+    <strong>P.Code Theme/Skin Editor</strong>
+    <label class="fileButton">Open SPL<input id="openSpl" type="file" accept=".SPL,.spl,text/plain"></label>
+    <span id="sourceName" class="sourceName"></span>
+    <label class="mode"><input id="sceneMode" type="checkbox"> Scene / SetRender</label>
+    <span class="spacer"></span>
+    <button id="resetSkin" type="button">Reset</button>
+    <button id="saveSpl" type="button">Save SPL</button>
+    <button id="exportSkin" type="button">Export Skin</button>
+    <label class="fileButton">Import Skin<input id="importSkin" type="file" accept="application/json"></label>
+    <span id="status">ready</span>
+  </header>
+
+  <main class="workspace">
+    <aside class="treePane">
+      <h2>Layers</h2>
+      <p class="hint">Click a rendered object or choose any layer here. Groups are selectable here because they have no Login by canon.</p>
+      <div id="tree"></div>
+    </aside>
+
+    <section class="previewPane">
+      <div class="previewHeader">
+        <strong>Live P.Code preview</strong>
+        <span>Click an object to edit it. Drag the corner handle to set canonical Width/Height.</span>
+      </div>
+      <div class="device">
+        <div class="previewSurface">
+          <div id="plane-code-root"></div>
+          <div id="selectionBox" class="selectionBox" hidden>
+            <div id="resizeHandle" class="resizeHandle" title="Resize Width / Height"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="inspectorPane">
+      <h2>Properties</h2>
+      <div id="inspector"></div>
+    </aside>
+  </main>
+
+  <script type="module" src="./editor.js"></script>
+</body>
+</html>
