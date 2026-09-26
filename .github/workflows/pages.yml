@@ -3,7 +3,7 @@ name: Test and deploy P.Code
 
 on:
   push:
-    branches: ["main", "feature/container-layout-trial", "feature/canonical-editable-input-v1"]
+    branches: ["main", "feature/container-layout-trial", "feature/canonical-editable-input-v1", "feature/theme-skin-editor-v1"]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/container-layout-trial'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/container-layout-trial' || github.ref == 'refs/heads/feature/theme-skin-editor-v1'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
