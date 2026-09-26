@@ -31,3 +31,18 @@ The editor does not invent absolute position properties. Arbitrary X/Y positioni
 ## Runtime model
 
 Every visual edit validates SetLang/SetRender, compiles a fresh private Object Plan, and renders the preview. Production runtime immutability is unchanged.
+
+
+## Live numeric controls
+
+Continuous numeric visual properties use a range slider together with a precise number field. Slider movement updates the P.Code preview immediately.
+
+The slider is an editor convenience, not a new PLang constraint. For finite values outside the convenience range, the precise numeric field remains authoritative and the slider expands to include the current value. Canonical limits are preserved where the contract defines them, including transparency `0..1` and FontWeight `1..1000`.
+
+Current slider-backed properties include border widths, Width/Height, Padding, Gap, FontSize, FontWeight, Parallax, PanelTransparency, Shadow, PanelSpacing, Transparency, TextTransparency and PictureTransparency.
+
+## Font family/resources decision gate
+
+The current main PLang canon states that `Container.Font` exists but its exact grammar is **NOT YET SPECIFIED**. The current SPL contract also defines no portable binary/resource section for embedded fonts or small assets.
+
+Therefore this editor does not invent a font-family selector, font-resource manifest, base64 blob syntax, resource path table, or other new SPL representation. FontSize and FontWeight remain editable now; font family selection and self-contained font/icon packaging require an explicit canonical representation first.
