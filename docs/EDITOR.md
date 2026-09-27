@@ -1,6 +1,6 @@
 # P.Code Theme/Skin Editor
 
-Status: working editor surface on `feature/theme-skin-editor-v1`.
+Status: working authoring surface in the P.Code 2.11.0 release candidate.
 
 `editor/` is a human-facing authoring surface over existing P.Code/SPL contracts. It is not a new runtime contract and does not create a separate Skin semantic layer.
 

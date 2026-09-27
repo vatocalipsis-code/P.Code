@@ -2,7 +2,7 @@
 
 Status: CURRENT
 
-SetRender is the independent **scene render contract** of PlaneCode.
+SetRender is the independent **scene render contract** of P.Code.
 
 SetRender describes only the global render environment of the scene. It MUST NOT address, identify, inspect, style, size or otherwise describe individual PLang objects. SetRender contains no Login bindings, no `Elements`, and no object `Types`.
 

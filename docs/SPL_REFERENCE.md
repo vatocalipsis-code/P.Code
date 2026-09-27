@@ -20,7 +20,7 @@ Resources {
 }
 ```
 
-`Resources` is optional. v1 allows 0..2 WOFF2 fonts and 0..N PNG pictures, all embedded as base64. URLs, external fetching, TTF/OTF, SVG, archives, nested files and other resource kinds are outside Resources v1.
+`Resources` is optional. v1 allows 0..2 WOFF2 fonts and 0..N PNG pictures, all embedded as base64. Resource names are unique within each collection. Missing referenced resources are validation errors with no silent fallback. URLs, external fetching, TTF/OTF, SVG, archives, nested files and other resource kinds are outside Resources v1.
 
 ## Typed panel structure
 

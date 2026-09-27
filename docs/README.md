@@ -2,6 +2,8 @@
 
 This directory separates current reference from historical release notes.
 
+The project's official current name is **P.Code**. `PlaneCode` is its historical former name and remains in historical release records and compatibility-sensitive identifiers where renaming could break consumers.
+
 ## Current reference
 
 | Document | Purpose |
@@ -11,11 +13,11 @@ This directory separates current reference from historical release notes.
 | [RUNTIME_REFERENCE.md](RUNTIME_REFERENCE.md) | Public Runtime API, lifecycle, validation, events, PNG path, and browser integration |
 | [PLANG_CANON.md](PLANG_CANON.md) | PLang and SetLang canonical semantics |
 | [SET_RENDER_CANON.md](SET_RENDER_CANON.md) | Scene-only SetRender contract |
-| [PLANE_CODE_2.10.0.md](PLANE_CODE_2.10.0.md) | Target-generation release delta |
+| [PLANE_CODE_2.11.0.md](PLANE_CODE_2.11.0.md) | 2.11.0 release-candidate contract and delta |
 
 ## Historical notes
 
-Files named PLANE_CODE_<version>.md below 2.10.0 are release history. Earlier documents may describe structures later superseded. When they conflict with current reference, current reference and current source win.
+Files named PLANE_CODE_<version>.md below 2.11.0 are release history. Earlier documents may describe structures later superseded. When they conflict with current reference, current reference and current source win.
 
 ## Source map
 

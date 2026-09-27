@@ -1,8 +1,8 @@
 # PLang Canon
 
-Status: CURRENT CANDIDATE on `feature/container-layout-trial`
+Status: CURRENT CANDIDATE — P.Code 2.11.0
 
-PLang is the declarative language inside PlaneCode. SetLang owns object identity, physical hierarchy, layout structure, geometry and object-specific visual properties. SetRender remains scene-only.
+PLang is the declarative language inside P.Code. SetLang owns object identity, physical hierarchy, layout structure, geometry and object-specific visual properties. SetRender remains scene-only.
 
 ## Physical hierarchy
 
@@ -69,7 +69,7 @@ false / true  -> fill available vertical space only
 true  / true  -> fill available space on both axes
 ```
 
-When two or more sibling layout items have Fill enabled on the parent's active axis, the free space remaining after fixed/intrinsic items and Gap is divided equally between those Fill siblings. This is PlaneCode semantics and MUST NOT depend on browser-specific flex heuristics.
+When two or more sibling layout items have Fill enabled on the parent's active axis, the free space remaining after fixed/intrinsic items and Gap is divided equally between those Fill siblings. This is P.Code semantics and MUST NOT depend on browser-specific flex heuristics.
 
 ## Container
 
@@ -115,7 +115,7 @@ The former experimental Container routing properties `Flip` and sibling-routing 
 
 Text constrained by an explicit/fill width uses single-line ellipsis overflow. SourcePicture uses contain behavior and preserves intrinsic PNG alpha and aspect ratio.
 
-Container may select one packaged WOFF2 resource through `Font = "<resource-name>"`. `Font` identifies only the resource/family; `FontSize` and `FontWeight` remain independent properties. A missing referenced font resource is a validation error.
+Container may select one packaged WOFF2 resource through `Font = "<resource-name>"`. `Font` identifies only the resource/family; `FontSize` and `FontWeight` remain independent properties. If `Font` is absent, existing/default renderer font behavior applies. A missing referenced font resource is a validation error; there is no silent fallback.
 
 ## SourcePicture
 

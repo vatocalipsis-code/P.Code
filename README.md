@@ -2,6 +2,8 @@
 
 P.Code is a standalone declarative interface engine. Applications describe an interface with an .SPL SetPlan; P.Code validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
 
+**Former name:** `PlaneCode` (retained only in historical release records and compatibility-sensitive identifiers).
+
 Current target release: 2.11.0
 
 ## Start here
@@ -19,7 +21,7 @@ Current target release: 2.11.0
 Host code imports only PlaneCodeEngine from runtime/public-runtime.js. The frozen v1 flow is:
 
 1. getDescriptor or connect with pcode.layout-group.v1 and serialization version 1; require `pcode.editable-input.v1` when editable controls are needed.
-2. prepare complete SetLang, SetData, and SetRender envelopes.
+2. prepare complete SetLang, SetData, and SetRender envelopes, with optional top-level Resources v1 packaging.
 3. mount a RuntimeHandle, attach an EventSink when event tokens exist, and enable interaction.
 4. apply full SetData or SetRender replacements, then disable or dispose.
 5. close the connection to drain all runtimes.
@@ -38,9 +40,9 @@ P.Code has exactly three physical panel layers: BasePanel, SimplePanel, and Acti
 - plans/: example .SPL SetPlans
 - docs/: current reference, canons, and release history
 - web/: browser/PWA integration and packaged PNG assets
-- editor/: preserved experimental authoring surface for the target generation
+- editor/: working Theme/Skin authoring surface for the target generation
 
-The feature editor is preserved as a separate authoring workflow. It does not change production runtime immutability or the Host-facing boundary.
+The Theme/Skin Editor is an authoring workflow over the same contracts. It does not change production runtime immutability or the Host-facing boundary.
 
 ## Editable input example
 

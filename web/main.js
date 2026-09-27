@@ -1,13 +1,13 @@
 /**
- * P.Code 2.10.0 browser/PWA integration through Public Runtime API v1.
+ * P.Code 2.11.0 browser/PWA integration through Public Runtime API v1.
  * Navigation and refresh remain client-integration behavior.
  */
-import {setLang} from "./release/set-lang.js?v=2.10.0";
-import {setData} from "./release/set-data.js?v=2.10.0";
-import {setRender} from "./release/set-render.js?v=2.10.0";
-import {PlaneCodeEngine} from "./runtime/public-runtime.js?v=2.10.0";
+import {setLang} from "./release/set-lang.js?v=2.11.0";
+import {setData} from "./release/set-data.js?v=2.11.0";
+import {setRender} from "./release/set-render.js?v=2.11.0";
+import {PlaneCodeEngine} from "./runtime/public-runtime.js?v=2.11.0";
 
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js?v=2.10.0",{updateViaCache:"none"}).then(registration=>registration.update()).catch(()=>{});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js?v=2.11.0",{updateViaCache:"none"}).then(registration=>registration.update()).catch(()=>{});
 
 const root=document.querySelector("#plane-code-root");
 const connectionResult=PlaneCodeEngine.connect({
