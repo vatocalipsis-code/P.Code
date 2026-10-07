@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createPlaneCodeEngine} from "../runtime/public-runtime-core.js";
 import {compileSetLang} from "../runtime/setlang-compiler.js";
-import {validatePLang,validateSetData,validateSetEnvelope,validateSetRender,validateResources,isCanonicalPngFile} from "../runtime/validator.js";
+import {validatePLang,validateSetData,validateSetEnvelope,validateSetRender,validateResources,isCanonicalPngFile,isCanonicalImageFile} from "../runtime/validator.js";
 
 const setLang={Name:"test-lang",Version:1,Data:[{
   Login:"Base",Properties:{Direction:"Vertical"},Layout:[],SimplePanels:[{
@@ -109,6 +109,9 @@ test("PNG source validation rejects remote, traversal and non-PNG values",()=>{
   assert.equal(isCanonicalPngFile("https://example.test/icon.png"),false);
   assert.equal(isCanonicalPngFile("../icon.png"),false);
   assert.equal(isCanonicalPngFile("./assets/icon.jpg"),false);
+  assert.equal(isCanonicalImageFile("./assets/icon.webp"),true);
+  assert.equal(isCanonicalImageFile("../icon.webp"),false);
+  assert.equal(isCanonicalImageFile("https://example.test/icon.webp"),false);
 });
 
 test("editable input requires explicit capability negotiation",async()=>{

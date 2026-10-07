@@ -93,6 +93,9 @@ export function isCanonicalPngFile(value){
   if(/^[a-z][a-z0-9+.-]*:/i.test(value)||value.startsWith("//")||value.includes("\\")||value.includes("\0"))return false;
   return !value.split("/").includes("..");
 }
+export function isCanonicalImageFile(value){
+  return (isCanonicalPngFile(value)||typeof value==="string"&&/\.webp$/i.test(value)&&isCanonicalPngFile(value.slice(0,-5)+".png"));
+}
 
 function collectEditableLogins(pLang){
   const result=new Set();
@@ -128,7 +131,7 @@ export function validateSetData(data,pLang,capabilities=[],resources=null){
         if(item.SourcePicture.startsWith("res:")){
           const name=item.SourcePicture.slice(4);
           if(!name||resourceIndex===true||!resourceIndex.pictureNames.has(name))fail("SourcePicture for "+login+" references missing picture resource "+name);
-        }else if(!isCanonicalPngFile(item.SourcePicture))fail("SourcePicture for "+login+" must reference a local PNG file or res:<name>");
+        }else if(!isCanonicalImageFile(item.SourcePicture))fail("SourcePicture for "+login+" must reference a local PNG/WebP file or res:<name>");
       }
     }
   }

@@ -30,11 +30,11 @@ MOUNTED_INACTIVE is physically inert. enableInteraction requires an EventSink wh
 
 `SetLang`, `SetData`, and `SetRender` are full Set envelopes with non-empty Name, a positive integer Version, and Data. Optional `Resources` v1 is validated separately as packaging, not as a fourth Set. SetLang is validated and compiled once into an immutable Object Plan during prepare. SetData updates validate the complete replacement and patch bound Container slots without recompiling SetLang.
 
-SourcePicture accepts prior local PNG references and canonical `res:<name>` references to `Resources.Pictures`. `Container.Font` references `Resources.Fonts`. Missing resources are rejected during prepare and SetData replacement.
+SourcePicture accepts local PNG and WebP references and canonical `res:<name>` references to `Resources.Pictures`. `Container.Font` references `Resources.Fonts`. Missing resources are rejected during prepare and SetData replacement.
 
 ## Rendering and events
 
-`runtime/web-renderer.js` reads object rules from the immutable plan, values from SetData, scene defaults from SetRender, and optional packaged resources. WOFF2 resources are installed through `@font-face`; packaged PNG resources resolve to in-memory data URLs. PNG intrinsic alpha and aspect ratio are preserved. PictureTint uses the PNG as an alpha mask.
+`runtime/web-renderer.js` reads object rules from the immutable plan, values from SetData, scene defaults from SetRender, and optional packaged resources. WOFF2 resources are installed through `@font-face`; packaged PNG resources resolve to in-memory data URLs. Image intrinsic alpha and aspect ratio are preserved. PictureTint uses the image as an alpha mask. Local file pictures are loaded when their Container approaches the viewport; data resources remain immediate. Deferred observations are released on patch, replacement and dispose. Resources.Pictures packaging remains PNG-only.
 
 Primary-pointer OnPress is emitted on a valid press. OffPress is emitted only for a same-panel successful release. Pointer cancellation, capture loss, movement into navigation, disableInteraction, and dispose cancel the claim. Each event carries a connection-unique EventId, EventType, ObjectLogin, and the opaque token.
 

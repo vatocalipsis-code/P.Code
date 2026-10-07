@@ -3,6 +3,20 @@ const activeParallax=new WeakMap();
 const activeInteraction=new WeakMap();
 const activeResourceStyles=new WeakMap();
 let resourceScopeCounter=0;
+const pictureObserver=typeof globalThis.IntersectionObserver==='function'?new IntersectionObserver(entries=>{
+  for(const entry of entries)if(entry.isIntersecting){
+    const img=entry.target;img.src=img.dataset.planeDeferredSrc;
+    delete img.dataset.planeDeferredSrc;pictureObserver.unobserve(img);
+  }
+},{rootMargin:'160px'}):null;
+function pictureSource(img,url){
+  if(!pictureObserver||url.startsWith('data:'))img.src=url;
+  else {img.dataset.planeDeferredSrc=url;pictureObserver.observe(img)}
+}
+function releaseDeferredPictures(scope){
+  if(!pictureObserver)return;
+  for(const image of scope.querySelectorAll('[data-plane-deferred-src]'))pictureObserver.unobserve(image);
+}
 const px=v=>String(v)+"px";
 const opacityFromTransparency=v=>String(1-v);
 const structuralPercent=t=>String((1-t)*100)+"%";
@@ -79,10 +93,10 @@ function renderSource(source,renderSet,rule,shadow=0,resources=null){
   if(source.kind==="Picture"){
     if(rule?.PictureTint!==undefined){
       const resolved=resolvePicture(source.value,resources);const p=document.createElement("span");p.dataset.planeSource="Picture";p.dataset.planePictureTint="present";p.style.opacity=opacityFromTransparency(renderSet.PictureTransparency);if(shadow>0)p.style.filter=contentShadowFilter(shadow);
-      const s=document.createElement("img");s.src=resolved;s.alt="";s.setAttribute("aria-hidden","true");s.dataset.planePictureSizer="";
+      const s=document.createElement("img");pictureSource(s,resolved);s.alt="";s.setAttribute("aria-hidden","true");s.dataset.planePictureSizer="";
       const t=document.createElement("span");t.dataset.planePictureTintLayer="";t.style.backgroundColor=rule.PictureTint;t.style.maskImage='url("'+resolved+'")';t.style.webkitMaskImage=t.style.maskImage;p.append(s,t);return p;
     }
-    const i=document.createElement("img");i.dataset.planeSource="Picture";i.src=resolvePicture(source.value,resources);i.alt="";i.style.opacity=opacityFromTransparency(renderSet.PictureTransparency);if(shadow>0)i.style.filter=contentShadowFilter(shadow);return i;
+    const i=document.createElement("img");i.dataset.planeSource="Picture";pictureSource(i,resolvePicture(source.value,resources));i.decoding="async";i.alt="";i.style.opacity=opacityFromTransparency(renderSet.PictureTransparency);if(shadow>0)i.style.filter=contentShadowFilter(shadow);return i;
   }
   throw new Error("WebRenderer: unsupported source kind "+source.kind);
 }
@@ -193,13 +207,15 @@ function bindParallax(root,nodes){
 }
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
-  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);root.replaceChildren();
+  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null){
   cancelPlaneCodeInteraction(root);
   root.style.setProperty("--panel-spacing",px(renderSet.PanelSpacing));root.style.setProperty("--background-color",renderSet.BackgroundColor);root.style.setProperty("--panel-color",renderSet.PanelColor);root.style.setProperty("--border-color",renderSet.BorderColor);root.style.setProperty("--text-color",renderSet.TextColor);
   const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];
-  root.replaceChildren(...roots.map(node=>renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources)));
+  const panels=roots.map(node=>renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources));
+  releaseDeferredPictures(root);
+  root.replaceChildren(...panels);
   activeInteraction.set(root,{cancel(){for(const cancel of cancellers)cancel()}});
   bindParallax(root,parallaxNodes);
 }
@@ -211,6 +227,7 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null){
     const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive"};const visual=el.__planeVisual??{};
     let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;
     const shadow=owner?.__planeVisual?.Shadow??0;
-    body.replaceChildren(...sourcesFromData(node,nextData).map(source=>renderSource(source,renderSet,visual,shadow,resources)));
+    const sources=sourcesFromData(node,nextData).map(source=>renderSource(source,renderSet,visual,shadow,resources));
+    releaseDeferredPictures(body);body.replaceChildren(...sources);
   }
 }
