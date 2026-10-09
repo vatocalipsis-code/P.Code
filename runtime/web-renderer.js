@@ -52,6 +52,11 @@ function alignmentValue(v){return {Start:"flex-start",Center:"center",End:"flex-
 function distributionValue(v){return {Start:"flex-start",Center:"center",End:"flex-end",Between:"space-between",Around:"space-around",Evenly:"space-evenly"}[v]}
 function hValue(v){return {Left:"flex-start",Center:"center",Right:"flex-end"}[v]}
 function vValue(v){return {Top:"flex-start",Center:"center",Bottom:"flex-end"}[v]}
+function applyLayoutValue(el,property,name,value){
+  const token="--pcode-layout-"+name;
+  if(typeof el.style.setProperty==="function")el.style.setProperty(token,value);else el.style[token]=value;
+  el.style[property]="var("+token+", "+value+")";
+}
 
 function applyBoxRule(el,rule={},renderSet,panelEffects=false){
   const pt=panelEffects?(rule.PanelTransparency??0):0;
@@ -62,12 +67,12 @@ function applyBoxRule(el,rule={},renderSet,panelEffects=false){
     if(rule["Border"+side+"Color"]!==undefined)el.style["border"+side+"Color"]=structuralColor(rule["Border"+side+"Color"],renderSet,pt);
     if(rule["Border"+side+"Width"]!==undefined)el.style["border"+side+"Width"]=px(rule["Border"+side+"Width"]);
   }
-  if(rule.Width!==undefined)el.style.width=px(rule.Width);
-  if(rule.Height!==undefined)el.style.height=px(rule.Height);
-  if(rule.Padding!==undefined)el.style.padding=px(rule.Padding);
+  if(rule.Width!==undefined)applyLayoutValue(el,"width","width",px(rule.Width));
+  if(rule.Height!==undefined)applyLayoutValue(el,"height","height",px(rule.Height));
+  if(rule.Padding!==undefined)applyLayoutValue(el,"padding","padding",px(rule.Padding));
 }
 function applyPanelLayout(el,rule={}){
-  if(rule.Gap!==undefined)el.style.gap=px(rule.Gap);
+  if(rule.Gap!==undefined)applyLayoutValue(el,"gap","gap",px(rule.Gap));
   if(rule.Alignment!==undefined)el.style.alignItems=alignmentValue(rule.Alignment);
   if(rule.Distribution!==undefined)el.style.justifyContent=distributionValue(rule.Distribution);
   if(rule.Direction!==undefined)el.style.flexDirection=rule.Direction==="Horizontal"?"row":"column";
@@ -83,7 +88,7 @@ function applyContainerContentLayout(content,rule={}){
   const direction=rule.Direction??"Horizontal";content.style.flexDirection=direction==="Horizontal"?"row":"column";
   const h=hValue(rule.HorizontalAlignment??"Center");const v=vValue(rule.VerticalAlignment??"Center");
   if(direction==="Horizontal"){content.style.justifyContent=h;content.style.alignItems=v}else{content.style.justifyContent=v;content.style.alignItems=h}
-  if(rule.Gap!==undefined)content.style.gap=px(rule.Gap);
+  if(rule.Gap!==undefined)applyLayoutValue(content,"gap","content-gap",px(rule.Gap));
 }
 function renderSource(source,renderSet,rule,shadow=0,resources=null){
   if(source.kind==="Text"){
@@ -141,7 +146,7 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
 function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources){
   if(node.type==="Group"){
     const rule=node.Layout??{};const el=document.createElement("div");el.dataset.planeType="Group";el.dataset.planeGroup="";el.style.display="flex";el.style.flexDirection=rule.Orientation==="Horizontal"?"row":"column";
-    if(rule.Gap!==undefined)el.style.gap=px(rule.Gap);if(rule.Width!==undefined)el.style.width=px(rule.Width);if(rule.Height!==undefined)el.style.height=px(rule.Height);applyFill(el,rule,parentOrientation);
+    if(rule.Gap!==undefined)applyLayoutValue(el,"gap","gap",px(rule.Gap));if(rule.Width!==undefined)applyLayoutValue(el,"width","width",px(rule.Width));if(rule.Height!==undefined)applyLayoutValue(el,"height","height",px(rule.Height));applyFill(el,rule,parentOrientation);
     for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources));
     return el;
   }

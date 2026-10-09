@@ -62,3 +62,26 @@ test("web renderer applies packaged WOFF2 and PNG resources",()=>{
   assert.equal(doc.head.children[0].removed,true);
   delete globalThis.document;
 });
+
+test("authored geometry exposes stable application override tokens",()=>{
+  const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement("div",doc);
+  const geometryLang=[{Login:"Base",Properties:{Direction:"Vertical",Gap:9,Padding:11,Width:320,Height:480},Layout:[
+    {Type:"Group",Properties:{Orientation:"Vertical",Gap:7,Width:120,Height:80},Layout:[{Login:"Content",Properties:{Width:24,Height:28,Padding:5,Gap:3}}]}
+  ],SimplePanels:[]}];
+  renderPlaneCode(root,compileSetLang(geometryLang),{Content:{SourceText:"Geometry"}},render,null,null);
+  const base=find(root,node=>node.dataset?.planeLogin==="Base"),group=find(root,node=>node.dataset?.planeGroup!==undefined),content=find(root,node=>node.dataset?.planeLogin==="Content");
+  assert.equal(base.style.width,"var(--pcode-layout-width, 320px)");
+  assert.equal(base.style["--pcode-layout-width"],"320px");
+  assert.equal(base.style.height,"var(--pcode-layout-height, 480px)");
+  assert.equal(base.style["--pcode-layout-height"],"480px");
+  assert.equal(base.style.padding,"var(--pcode-layout-padding, 11px)");
+  assert.equal(base.style.gap,"var(--pcode-layout-gap, 9px)");
+  assert.equal(group.style.width,"var(--pcode-layout-width, 120px)");
+  assert.equal(group.style.height,"var(--pcode-layout-height, 80px)");
+  assert.equal(group.style["--pcode-layout-height"],"80px");
+  assert.equal(group.style.gap,"var(--pcode-layout-gap, 7px)");
+  assert.equal(content.style.width,"var(--pcode-layout-width, 24px)");
+  assert.equal(content.style.height,"var(--pcode-layout-height, 28px)");
+  assert.equal(content.style.padding,"var(--pcode-layout-padding, 5px)");
+  disposePlaneCode(root);delete globalThis.document;
+});
