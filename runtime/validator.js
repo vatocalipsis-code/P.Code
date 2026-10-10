@@ -106,6 +106,14 @@ export function validateSetEnvelope(value,label){
   if(!isNonEmptyString(value.Name))fail(label+".Name must be a non-empty string");
   if(!Number.isInteger(value.Version)||value.Version<1)fail(label+".Version must be a positive integer");
   if(value.Data===undefined)fail(label+".Data is required");
+  if(label==="SetLang"&&value.ThemeContract!==undefined&&!new Set(["SelfContained","HostMapped"]).has(value.ThemeContract))
+    fail("SetLang.ThemeContract must be SelfContained or HostMapped");
+  if(label==="SetLang"&&value.StyleSheet!==undefined){
+    if(typeof value.StyleSheet!=="string"||!value.StyleSheet.trim())fail("SetLang.StyleSheet must be non-empty CSS text");
+    if(value.StyleSheet.length>2_000_000)fail("SetLang.StyleSheet is too large");
+    if(/@import\b|<\/style\b|url\s*\(\s*['"]?\s*(?:https?:|\/\/|javascript:)/i.test(value.StyleSheet))
+      fail("SetLang.StyleSheet cannot import CSS, load remote URLs, or contain a style closing tag");
+  }
   return value.Data;
 }
 

@@ -69,6 +69,22 @@ test("web renderer applies packaged WOFF2 and PNG resources",()=>{
   delete globalThis.document;
 });
 
+test("skin CSS is installed with its render and removed on dispose",()=>{
+  const doc=new FakeDocument();globalThis.document=doc;
+  const root=new FakeElement("div",doc),plan=compileSetLang(lang);
+  renderPlaneCode(root,plan,data,render,null,resources,"#plane-code-root{color:red}");
+  assert.equal(doc.head.children.length,2);
+  const first=doc.head.children[0];
+  assert.equal(first.dataset.pcodeSkinStyle,"");
+  renderPlaneCode(root,plan,data,render,null,resources,"#plane-code-root{color:blue}");
+  assert.equal(first.removed,true);
+  const second=doc.head.children[2];
+  assert.equal(second.textContent,"#plane-code-root{color:blue}");
+  disposePlaneCode(root);
+  assert.equal(second.removed,true);
+  delete globalThis.document;
+});
+
 test("authored geometry exposes stable application override tokens",()=>{
   const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement("div",doc);
   const geometryLang=[{Login:"Base",Properties:{Direction:"Vertical",Gap:9,Padding:11,Width:320,Height:480},Layout:[

@@ -75,7 +75,7 @@ export function createPlaneCodeEngine(dependencies){
         if(!RenderTarget||(typeof RenderTarget!=="object"&&typeof RenderTarget!=="function"))return rejected("runtime-preparation","invalid-render-target");
         if(owners.has(RenderTarget))return rejected("runtime-preparation","render-target-in-use");
         try{
-          dependencies.renderer.mount(RenderTarget,this.objectPlan,this.setData.Data,this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources);
+          dependencies.renderer.mount(RenderTarget,this.objectPlan,this.setData.Data,this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
           owners.set(RenderTarget,this);this.target=RenderTarget;this.state="MOUNTED_INACTIVE";
           return completed();
         }catch(error){return this._failStop("mount-failed",error)}
@@ -109,7 +109,7 @@ export function createPlaneCodeEngine(dependencies){
         catch(error){return rejected("setrender","invalid-setrender",diagnostic(error))}
         try{
           this.setRender=SetRender;
-          if(this.target)dependencies.renderer.rerender(this.target,this.objectPlan,this.setData.Data,render,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources);
+          if(this.target)dependencies.renderer.rerender(this.target,this.objectPlan,this.setData.Data,render,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
           return completed();
         }catch(error){return this._failStop("render-update-failed",error)}
       });
@@ -163,6 +163,10 @@ export function createPlaneCodeEngine(dependencies){
         return rejected("capability","invalid-skin-requirements");
       if(requires.some(value=>!this.capabilities.includes(value)))
         return rejected("capability","skin-capability-not-negotiated",requires.filter(value=>!this.capabilities.includes(value)).join(", "));
+      if(input.SetLang.StyleSheet!==undefined&&!requires.includes("pcode.skin-stylesheet.v1"))
+        return rejected("capability","skin-stylesheet-requirement-missing");
+      if(input.SetLang.StyleSheet!==undefined&&!this.capabilities.includes("pcode.skin-stylesheet.v1"))
+        return rejected("capability","skin-stylesheet-capability-not-negotiated");
       if(setRenderData.Parallax&&!this.capabilities.includes("pcode.parallax.v1"))
         return rejected("capability","parallax-capability-not-negotiated");
       try{dependencies.validateResources(input.Resources);dependencies.validatePlan(setLangData,setDataData,this.capabilities,input.Resources)}

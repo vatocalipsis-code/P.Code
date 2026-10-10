@@ -31,6 +31,18 @@ function tokenize(text) {
       const sl=line, sc=col; bump(c); push(c, c, sl, sc); continue;
     }
 
+    if (text.startsWith('"""',i)) {
+      const sl=line,sc=col;
+      for(let n=0;n<3;n++)bump(text[i]);
+      let value='';
+      while(i<text.length&&!text.startsWith('"""',i)){
+        value+=text[i];bump(text[i]);
+      }
+      if(i>=text.length)syntax("unterminated multiline string",{line:sl,col:sc});
+      for(let n=0;n<3;n++)bump(text[i]);
+      push("string",value,sl,sc);
+      continue;
+    }
     if (c === '"') {
       const sl=line, sc=col;
       let raw = '"';
@@ -260,6 +272,7 @@ function lit(value){
   if(value===null) return "null";
   if(typeof value==="number"||typeof value==="boolean") return String(value);
   if(value==="NOT_YET_SPECIFIED") return value;
+  if(typeof value==='string'&&value.includes('\n')&&!value.includes('"""'))return '"""'+value+'"""';
   return q(String(value));
 }
 function line(indent,text){ return "  ".repeat(indent)+text; }

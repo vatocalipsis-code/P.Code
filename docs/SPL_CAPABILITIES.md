@@ -28,3 +28,15 @@ renderer, and tests. Only skins using it need to request it and set its paramete
 `pcode.corner-radius.v1` maps `CornerRadius` in a visual Properties block to the
 browser's border radius. `pcode.parallax.v1` advertises the existing `Parallax`
 rendering capability; a skin can request it when it uses that effect.
+
+`pcode.skin-stylesheet.v1` lets an SPL carry `SetLang.StyleSheet` as browser CSS
+for cases such as theme variants, pseudo states and responsive layout. P.Code
+installs this CSS only while that skin is mounted and removes it on disposal.
+The P.Code renderer stylesheet remains skin independent; a host does not select
+CSS files. The SPL must declare the stylesheet capability. CSS imports and remote
+URLs are rejected. A stylesheet is a declarative skin resource,
+not a replacement for typed PLang properties when those can express the style.
+Multiline CSS can be written between triple quotes. `SetLang.ThemeContract` is
+optional: `SelfContained` keeps all authored colors, while `HostMapped` signals a
+legacy host palette transform. New skins should use `SelfContained` and theme
+variables in their own stylesheet.

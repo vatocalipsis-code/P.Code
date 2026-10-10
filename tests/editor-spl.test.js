@@ -9,6 +9,13 @@ test('SPL capability requirements round-trip as declarative metadata',()=>{
   assert.deepEqual(parseSPL(serializeSPL(project)).SetLang.Requires,['pcode.parallax.v1']);
 });
 
+test('SPL preserves the skin stylesheet as SetLang metadata',()=>{
+  const project=parseSPL(legacy);
+  project.SetLang.StyleSheet='html[data-theme="dark"] #plane-code-root{color:#fff}\n@media (max-width: 400px) { #plane-code-root{padding:0} }';
+  const parsed=parseSPL(serializeSPL(project));
+  assert.equal(parsed.SetLang.StyleSheet,project.SetLang.StyleSheet);
+});
+
 const legacy = `
 SetLang {
   Name = "legacy"

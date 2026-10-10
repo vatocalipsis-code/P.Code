@@ -2,6 +2,7 @@
 const activeParallax=new WeakMap();
 const activeInteraction=new WeakMap();
 const activeResourceStyles=new WeakMap();
+const activeSkinStyles=new WeakMap();
 let resourceScopeCounter=0;
 const pictureObserver=typeof globalThis.IntersectionObserver==='function'?new IntersectionObserver(entries=>{
   for(const entry of entries)if(entry.isIntersecting){
@@ -40,6 +41,15 @@ function prepareResources(root,resources){
     const style=doc.createElement("style");style.dataset.pcodeResources="";style.textContent=rules.join("\n");doc.head.append(style);activeResourceStyles.set(root,style);
   }
   return {fonts,pictures};
+}
+function prepareSkinStyle(root,css){
+  const old=activeSkinStyles.get(root);
+  if(!css){old?.remove();activeSkinStyles.delete(root);return}
+  if(old?.textContent===css)return;
+  const doc=root?.ownerDocument??globalThis.document;
+  if(!doc?.createElement||!doc?.head)throw new Error("WebRenderer: skin CSS requires a document head");
+  const style=doc.createElement("style");style.dataset.pcodeSkinStyle="";style.textContent=css;
+  doc.head.append(style);old?.remove();activeSkinStyles.set(root,style);
 }
 function resolvePicture(value,resources){
   if(typeof value!=="string"||!value.startsWith("res:"))return value;
@@ -234,10 +244,11 @@ function bindParallax(root,nodes){
 }
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
-  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
+  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeSkinStyles.get(root)?.remove?.();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
-export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null){
+export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
   cancelPlaneCodeInteraction(root);
+  prepareSkinStyle(root,skinStyleSheet);
   root.style.setProperty("--panel-spacing",px(renderSet.PanelSpacing));root.style.setProperty("--background-color",renderSet.BackgroundColor);root.style.setProperty("--panel-color",renderSet.PanelColor);root.style.setProperty("--border-color",renderSet.BorderColor);root.style.setProperty("--text-color",renderSet.TextColor);
   const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];
   const panels=roots.map(node=>renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources));

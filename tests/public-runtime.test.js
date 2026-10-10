@@ -160,6 +160,18 @@ test("skin capabilities must be negotiated before preparation",async()=>{
   assert.throws(()=>validatePLang(plan,setData.Data),/pcode.parallax.v1/);
 });
 
+test("skin stylesheet requires the generic CSS capability",async()=>{
+  const {engine}=harness();
+  const styled={...setLang,StyleSheet:"#plane-code-root{color:red}"};
+  const rejected=await connect(engine).Connection.prepare({SetLang:styled,SetData:setData,SetRender:setRender});
+  assert.equal(rejected.Failure.Code,"skin-stylesheet-requirement-missing");
+  const declared={...styled,Requires:["pcode.skin-stylesheet.v1"]};
+  const unavailable=await connect(engine).Connection.prepare({SetLang:declared,SetData:setData,SetRender:setRender});
+  assert.equal(unavailable.Failure.Code,"skin-capability-not-negotiated");
+  assert.throws(()=>validateSetEnvelope({...styled,StyleSheet:"@import url(https://example.test/x.css)"},"SetLang"),/cannot import/);
+  assert.throws(()=>validateSetEnvelope({...styled,StyleSheet:"a{background:url(https://example.test/x.png)}"},"SetLang"),/remote URLs/);
+});
+
 test("editable values and ordered value-bearing events cross only the negotiated boundary",async()=>{
   const h=harness();const connection=connect(h.engine,["pcode.editable-input.v1"]).Connection;
   const prepared=await connection.prepare({SetLang:inputSetLang,SetData:inputSetData,SetRender:setRender});

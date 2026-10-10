@@ -5,16 +5,16 @@ import {renderPlaneCode,patchSetData,cancelPlaneCodeInteraction,disposePlaneCode
 import {createPlaneCodeEngine} from "./public-runtime-core.js";
 
 const descriptor={
-  ComponentVersion:"2.13.0",
+  ComponentVersion:"2.14.0",
   GenerationId:"pcode.layout-group.v1",
   SupportedSerializationVersions:[1],
-  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1"]
+  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1"]
 };
 
 const renderer={
-  mount(target,plan,data,render,interaction,resources){renderPlaneCode(target,plan,data,render,interaction,resources)},
+  mount(target,plan,data,render,interaction,resources,styleSheet){renderPlaneCode(target,plan,data,render,interaction,resources,styleSheet)},
   patchData(target,data,render,resources){patchSetData(target,data,render,resources)},
-  rerender(target,plan,data,render,interaction,resources){renderPlaneCode(target,plan,data,render,interaction,resources)},
+  rerender(target,plan,data,render,interaction,resources,styleSheet){renderPlaneCode(target,plan,data,render,interaction,resources,styleSheet)},
   cancelInteraction(target){cancelPlaneCodeInteraction(target)},
   dispose(target){disposePlaneCode(target)}
 };
