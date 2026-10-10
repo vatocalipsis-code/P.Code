@@ -8,12 +8,18 @@ class StyleBag {
 }
 class FakeElement {
   constructor(tag,doc){this.tagName=tag.toUpperCase();this.ownerDocument=doc;this.children=[];this.dataset={};this.style=new StyleBag();this.attributes={};this.textContent="";}
-  append(...nodes){this.children.push(...nodes)}
-  replaceChildren(...nodes){this.children=[...nodes]}
+  append(...nodes){for(const node of nodes)node.parentElement=this;this.children.push(...nodes)}
+  replaceChildren(...nodes){for(const old of this.children)old.parentElement=null;this.children=[];this.append(...nodes)}
   setAttribute(name,value){this.attributes[name]=String(value)}
   removeAttribute(name){delete this.attributes[name]}
   addEventListener(){}
-  querySelectorAll(){return []}
+  querySelectorAll(selector){
+    const nodes=[];
+    const matches=child=>selector==='[data-plane-source="Text"]'&&child.dataset.planeSource==='Text'||selector==='[data-plane-data-slot]'&&child.dataset.planeDataSlot!==undefined||selector==='[data-plane-deferred-src]'&&child.dataset.planeDeferredSrc!==undefined;
+    const walk=node=>{for(const child of node.children){if(matches(child))nodes.push(child);walk(child)}};
+    walk(this);return nodes;
+  }
+  querySelector(selector){return selector===':scope > [data-plane-container-content]'?this.children.find(child=>child.dataset.planeContainerContent!==undefined)??null:null}
   remove(){this.removed=true}
 }
 class FakeDocument {
@@ -83,5 +89,30 @@ test("authored geometry exposes stable application override tokens",()=>{
   assert.equal(content.style.width,"var(--pcode-layout-width, 24px)");
   assert.equal(content.style.height,"var(--pcode-layout-height, 28px)");
   assert.equal(content.style.padding,"var(--pcode-layout-padding, 5px)");
+  disposePlaneCode(root);delete globalThis.document;
+});
+
+test("content-sized rows and wrapped text survive SetData patches",async()=>{
+  const {patchSetData}=await import("../runtime/web-renderer.js");
+  const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement("div",doc);
+  const lang=[{Login:"Base",Properties:{Direction:"Vertical"},Layout:[],SimplePanels:[{
+    Login:"List",Properties:{Direction:"Vertical"},Layout:[],ActivePanels:[{
+      Login:"Row",Properties:{Direction:"Vertical",Height:"Auto",MinHeight:60},Layout:[
+        {Login:"Text",Properties:{FillHorizontal:true,TextOverflow:"Wrap",MinWidth:20}}
+      ]
+    }]
+  }]}];
+  renderPlaneCode(root,compileSetLang(lang),{Text:{SourceText:"Initial text"}},render);
+  const row=find(root,node=>node.dataset?.planeLogin==="Row");
+  const container=find(root,node=>node.dataset?.planeLogin==="Text");
+  assert.equal(row.style.height,"var(--pcode-layout-height, auto)");
+  assert.equal(row.style.minHeight,"var(--pcode-layout-min-height, 60px)");
+  assert.equal(container.style.minWidth,"var(--pcode-layout-min-width, 20px)");
+  assert.equal(find(root,node=>node.dataset?.planeSource==="Text").style.whiteSpace,"normal");
+  patchSetData(root,{Text:{SourceText:"Updated text that may wrap across lines"}},render);
+  const updated=find(root,node=>node.dataset?.planeSource==="Text");
+  assert.equal(updated.textContent,"Updated text that may wrap across lines");
+  assert.equal(updated.style.whiteSpace,"normal");
+  assert.equal(updated.style.overflowWrap,"anywhere");
   disposePlaneCode(root);delete globalThis.document;
 });

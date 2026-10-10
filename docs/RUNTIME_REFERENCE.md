@@ -16,7 +16,7 @@ The only Host-facing JavaScript boundary is exported by runtime/public-runtime.j
 - RuntimeHandle.disableInteraction()
 - RuntimeHandle.dispose()
 
-The descriptor is fixed at ComponentVersion 2.11.0, GenerationId pcode.layout-group.v1, serialization version 1, with the optional capability `pcode.editable-input.v1`. runtime/public-runtime-core.js is an internal implementation and test seam; Host code must not import it.
+The descriptor is fixed at ComponentVersion 2.12.0, GenerationId pcode.layout-group.v1, serialization version 1, with the optional capability `pcode.editable-input.v1`. runtime/public-runtime-core.js is an internal implementation and test seam; Host code must not import it.
 
 All ordinary outcomes are returned as Completed, Rejected, or Failed. A renderer failure is fail-stop and disposes that runtime. Connection close drains and disposes every prepared runtime and is idempotent.
 

@@ -33,7 +33,7 @@ function harness(options={}){
     dispose(){calls.dispose++}
   };
   const engine=createPlaneCodeEngine({
-    descriptor:{ComponentVersion:"2.11.0",GenerationId:"pcode.layout-group.v1",SupportedSerializationVersions:[1],Capabilities:["pcode.editable-input.v1"]},
+    descriptor:{ComponentVersion:"2.12.0",GenerationId:"pcode.layout-group.v1",SupportedSerializationVersions:[1],Capabilities:["pcode.editable-input.v1"]},
     compile(value){compileCount++;return compileSetLang(value)},
     validateEnvelope:validateSetEnvelope,validatePlan:validatePLang,validateData:validateSetData,validateRender:validateSetRender,validateResources,renderer
   });
@@ -45,7 +45,7 @@ function connect(engine,required=[],optional=[]){
 
 test("descriptor and negotiation are exact",()=>{
   const {engine}=harness();
-  assert.deepEqual(engine.getDescriptor(),{ComponentVersion:"2.11.0",GenerationId:"pcode.layout-group.v1",SupportedSerializationVersions:[1],Capabilities:["pcode.editable-input.v1"]});
+  assert.deepEqual(engine.getDescriptor(),{ComponentVersion:"2.12.0",GenerationId:"pcode.layout-group.v1",SupportedSerializationVersions:[1],Capabilities:["pcode.editable-input.v1"]});
   assert.equal(connect(engine).Acceptance.Status,"Accepted");
   assert.equal(engine.connect({GenerationId:"other",SerializationVersion:1,RequiredCapabilities:[],OptionalCapabilities:[]}).Acceptance.Status,"Incompatible");
   assert.equal(engine.connect({GenerationId:"pcode.layout-group.v1",SerializationVersion:2,RequiredCapabilities:[],OptionalCapabilities:[]}).Acceptance.Status,"Incompatible");
@@ -122,6 +122,19 @@ test("editable input requires explicit capability negotiation",async()=>{
   const accepted=connect(engine,["pcode.editable-input.v1"]);
   assert.deepEqual(accepted.Acceptance.AgreedCapabilities,["pcode.editable-input.v1"]);
   assert.equal((await accepted.Connection.prepare({SetLang:inputSetLang,SetData:inputSetData,SetRender:setRender})).Outcome,"Completed");
+});
+
+test("content-sized SPL geometry validates and invalid layout values fail",()=>{
+  const plan=structuredClone(setLang.Data);
+  const row=plan[0].SimplePanels[0].ActivePanels[0];
+  row.Properties.Height="Auto";row.Properties.MinHeight=60;
+  row.Layout[0].Properties.TextOverflow="Wrap";
+  row.Layout[0].Properties.MinWidth=12;
+  assert.equal(validatePLang(plan,setData.Data),true);
+  row.Properties.Height="automatic";
+  assert.throws(()=>validatePLang(plan,setData.Data),/Height/);
+  row.Properties.Height="Auto";row.Layout[0].Properties.TextOverflow="Other";
+  assert.throws(()=>validatePLang(plan,setData.Data),/TextOverflow/);
 });
 
 test("editable values and ordered value-bearing events cross only the negotiated boundary",async()=>{

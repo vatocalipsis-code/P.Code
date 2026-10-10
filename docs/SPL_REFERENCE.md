@@ -101,6 +101,12 @@ B.FillHorizontal = true
 
 -> A reserves 80, B receives the remaining horizontal space.
 
+## Content-sized geometry
+
+`Height = Auto` sizes a panel, Group, Container, or EditableInput from its content. `MinHeight` and `MinWidth` are non-negative pixel minimums; numeric `Height` and `Width` keep their previous fixed-size meaning. Use `Height = Auto` with `MinHeight` for records whose text may span several lines. These rules are optional, so existing SPL remains valid.
+
+Containers accept `TextOverflow = Ellipsis | Wrap | Clip`. Without it, a container constrained by `Width` or `FillHorizontal` keeps the legacy single-line ellipsis. `Wrap` lets text break within the available width, including long words. The same rule is reapplied after every SetData replacement.
+
 ## Container
 
 Container requires unique Login and is the SetData-addressable content slot.

@@ -106,6 +106,14 @@ test('serializeSPL round-trips SetLang, SetData and SetRender without changing d
   assert.equal(second.SetData.Data.Search.ValidationState.Status, 'None');
 });
 
+test('content-sized SPL properties survive editor round-trip',()=>{
+  const authored=current.replace('Orientation = "Horizontal" FillHorizontal = true Gap = 6','Orientation = "Horizontal" FillHorizontal = true Height = Auto MinHeight = 60 Gap = 6').replace('FillHorizontal = true TextColor = "#ffffff"','FillHorizontal = true TextColor = "#ffffff" TextOverflow = Wrap MinWidth = 20');
+  const first=parseSPL(authored),second=parseSPL(serializeSPL(first));
+  assert.deepEqual(second,first);
+  assert.equal(second.SetLang.Data[0].Layout[0].Properties.Height,'Auto');
+  assert.equal(second.SetLang.Data[0].Layout[0].Layout[0].Properties.TextOverflow,'Wrap');
+});
+
 test('parser rejects plans missing one of the three independent Sets', () => {
   assert.throws(() => parseSPL(`SetLang { Name="x" Version=1 Data { } }`), /missing SetData/);
 });

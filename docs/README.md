@@ -14,6 +14,7 @@ The project's official current name is **P.Code**. `PlaneCode` is its historical
 | [PLANG_CANON.md](PLANG_CANON.md) | PLang and SetLang canonical semantics |
 | [SET_RENDER_CANON.md](SET_RENDER_CANON.md) | Scene-only SetRender contract |
 | [PLANE_CODE_2.11.0.md](PLANE_CODE_2.11.0.md) | 2.11.0 release-candidate contract and delta |
+| [PLANE_CODE_2.12.0.md](PLANE_CODE_2.12.0.md) | Content-sized layout and text overflow delta |
 
 ## Historical notes
 

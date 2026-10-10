@@ -1,6 +1,6 @@
 # P.Code architecture
 
-Status: P.Code 2.11.0 release candidate.
+Status: P.Code 2.12.0 local candidate.
 
 ## Contracts
 
@@ -28,10 +28,10 @@ SetRender = { Name, Version, Data }
 
 ## Generation and physical hierarchy
 
-The 2.11.0 runtime descriptor is:
+The 2.12.0 runtime descriptor is:
 
 ```text
-ComponentVersion = 2.11.0
+ComponentVersion = 2.12.0
 GenerationId = pcode.layout-group.v1
 SupportedSerializationVersions = [1]
 Capabilities = [pcode.editable-input.v1]

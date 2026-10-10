@@ -1,6 +1,6 @@
 # PLang Canon
 
-Status: CURRENT CANDIDATE — P.Code 2.11.0
+Status: CURRENT CANDIDATE — P.Code 2.12.0
 
 PLang is the declarative language inside P.Code. SetLang owns object identity, physical hierarchy, layout structure, geometry and object-specific visual properties. SetRender remains scene-only.
 

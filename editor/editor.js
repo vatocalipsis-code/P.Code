@@ -155,6 +155,16 @@ function numberField(node,key,label=key){
   control.append(wrap,clear);
   inspector.append(el);
 }
+function heightField(node){
+  const {el,control}=row('Height mode');
+  const select=document.createElement('select');
+  for(const [value,label] of [['','Intrinsic'],['Auto','Auto'],['Fixed','Fixed pixels']]){const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option)}
+  const height=node.Properties?.Height;
+  select.value=height==='Auto'?'Auto':typeof height==='number'?'Fixed':'';
+  select.onchange=()=>setProp(node,'Height',select.value==='Auto'?'Auto':select.value==='Fixed'?(typeof height==='number'?height:44):undefined);
+  control.append(select);inspector.append(el);
+  if(select.value==='Fixed')numberField(node,'Height');
+}
 function textField(node,key,label=key){
   const {el,control}=row(label);
   const input=document.createElement('input');
@@ -271,7 +281,9 @@ function commonVisual(node){
   inspector.append(section('Surface & color'));
   for(const key of ['Background','BorderColor','BorderLeftColor','BorderRightColor','BorderTopColor','BorderBottomColor','TextColor','PictureTint']) colorField(node,key);
   inspector.append(section('Border & size'));
-  for(const key of ['BorderWidth','BorderLeftWidth','BorderRightWidth','BorderTopWidth','BorderBottomWidth','Width','Height','Padding','Gap']) numberField(node,key);
+  for(const key of ['BorderWidth','BorderLeftWidth','BorderRightWidth','BorderTopWidth','BorderBottomWidth','Width','MinWidth']) numberField(node,key);
+  heightField(node);numberField(node,'MinHeight');
+  for(const key of ['Padding','Gap'])numberField(node,key);
   inspector.append(section('Typography & motion'));
   for(const key of ['FontSize','FontWeight','Parallax']) numberField(node,key);
 }
@@ -279,7 +291,7 @@ function commonVisual(node){
 function renderGroupInspector(node){
   inspector.append(section('Group layout'));
   selectField(node,'Orientation',['Horizontal','Vertical']);
-  numberField(node,'Width'); numberField(node,'Height'); numberField(node,'Gap');
+  numberField(node,'Width');numberField(node,'MinWidth');heightField(node);numberField(node,'MinHeight');numberField(node,'Gap');
   booleanField(node,'FillHorizontal','Fill horizontal');
   booleanField(node,'FillVertical','Fill vertical');
   orderControls();
@@ -318,6 +330,7 @@ function renderContainerLayout(node){
   selectField(node,'HorizontalAlignment',['Left','Center','Right'],'Horizontal content');
   selectField(node,'VerticalAlignment',['Top','Center','Bottom'],'Vertical content');
   selectField(node,'Direction',['Horizontal','Vertical'],'Content direction');
+  selectField(node,'TextOverflow',['Ellipsis','Wrap','Clip'],'Text overflow');
   selectField(node,'Order',['Positive','Negative'],'Picture / text order');
   resourceSelectField(node);
   renderContainerPictureResource(node);

@@ -68,7 +68,9 @@ function applyBoxRule(el,rule={},renderSet,panelEffects=false){
     if(rule["Border"+side+"Width"]!==undefined)el.style["border"+side+"Width"]=px(rule["Border"+side+"Width"]);
   }
   if(rule.Width!==undefined)applyLayoutValue(el,"width","width",px(rule.Width));
-  if(rule.Height!==undefined)applyLayoutValue(el,"height","height",px(rule.Height));
+  if(rule.MinWidth!==undefined)applyLayoutValue(el,"minWidth","min-width",px(rule.MinWidth));
+  if(rule.Height!==undefined)applyLayoutValue(el,"height","height",rule.Height==="Auto"?"auto":px(rule.Height));
+  if(rule.MinHeight!==undefined)applyLayoutValue(el,"minHeight","min-height",px(rule.MinHeight));
   if(rule.Padding!==undefined)applyLayoutValue(el,"padding","padding",px(rule.Padding));
 }
 function applyPanelLayout(el,rule={}){
@@ -82,7 +84,8 @@ function applyFill(el,rule,parentOrientation){
   const crossFill=parentOrientation==="Horizontal"?rule.FillVertical===true:rule.FillHorizontal===true;
   el.style.flex=mainFill?"1 1 0":"0 0 auto";
   if(crossFill)el.style.alignSelf="stretch";
-  el.style.minWidth="0";el.style.minHeight="0";
+  if(rule.MinWidth===undefined)el.style.minWidth="0";
+  if(rule.MinHeight===undefined)el.style.minHeight="0";
 }
 function applyContainerContentLayout(content,rule={}){
   const direction=rule.Direction??"Horizontal";content.style.flexDirection=direction==="Horizontal"?"row":"column";
@@ -111,6 +114,19 @@ function sourcesFromData(node,dataSet){
   const picture=typeof item.SourcePicture==="string"&&item.SourcePicture.length?{kind:"Picture",value:item.SourcePicture}:null;
   if(text&&picture)return node.Order==="Negative"?[text,picture]:[picture,text];
   return text?[text]:picture?[picture]:[];
+}
+function applyTextLayout(el,body,rule){
+  const constrained=rule.FillHorizontal===true||rule.Width!==undefined;
+  if(!constrained&&rule.TextOverflow===undefined)return;
+  const mode=rule.TextOverflow??"Ellipsis";
+  if(constrained){el.style.overflow=mode==="Wrap"?"visible":"hidden";body.style.minWidth="0";body.style.overflow=mode==="Wrap"?"visible":"hidden"}
+  for(const text of body.querySelectorAll('[data-plane-source="Text"]')){
+    text.style.minWidth="0";text.style.maxWidth="100%";
+    text.style.overflow=mode==="Wrap"?"visible":"hidden";
+    text.style.textOverflow=mode==="Ellipsis"?"ellipsis":"clip";
+    text.style.whiteSpace=mode==="Wrap"?"normal":"nowrap";
+    if(mode==="Wrap")text.style.overflowWrap="anywhere";
+  }
 }
 
 function applyEditableState(el,item={}){
@@ -146,7 +162,12 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
 function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources){
   if(node.type==="Group"){
     const rule=node.Layout??{};const el=document.createElement("div");el.dataset.planeType="Group";el.dataset.planeGroup="";el.style.display="flex";el.style.flexDirection=rule.Orientation==="Horizontal"?"row":"column";
-    if(rule.Gap!==undefined)applyLayoutValue(el,"gap","gap",px(rule.Gap));if(rule.Width!==undefined)applyLayoutValue(el,"width","width",px(rule.Width));if(rule.Height!==undefined)applyLayoutValue(el,"height","height",px(rule.Height));applyFill(el,rule,parentOrientation);
+    if(rule.Gap!==undefined)applyLayoutValue(el,"gap","gap",px(rule.Gap));
+    if(rule.Width!==undefined)applyLayoutValue(el,"width","width",px(rule.Width));
+    if(rule.MinWidth!==undefined)applyLayoutValue(el,"minWidth","min-width",px(rule.MinWidth));
+    if(rule.Height!==undefined)applyLayoutValue(el,"height","height",rule.Height==="Auto"?"auto":px(rule.Height));
+    if(rule.MinHeight!==undefined)applyLayoutValue(el,"minHeight","min-height",px(rule.MinHeight));
+    applyFill(el,rule,parentOrientation);
     for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources));
     return el;
   }
@@ -159,7 +180,7 @@ function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const body=document.createElement("div");body.dataset.planeContainerContent="";applyContainerContentLayout(body,rule);
   for(const source of sourcesFromData(node,dataSet))body.append(renderSource(source,renderSet,rule,ownerShadow,resources));
-  if(rule.FillHorizontal===true||rule.Width!==undefined){el.style.overflow="hidden";body.style.minWidth="0";body.style.overflow="hidden";for(const text of body.querySelectorAll('[data-plane-source="Text"]')){text.style.minWidth="0";text.style.maxWidth="100%";text.style.overflow="hidden";text.style.textOverflow="ellipsis";text.style.whiteSpace="nowrap"}}
+  applyTextLayout(el,body,rule);
   el.append(body);return el;
 }
 function bindActivePanel(el,node,interaction,cancellers){
@@ -233,6 +254,6 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null){
     let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;
     const shadow=owner?.__planeVisual?.Shadow??0;
     const sources=sourcesFromData(node,nextData).map(source=>renderSource(source,renderSet,visual,shadow,resources));
-    releaseDeferredPictures(body);body.replaceChildren(...sources);
+    releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
 }

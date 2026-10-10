@@ -15,7 +15,8 @@ const INPUT_MODES=new Set(["text","decimal","numeric","email","tel","url","searc
 const VALIDATION_STATES=new Set(["None","Valid","Invalid"]);
 const EDITABLE_INPUT_CAPABILITY="pcode.editable-input.v1";
 const STRING_RULES=["Background","BorderColor","BorderLeftColor","BorderRightColor","BorderTopColor","BorderBottomColor","TextColor","PictureTint"];
-const NON_NEGATIVE_RULES=["BorderWidth","BorderLeftWidth","BorderRightWidth","BorderTopWidth","BorderBottomWidth","Width","Height","Padding","Gap","FontSize"];
+const NON_NEGATIVE_RULES=["BorderWidth","BorderLeftWidth","BorderRightWidth","BorderTopWidth","Width","MinWidth","MinHeight","Padding","Gap","FontSize"];
+const TEXT_OVERFLOWS=new Set(["Ellipsis","Wrap","Clip"]);
 
 
 function decodeBase64(value,label){
@@ -60,6 +61,9 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(!rule||typeof rule!=="object"||Array.isArray(rule))fail("Properties for "+label+" must be an object");
   for(const p of STRING_RULES)if(rule[p]!==undefined&&!isNonEmptyString(rule[p]))fail(p+" for "+label+" must be a non-empty string");
   for(const p of NON_NEGATIVE_RULES)if(rule[p]!==undefined&&!isNonNegativeNumber(rule[p]))fail(p+" for "+label+" must be non-negative");
+  if(rule.Height!==undefined&&rule.Height!=="Auto"&&!isNonNegativeNumber(rule.Height))fail("Height for "+label+" must be Auto or non-negative");
+  if(rule.TextOverflow!==undefined&&!TEXT_OVERFLOWS.has(rule.TextOverflow))fail("invalid TextOverflow for "+label);
+  if(rule.TextOverflow!==undefined&&!label.startsWith("Container "))fail("TextOverflow is only allowed for Container");
   if(rule.FontWeight!==undefined&&(!Number.isInteger(rule.FontWeight)||rule.FontWeight<1||rule.FontWeight>1000))fail("FontWeight for "+label+" must be 1..1000");
   if(rule.Alignment!==undefined&&!ALIGNMENTS.has(rule.Alignment))fail("invalid Alignment for "+label);
   if(rule.Distribution!==undefined&&!DISTRIBUTIONS.has(rule.Distribution))fail("invalid Distribution for "+label);
@@ -159,7 +163,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     for(const key of ["OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])validateEventToken(source[key],"EditableInput "+input.Login+"."+key);
   };
   const checkLayout=(items,label)=>{if(!Array.isArray(items))fail(label+".Layout must be an array");for(const item of items){if(item?.Type==="Group")checkGroup(item);else if(item?.Type==="EditableInput")checkInput(item);else if(item?.Type==="Container"||item?.Login!==undefined)checkContainer(item);else fail(label+".Layout accepts only Group, Container, or EditableInput")}};
-  const checkGroup=g=>{const p=g.Properties??{};const allowed=new Set(["Orientation","Width","Height","FillHorizontal","FillVertical","Gap"]);for(const k of Object.keys(p))if(!allowed.has(k))fail("Group property "+k+" is not allowed");for(const k of ["Width","Height","Gap"])if(p[k]!==undefined&&!isNonNegativeNumber(p[k]))fail("Group."+k+" must be non-negative");checkFill(p,"Group");if(!DIRECTIONS.has(p.Orientation))fail("Group.Properties.Orientation must be Horizontal or Vertical");if(g.Login!==undefined)fail("Group must not have Login");checkLayout(g.Layout??[],"Group")};
+  const checkGroup=g=>{const p=g.Properties??{};const allowed=new Set(["Orientation","Width","MinWidth","Height","MinHeight","FillHorizontal","FillVertical","Gap"]);for(const k of Object.keys(p))if(!allowed.has(k))fail("Group property "+k+" is not allowed");for(const k of ["Width","MinWidth","MinHeight","Gap"])if(p[k]!==undefined&&!isNonNegativeNumber(p[k]))fail("Group."+k+" must be non-negative");if(p.Height!==undefined&&p.Height!=="Auto"&&!isNonNegativeNumber(p.Height))fail("Group.Height must be Auto or non-negative");checkFill(p,"Group");if(!DIRECTIONS.has(p.Orientation))fail("Group.Properties.Orientation must be Horizontal or Vertical");if(g.Login!==undefined)fail("Group must not have Login");checkLayout(g.Layout??[],"Group")};
   const panelLayout=(node,label)=>{if(node.Layout!==undefined&&node.Containers!==undefined)fail(label+" cannot define both Layout and legacy Containers");if(node.Layout!==undefined)checkLayout(node.Layout,label);else{if(!Array.isArray(node.Containers))fail(label+".Layout or legacy Containers required");node.Containers.forEach(checkContainer)}};
   const checkActive=(a,aggregate=false)=>{add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel");validateVisualRule(a.Properties??{},(aggregate?"AggregateActivePanel ":"ActivePanel ")+a.Login,true,true);panelLayout(a,a.Login)};
   const checkSimple=sp=>{add(sp.Login,"SimplePanel");const p={...(sp.Properties??{})};const ag=p.AggregateActivePanels??[];delete p.AggregateActivePanels;validateVisualRule(p,"SimplePanel "+sp.Login,true);if(!Array.isArray(ag)||ag.length>1)fail(sp.Login+".Properties.AggregateActivePanels must contain 0..1 item");ag.forEach(x=>checkActive(x,true));panelLayout(sp,sp.Login);if(!Array.isArray(sp.ActivePanels))fail(sp.Login+".ActivePanels required");sp.ActivePanels.forEach(x=>checkActive(x,false))};

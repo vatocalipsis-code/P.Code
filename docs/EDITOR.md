@@ -1,6 +1,8 @@
 # P.Code Theme/Skin Editor
 
-Status: working authoring surface in the P.Code 2.11.0 release candidate.
+Status: working authoring surface in the P.Code 2.12.0 local candidate.
+
+The inspector exposes intrinsic, automatic, and fixed pixel height; minimum width and height; and Container text overflow. Automatic height remains a string in SPL and is never coerced to zero by a numeric slider.
 
 `editor/` is a human-facing authoring surface over existing P.Code/SPL contracts. It is not a new runtime contract and does not create a separate Skin semantic layer.
 
