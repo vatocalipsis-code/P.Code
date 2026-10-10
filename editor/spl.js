@@ -232,6 +232,8 @@ class Parser {
         this.expect("{");
         env.Data = name==="SetLang" ? this.setLangData() : name==="SetData" ? this.setDataData() : this.mapBody();
         this.expect("}");
+      } else if(field==="Requires"&&name==="SetLang"){
+        this.expect("[");env.Requires=this.literalArrayBody();this.expect("]");
       } else {
         this.expect("="); env[field]=this.literal();
       }
@@ -344,8 +346,13 @@ function serializeEnvelope(name,env){
   const rows=[`${name} {`];
   if(env.Name!==undefined) rows.push(line(1,`Name = ${lit(env.Name)}`));
   if(env.Version!==undefined) rows.push(line(1,`Version = ${lit(env.Version)}`));
+  if(name==="SetLang"&&Array.isArray(env.Requires)){
+    rows.push(line(1,"Requires ["));
+    for(const capability of env.Requires)rows.push(line(2,lit(capability)));
+    rows.push(line(1,"]"));
+  }
   for(const [k,v] of Object.entries(env)){
-    if(["Name","Version","Data"].includes(k)) continue;
+    if(["Name","Version","Data","Requires"].includes(k)) continue;
     if(v===null||typeof v!=="object") rows.push(line(1,`${k} = ${lit(v)}`));
   }
   rows.push(line(1,"Data {"));

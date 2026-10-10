@@ -137,6 +137,29 @@ test("content-sized SPL geometry validates and invalid layout values fail",()=>{
   assert.throws(()=>validatePLang(plan,setData.Data),/TextOverflow/);
 });
 
+test("unsupported skin properties fail before mounting instead of being ignored",()=>{
+  const plan=structuredClone(setLang.Data);
+  plan[0].SimplePanels[0].Properties.CornerRadius=12;
+  assert.throws(()=>validatePLang(plan,setData.Data),/pcode.corner-radius.v1/);
+  assert.equal(validatePLang(plan,setData.Data,["pcode.corner-radius.v1"]),true);
+  plan[0].SimplePanels[0].Properties.UnavailableEffect=1;
+  assert.throws(()=>validatePLang(plan,setData.Data,["pcode.corner-radius.v1"]),/unsupported property UnavailableEffect/);
+  assert.throws(()=>validateSetRender({...setRender.Data,UnavailableEffect:1}),/unsupported SetRender property UnavailableEffect/);
+});
+
+test("skin capabilities must be negotiated before preparation",async()=>{
+  const {engine}=harness();
+  const requested={...setLang,Requires:["pcode.parallax.v1"]};
+  const result=await connect(engine).Connection.prepare({SetLang:requested,SetData:setData,SetRender:setRender});
+  assert.equal(result.Outcome,"Rejected");
+  assert.equal(result.Failure.Code,"skin-capability-not-negotiated");
+  const scene={...setRender,Data:{...setRender.Data,Parallax:1}};
+  const sceneResult=await connect(engine).Connection.prepare({SetLang:setLang,SetData:setData,SetRender:scene});
+  assert.equal(sceneResult.Failure.Code,"parallax-capability-not-negotiated");
+  const plan=structuredClone(setLang.Data);plan[0].Properties.Parallax=1;
+  assert.throws(()=>validatePLang(plan,setData.Data),/pcode.parallax.v1/);
+});
+
 test("editable values and ordered value-bearing events cross only the negotiated boundary",async()=>{
   const h=harness();const connection=connect(h.engine,["pcode.editable-input.v1"]).Connection;
   const prepared=await connection.prepare({SetLang:inputSetLang,SetData:inputSetData,SetRender:setRender});

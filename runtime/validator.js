@@ -15,8 +15,23 @@ const INPUT_MODES=new Set(["text","decimal","numeric","email","tel","url","searc
 const VALIDATION_STATES=new Set(["None","Valid","Invalid"]);
 const EDITABLE_INPUT_CAPABILITY="pcode.editable-input.v1";
 const STRING_RULES=["Background","BorderColor","BorderLeftColor","BorderRightColor","BorderTopColor","BorderBottomColor","TextColor","PictureTint"];
-const NON_NEGATIVE_RULES=["BorderWidth","BorderLeftWidth","BorderRightWidth","BorderTopWidth","Width","MinWidth","MinHeight","Padding","Gap","FontSize"];
+const NON_NEGATIVE_RULES=["BorderWidth","BorderLeftWidth","BorderRightWidth","BorderTopWidth","BorderBottomWidth","Width","MinWidth","MinHeight","Padding","Gap","FontSize"];
 const TEXT_OVERFLOWS=new Set(["Ellipsis","Wrap","Clip"]);
+// A misspelled or newer visual property must not silently produce a partial skin.
+// New renderer features extend this vocabulary and its renderer together.
+const VISUAL_RULES=new Set([
+  ...STRING_RULES,...NON_NEGATIVE_RULES,
+  "Height","TextOverflow","FontWeight","Alignment","Distribution","Direction",
+  "Parallax","PanelTransparency","Shadow","OnPress","OffPress",
+  "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
+  "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
+  "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
+  "CornerRadius"
+]);
+const RENDER_RULES=new Set([
+  "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
+  "Transparency","TextTransparency","PictureTransparency","Parallax"
+]);
 
 
 function decodeBase64(value,label){
@@ -59,6 +74,7 @@ function validateEventToken(value,label){
 }
 function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false){
   if(!rule||typeof rule!=="object"||Array.isArray(rule))fail("Properties for "+label+" must be an object");
+  for(const key of Object.keys(rule))if(!VISUAL_RULES.has(key))fail("unsupported property "+key+" for "+label);
   for(const p of STRING_RULES)if(rule[p]!==undefined&&!isNonEmptyString(rule[p]))fail(p+" for "+label+" must be a non-empty string");
   for(const p of NON_NEGATIVE_RULES)if(rule[p]!==undefined&&!isNonNegativeNumber(rule[p]))fail(p+" for "+label+" must be non-negative");
   if(rule.Height!==undefined&&rule.Height!=="Auto"&&!isNonNegativeNumber(rule.Height))fail("Height for "+label+" must be Auto or non-negative");
@@ -69,6 +85,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Distribution!==undefined&&!DISTRIBUTIONS.has(rule.Distribution))fail("invalid Distribution for "+label);
   if(rule.Direction!==undefined&&!DIRECTIONS.has(rule.Direction))fail("invalid Direction for "+label);
   if(rule.Parallax!==undefined&&!isFiniteNumber(rule.Parallax))fail("invalid Parallax for "+label);
+  if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.PanelTransparency!==undefined){
     if(!allowPanelEffects)fail("PanelTransparency is not allowed for "+label);
     if(!isTransparency(rule.PanelTransparency))fail("PanelTransparency for "+label+" must be 0..1");
@@ -145,6 +162,17 @@ export function validateSetData(data,pLang,capabilities=[],resources=null){
 export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   if(!Array.isArray(pLang))fail("SetLang.Data must be BasePanel[]");
   const capabilitySet=new Set(capabilities);
+  const checkVisualCapabilities=node=>{
+    if(Array.isArray(node)){node.forEach(checkVisualCapabilities);return}
+    if(!node||typeof node!=="object")return;
+    if(node.Properties?.CornerRadius!==undefined&&!capabilitySet.has("pcode.corner-radius.v1"))
+      fail("CornerRadius requires negotiated pcode.corner-radius.v1");
+    if(node.Properties?.Parallax&&!capabilitySet.has("pcode.parallax.v1"))
+      fail("Parallax requires negotiated pcode.parallax.v1");
+    for(const [key,value] of Object.entries(node))if(key!=="Properties")checkVisualCapabilities(value);
+    checkVisualCapabilities(node.Properties?.AggregateActivePanels);
+  };
+  checkVisualCapabilities(pLang);
   const resourceIndex=validateResources(resources);
   const logins=new Set();
   const add=(login,label)=>{if(!isNonEmptyString(login))fail(label+".Login required");if(logins.has(login))fail("duplicate Login "+login);logins.add(login)};
@@ -174,6 +202,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
 
 export function validateSetRender(renderSet={}){
   if(!renderSet||typeof renderSet!=="object"||Array.isArray(renderSet))fail("SetRender.Data must be an object");
+  for(const key of Object.keys(renderSet))if(!RENDER_RULES.has(key))fail("unsupported SetRender property "+key);
   for(const forbidden of ["Elements","Types","Global"])if(renderSet[forbidden]!==undefined)fail("SetRender."+forbidden+" is forbidden; object visuals belong to SetLang");
   for(const p of ["Transparency","TextTransparency","PictureTransparency"])if(!isTransparency(renderSet[p]))fail("SetRender."+p+" must be 0..1");
   if(renderSet.PanelSpacing!==undefined&&!isNonNegativeNumber(renderSet.PanelSpacing))fail("SetRender.PanelSpacing must be non-negative");

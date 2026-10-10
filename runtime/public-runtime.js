@@ -5,10 +5,10 @@ import {renderPlaneCode,patchSetData,cancelPlaneCodeInteraction,disposePlaneCode
 import {createPlaneCodeEngine} from "./public-runtime-core.js";
 
 const descriptor={
-  ComponentVersion:"2.12.0",
+  ComponentVersion:"2.13.0",
   GenerationId:"pcode.layout-group.v1",
   SupportedSerializationVersions:[1],
-  Capabilities:["pcode.editable-input.v1"]
+  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1"]
 };
 
 const renderer={

@@ -158,6 +158,13 @@ export function createPlaneCodeEngine(dependencies){
         setDataData=dependencies.validateEnvelope(input.SetData,"SetData");
         setRenderData=dependencies.validateEnvelope(input.SetRender,"SetRender");
       }catch(error){return rejected("serialization","invalid-set-envelope",diagnostic(error))}
+      const requires=input.SetLang.Requires??[];
+      if(!Array.isArray(requires)||requires.some(value=>typeof value!=="string"||!value)||new Set(requires).size!==requires.length)
+        return rejected("capability","invalid-skin-requirements");
+      if(requires.some(value=>!this.capabilities.includes(value)))
+        return rejected("capability","skin-capability-not-negotiated",requires.filter(value=>!this.capabilities.includes(value)).join(", "));
+      if(setRenderData.Parallax&&!this.capabilities.includes("pcode.parallax.v1"))
+        return rejected("capability","parallax-capability-not-negotiated");
       try{dependencies.validateResources(input.Resources);dependencies.validatePlan(setLangData,setDataData,this.capabilities,input.Resources)}
       catch(error){return rejected("setlang","invalid-setlang",diagnostic(error))}
       try{dependencies.validateData(setDataData,setLangData,this.capabilities,input.Resources)}

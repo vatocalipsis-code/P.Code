@@ -3,6 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSPL, serializeSPL } from '../editor/spl.js';
 
+test('SPL capability requirements round-trip as declarative metadata',()=>{
+  const project=parseSPL(legacy);
+  project.SetLang.Requires=['pcode.parallax.v1'];
+  assert.deepEqual(parseSPL(serializeSPL(project)).SetLang.Requires,['pcode.parallax.v1']);
+});
+
 const legacy = `
 SetLang {
   Name = "legacy"

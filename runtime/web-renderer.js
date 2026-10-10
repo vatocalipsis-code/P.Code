@@ -63,6 +63,7 @@ function applyBoxRule(el,rule={},renderSet,panelEffects=false){
   if(rule.Background!==undefined){el.style.setProperty("--plane-background",rule.Background);el.dataset.planeBackground="present"}else el.dataset.planeBackground="absent";
   if(rule.BorderColor!==undefined)el.style.borderColor=structuralColor(rule.BorderColor,renderSet,pt);
   if(rule.BorderWidth!==undefined)el.style.borderWidth=px(rule.BorderWidth);
+  if(rule.CornerRadius!==undefined)el.style.borderRadius=px(rule.CornerRadius);
   for(const side of ["Left","Right","Top","Bottom"]){
     if(rule["Border"+side+"Color"]!==undefined)el.style["border"+side+"Color"]=structuralColor(rule["Border"+side+"Color"],renderSet,pt);
     if(rule["Border"+side+"Width"]!==undefined)el.style["border"+side+"Width"]=px(rule["Border"+side+"Width"]);
