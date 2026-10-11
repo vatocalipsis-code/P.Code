@@ -11,6 +11,7 @@ The project's official current name is **P.Code**. `PlaneCode` is its historical
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System boundaries, data flow, ownership, and three-layer model |
 | [SPL_REFERENCE.md](SPL_REFERENCE.md) | SetPlan / .SPL syntax and typed SetLang structure |
 | [RUNTIME_REFERENCE.md](RUNTIME_REFERENCE.md) | Public Runtime API, lifecycle, validation, events, PNG path, and browser integration |
+| [HOST_ADAPTER.md](HOST_ADAPTER.md) | Reusable browser Host setup for a new application |
 | [PLANG_CANON.md](PLANG_CANON.md) | PLang and SetLang canonical semantics |
 | [SET_RENDER_CANON.md](SET_RENDER_CANON.md) | Scene-only SetRender contract |
 | [PLANE_CODE_2.11.0.md](PLANE_CODE_2.11.0.md) | 2.11.0 release-candidate contract and delta |

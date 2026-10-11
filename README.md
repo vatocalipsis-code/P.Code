@@ -12,6 +12,7 @@ Current target release: 2.15.0
 - [Architecture](docs/ARCHITECTURE.md)
 - [SPL reference](docs/SPL_REFERENCE.md)
 - [Runtime reference](docs/RUNTIME_REFERENCE.md)
+- [Browser Host adapter](docs/HOST_ADAPTER.md)
 - [PLang / SetLang canon](docs/PLANG_CANON.md)
 - [SetRender canon](docs/SET_RENDER_CANON.md)
 - [2.11.0 release delta](docs/PLANE_CODE_2.11.0.md)
