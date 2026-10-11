@@ -30,7 +30,7 @@ const VISUAL_RULES=new Set([
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
-  "Transparency","TextTransparency","PictureTransparency","Parallax"
+  "Transparency","TextTransparency","PictureTransparency","Parallax","TiltParallax"
 ]);
 
 
@@ -215,5 +215,11 @@ export function validateSetRender(renderSet={}){
   for(const p of ["Transparency","TextTransparency","PictureTransparency"])if(!isTransparency(renderSet[p]))fail("SetRender."+p+" must be 0..1");
   if(renderSet.PanelSpacing!==undefined&&!isNonNegativeNumber(renderSet.PanelSpacing))fail("SetRender.PanelSpacing must be non-negative");
   if(renderSet.Parallax!==undefined&&!isFiniteNumber(renderSet.Parallax))fail("SetRender.Parallax must be finite");
+  if(renderSet.TiltParallax!==undefined){
+    const tilt=renderSet.TiltParallax;
+    if(!tilt||typeof tilt!=="object"||Array.isArray(tilt)||Object.keys(tilt).some(key=>!["MaxOffset","Smoothing"].includes(key)))fail("SetRender.TiltParallax has unsupported properties");
+    if(!isFiniteNumber(tilt.MaxOffset)||tilt.MaxOffset<0||tilt.MaxOffset>12)fail("SetRender.TiltParallax.MaxOffset must be 0..12");
+    if(!isFiniteNumber(tilt.Smoothing)||tilt.Smoothing<=0||tilt.Smoothing>1)fail("SetRender.TiltParallax.Smoothing must be >0..1");
+  }
   return true;
 }

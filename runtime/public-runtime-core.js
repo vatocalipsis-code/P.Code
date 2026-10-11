@@ -128,10 +128,22 @@ export function createPlaneCodeEngine(dependencies){
         this.state="ACTIVE";return completed();
       });
     }
+    requestTilt(){
+      if(this.state!=="ACTIVE")return Promise.resolve(this._rejectState("requestTilt",["ACTIVE"]));
+      if(!this.connection.capabilities.includes("pcode.tilt-parallax.v1")||!this.setRender.Data.TiltParallax)
+        return Promise.resolve(rejected("capability","tilt-parallax-not-negotiated"));
+      // Invoke the browser permission request in the original user gesture.
+      return dependencies.renderer.requestTilt(this.target).then(()=>completed(),error=>rejected("capability","tilt-parallax-unavailable",diagnostic(error)));
+    }
+    disableTilt(){
+      if(this.state!=="ACTIVE")return this._rejectState("disableTilt",["ACTIVE"]);
+      dependencies.renderer.disableTilt(this.target);
+      return completed();
+    }
     disableInteraction(){
       return this._enqueue(()=>{
         if(this.state!=="ACTIVE")return this._rejectState("disableInteraction",["ACTIVE"]);
-        try{dependencies.renderer.cancelInteraction(this.target);this.state="MOUNTED_INACTIVE";return completed()}
+        try{dependencies.renderer.cancelInteraction(this.target);dependencies.renderer.disableTilt?.(this.target);this.state="MOUNTED_INACTIVE";return completed()}
         catch(error){return this._failStop("disable-failed",error)}
       });
     }
@@ -169,6 +181,8 @@ export function createPlaneCodeEngine(dependencies){
         return rejected("capability","skin-stylesheet-capability-not-negotiated");
       if(setRenderData.Parallax&&!this.capabilities.includes("pcode.parallax.v1"))
         return rejected("capability","parallax-capability-not-negotiated");
+      if(setRenderData.TiltParallax&&!requires.includes("pcode.tilt-parallax.v1"))
+        return rejected("capability","tilt-parallax-requirement-missing");
       try{dependencies.validateResources(input.Resources);dependencies.validatePlan(setLangData,setDataData,this.capabilities,input.Resources)}
       catch(error){return rejected("setlang","invalid-setlang",diagnostic(error))}
       try{dependencies.validateData(setDataData,setLangData,this.capabilities,input.Resources)}

@@ -29,6 +29,15 @@ renderer, and tests. Only skins using it need to request it and set its paramete
 browser's border radius. `pcode.parallax.v1` advertises the existing `Parallax`
 rendering capability; a skin can request it when it uses that effect.
 
+`pcode.tilt-parallax.v1` is an opt-in device orientation signal. A skin declares
+the capability and `SetRender.Data.TiltParallax { MaxOffset = 6 Smoothing = 0.18 }`.
+The active RuntimeHandle exposes `requestTilt()` and `disableTilt()`; the host
+must call `requestTilt()` in a direct user press so an iPhone can ask permission.
+P.Code publishes bounded `--pcode-tilt-x` and `--pcode-tilt-y` pixel variables
+on the render root. Only the SPL stylesheet decides which decorative layers or
+shadows respond. Without permission, device events, or when reduced motion is
+selected, the skin remains static. Disposal removes listeners and variables.
+
 `pcode.skin-stylesheet.v1` lets an SPL carry `SetLang.StyleSheet` as browser CSS
 for cases such as theme variants, pseudo states and responsive layout. P.Code
 installs this CSS only while that skin is mounted and removes it on disposal.

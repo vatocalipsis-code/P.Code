@@ -1,6 +1,6 @@
 # P.Code architecture
 
-Status: P.Code 2.12.0 local candidate.
+Status: P.Code 2.15.0 local candidate.
 
 ## Contracts
 

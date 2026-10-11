@@ -14,6 +14,8 @@ The only Host-facing JavaScript boundary is exported by runtime/public-runtime.j
 - RuntimeHandle.applySetRender(fullSetRender)
 - RuntimeHandle.enableInteraction()
 - RuntimeHandle.disableInteraction()
+- RuntimeHandle.requestTilt() (only for negotiated `pcode.tilt-parallax.v1`)
+- RuntimeHandle.disableTilt()
 - RuntimeHandle.dispose()
 
 The descriptor is fixed at ComponentVersion 2.12.0, GenerationId pcode.layout-group.v1, serialization version 1, with the optional capability `pcode.editable-input.v1`. runtime/public-runtime-core.js is an internal implementation and test seam; Host code must not import it.
@@ -25,6 +27,8 @@ All ordinary outcomes are returned as Completed, Rejected, or Failed. A renderer
 A runtime moves through PREPARED, MOUNTED_INACTIVE, ACTIVE, and DISPOSED. A render target may have one mounted runtime. Multiple runtimes may be active on different targets and keep independent state, event counters, sinks, and data.
 
 MOUNTED_INACTIVE is physically inert. enableInteraction requires an EventSink when the compiled plan contains OnPress or OffPress tokens. disableInteraction cancels the current pointer claim before returning. Event callbacks are delivered inside the runtime's serialized operation boundary; operations requested by a callback are queued after that callback.
+
+`requestTilt()` is the deliberate exception to queued operations: it calls the browser's orientation permission API synchronously in the originating user gesture, then returns a Promise with the usual Completed/Rejected result. It requires an ACTIVE runtime and a skin that declared `pcode.tilt-parallax.v1` with `SetRender.Data.TiltParallax`. `disableTilt()` and disposal stop sensor listeners and remove the scene variables. Device angles are never sent through SetData or to the Host.
 
 ## Validation and compilation
 

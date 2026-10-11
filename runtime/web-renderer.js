@@ -1,5 +1,7 @@
 /** Browser renderer for compiled P.Code Object Plans. */
 const activeParallax=new WeakMap();
+const activeTilt=new WeakMap();
+const tiltScenes=new WeakMap();
 const activeInteraction=new WeakMap();
 const activeResourceStyles=new WeakMap();
 const activeSkinStyles=new WeakMap();
@@ -242,12 +244,57 @@ function bindParallax(root,nodes){
   root.addEventListener("pointermove",e=>{point={x:e.clientX,y:e.clientY};if(!frame)frame=requestAnimationFrame(apply)},{signal:controller.signal});
   root.addEventListener("pointerleave",()=>{point=null;if(frame)cancelAnimationFrame(frame);frame=0;for(const item of nodes)item.element.style.translate=""},{signal:controller.signal});
 }
+function stopTilt(root){
+  activeTilt.get(root)?.cancel();activeTilt.delete(root);
+  root.style?.removeProperty?.('--pcode-tilt-x');root.style?.removeProperty?.('--pcode-tilt-y');
+}
+export function disableTiltParallax(root){stopTilt(root)}
+export function requestTiltParallax(root){
+  const scene=tiltScenes.get(root),doc=root.ownerDocument??globalThis.document;
+  if(!scene)return Promise.reject(new Error('Tilt parallax is not configured'));
+  if(!doc||doc.visibilityState==='hidden'||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+    return Promise.reject(new Error('Motion is unavailable in this view'));
+  const Sensor=globalThis.DeviceOrientationEvent;
+  if(!Sensor)return Promise.reject(new Error('Device orientation is unavailable'));
+  // This call must happen synchronously during the user's press on iOS.
+  let permission;
+  try{permission=typeof Sensor.requestPermission==='function'?Sensor.requestPermission():Promise.resolve('granted')}
+  catch(error){return Promise.reject(error)}
+  return Promise.resolve(permission).then(status=>{
+    if(status!=='granted')throw new Error('Device orientation permission denied');
+    stopTilt(root);
+    const controller=new AbortController(),signal=controller.signal;
+    let baseline=null,frame=0,targetX=0,targetY=0,x=0,y=0;
+    const reset=()=>{root.style.removeProperty('--pcode-tilt-x');root.style.removeProperty('--pcode-tilt-y')};
+    const cancel=()=>{controller.abort();if(frame)cancelAnimationFrame(frame);reset()};
+    function paint(){
+      frame=0;
+      x+=(targetX-x)*scene.Smoothing;y+=(targetY-y)*scene.Smoothing;
+      root.style.setProperty('--pcode-tilt-x',x.toFixed(2)+'px');root.style.setProperty('--pcode-tilt-y',y.toFixed(2)+'px');
+      if(Math.abs(targetX-x)>.05||Math.abs(targetY-y)>.05)frame=requestAnimationFrame(paint);
+    }
+    globalThis.addEventListener('deviceorientation',event=>{
+      if(doc.visibilityState==='hidden'||!Number.isFinite(event.beta)||!Number.isFinite(event.gamma))return;
+      if(!baseline){baseline={beta:event.beta,gamma:event.gamma};return}
+      const clamp=value=>Math.max(-1,Math.min(1,value/15));
+      targetX=clamp(event.gamma-baseline.gamma)*scene.MaxOffset;
+      targetY=clamp(event.beta-baseline.beta)*scene.MaxOffset;
+      if(!frame)frame=requestAnimationFrame(paint);
+    },{signal});
+    doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='hidden')stopTilt(root)},{signal});
+    const reduced=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
+    reduced?.addEventListener?.('change',()=>{if(reduced.matches)stopTilt(root)},{signal});
+    activeTilt.set(root,{cancel});
+  });
+}
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
-  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeSkinStyles.get(root)?.remove?.();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
+  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeSkinStyles.get(root)?.remove?.();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
   cancelPlaneCodeInteraction(root);
+  if(!renderSet.TiltParallax)stopTilt(root);
+  tiltScenes.set(root,renderSet.TiltParallax??null);
   prepareSkinStyle(root,skinStyleSheet);
   root.style.setProperty("--panel-spacing",px(renderSet.PanelSpacing));root.style.setProperty("--background-color",renderSet.BackgroundColor);root.style.setProperty("--panel-color",renderSet.PanelColor);root.style.setProperty("--border-color",renderSet.BorderColor);root.style.setProperty("--text-color",renderSet.TextColor);
   const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];

@@ -24,16 +24,18 @@ const inputSetData={Name:"input-data",Version:1,Data:{Name:{InputValue:"Ada",Val
 
 function harness(options={}){
   let compileCount=0;
-  const sessions=[],calls={patch:0,dispose:0,cancel:0,render:0};
+  const sessions=[],calls={patch:0,dispose:0,cancel:0,render:0,tilt:0,stopTilt:0};
   const renderer={
     mount(target,plan,data,render,interaction,resources){if(options.failMount)throw new Error("mount boom");sessions.push({target,plan,data,render,interaction,resources});calls.render++},
     patchData(target,data,render,resources){calls.patch++;const session=sessions.find(x=>x.target===target);session.data=data;session.resources=resources},
     rerender(target,plan,data,render,interaction,resources){calls.render++;sessions.push({target,plan,data,render,interaction,resources})},
     cancelInteraction(){calls.cancel++},
+    requestTilt(){calls.tilt++;return Promise.resolve()},
+    disableTilt(){calls.stopTilt++},
     dispose(){calls.dispose++}
   };
   const engine=createPlaneCodeEngine({
-    descriptor:{ComponentVersion:"2.12.0",GenerationId:"pcode.layout-group.v1",SupportedSerializationVersions:[1],Capabilities:["pcode.editable-input.v1"]},
+    descriptor:{ComponentVersion:"2.12.0",GenerationId:"pcode.layout-group.v1",SupportedSerializationVersions:[1],Capabilities:options.capabilities??["pcode.editable-input.v1"]},
     compile(value){compileCount++;return compileSetLang(value)},
     validateEnvelope:validateSetEnvelope,validatePlan:validatePLang,validateData:validateSetData,validateRender:validateSetRender,validateResources,renderer
   });
@@ -170,6 +172,23 @@ test("skin stylesheet requires the generic CSS capability",async()=>{
   assert.equal(unavailable.Failure.Code,"skin-capability-not-negotiated");
   assert.throws(()=>validateSetEnvelope({...styled,StyleSheet:"@import url(https://example.test/x.css)"},"SetLang"),/cannot import/);
   assert.throws(()=>validateSetEnvelope({...styled,StyleSheet:"a{background:url(https://example.test/x.png)}"},"SetLang"),/remote URLs/);
+});
+
+test("tilt motion is opt-in, bounded, and invoked from the active runtime",async()=>{
+  const scene={...setRender,Data:{...setRender.Data,TiltParallax:{MaxOffset:6,Smoothing:.2}}};
+  const unavailable=await connect(harness().engine).Connection.prepare({SetLang:setLang,SetData:setData,SetRender:scene});
+  assert.equal(unavailable.Failure.Code,"tilt-parallax-requirement-missing");
+  const h=harness({capabilities:["pcode.editable-input.v1","pcode.tilt-parallax.v1"]});
+  const lang={...setLang,Requires:["pcode.tilt-parallax.v1"]};
+  const prepared=await connect(h.engine,["pcode.tilt-parallax.v1"]).Connection.prepare({SetLang:lang,SetData:setData,SetRender:scene});
+  assert.equal(prepared.Outcome,"Completed");
+  const runtime=prepared.Runtime;
+  assert.equal((await runtime.requestTilt()).Failure.Code,"invalid-state");
+  await runtime.setEventSink(()=>{});await runtime.mount({});await runtime.enableInteraction();
+  assert.equal((await runtime.requestTilt()).Outcome,"Completed");assert.equal(h.calls.tilt,1);
+  assert.equal(runtime.disableTilt().Outcome,"Completed");assert.equal(h.calls.stopTilt,1);
+  assert.throws(()=>validateSetRender({...scene.Data,TiltParallax:{MaxOffset:40,Smoothing:.2}}),/MaxOffset/);
+  await runtime.dispose();
 });
 
 test("editable values and ordered value-bearing events cross only the negotiated boundary",async()=>{

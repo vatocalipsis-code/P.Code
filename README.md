@@ -4,7 +4,7 @@ P.Code is a standalone declarative interface engine. Applications describe an in
 
 **Former name:** `PlaneCode` (retained only in historical release records and compatibility-sensitive identifiers).
 
-Current target release: 2.12.0
+Current target release: 2.15.0
 
 ## Start here
 
@@ -16,6 +16,7 @@ Current target release: 2.12.0
 - [SetRender canon](docs/SET_RENDER_CANON.md)
 - [2.11.0 release delta](docs/PLANE_CODE_2.11.0.md)
 - [2.12.0 layout delta](docs/PLANE_CODE_2.12.0.md)
+- [2.15.0 tilt parallax delta](docs/PLANE_CODE_2.15.0.md)
 
 ## Public runtime
 

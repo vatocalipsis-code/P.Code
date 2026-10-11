@@ -1,14 +1,14 @@
 /** Frozen P.Code Public Runtime API v1 boundary. */
 import {compileSetLang} from "./setlang-compiler.js";
 import {validatePLang,validateSetData,validateSetEnvelope,validateSetRender,validateResources} from "./validator.js";
-import {renderPlaneCode,patchSetData,cancelPlaneCodeInteraction,disposePlaneCode} from "./web-renderer.js";
+import {renderPlaneCode,patchSetData,cancelPlaneCodeInteraction,disposePlaneCode,requestTiltParallax,disableTiltParallax} from "./web-renderer.js";
 import {createPlaneCodeEngine} from "./public-runtime-core.js";
 
 const descriptor={
-  ComponentVersion:"2.14.0",
+  ComponentVersion:"2.15.0",
   GenerationId:"pcode.layout-group.v1",
   SupportedSerializationVersions:[1],
-  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1"]
+  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1"]
 };
 
 const renderer={
@@ -16,6 +16,8 @@ const renderer={
   patchData(target,data,render,resources){patchSetData(target,data,render,resources)},
   rerender(target,plan,data,render,interaction,resources,styleSheet){renderPlaneCode(target,plan,data,render,interaction,resources,styleSheet)},
   cancelInteraction(target){cancelPlaneCodeInteraction(target)},
+  requestTilt(target){return requestTiltParallax(target)},
+  disableTilt(target){disableTiltParallax(target)},
   dispose(target){disposePlaneCode(target)}
 };
 
