@@ -4,6 +4,10 @@ Status: P.Code 2.15.0 local candidate.
 
 ## Contracts
 
+The optional browser Host adapter lives in `host/browser-host.js`. It has no
+product API calls or visual rules. An application supplies SPL identity, data,
+actions, and navigation; P.Code owns validation, compilation, and rendering.
+
 P.Code keeps its responsibilities separate:
 
 - **PLang / SetLang** describes concrete interface objects, hierarchy, layout, geometry, and object-specific visual properties.

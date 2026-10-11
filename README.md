@@ -22,6 +22,11 @@ Current target release: 2.15.0
 
 Host code imports only PlaneCodeEngine from runtime/public-runtime.js. The frozen v1 flow is:
 
+`host/browser-host.js` is an optional, product-neutral browser adapter for
+SPL download, identity checks, caching, capability negotiation, and runtime
+preparation. Hosts inject their P.Code engine and SPL parser. Data binding,
+business actions, authentication, and navigation remain application-owned.
+
 1. getDescriptor or connect with pcode.layout-group.v1 and serialization version 1; require `pcode.editable-input.v1` when editable controls are needed.
 2. prepare complete SetLang, SetData, and SetRender envelopes, with optional top-level Resources v1 packaging.
 3. mount a RuntimeHandle, attach an EventSink when event tokens exist, and enable interaction.
@@ -38,6 +43,7 @@ P.Code has exactly three physical panel layers: BasePanel, SimplePanel, and Acti
 
 - release/: complete Set envelopes used by the client screen
 - runtime/: public boundary, internal lifecycle, compiler, validators, and renderer
+- host/: optional browser adapter for applications using the public boundary
 - tests/: Public Runtime API contract tests
 - plans/: example .SPL SetPlans
 - docs/: current reference, canons, and release history
