@@ -9,19 +9,25 @@ export function createPCodeHost({engine,parse,fetchText=async path=>{
   const sources=new Map();
   async function load({key,path,expectedName}){
     if(!key||!path)throw new TypeError('SPL key and path required');
-    if(sources.has(key))return sources.get(key);
+    if(typeof path!=='string'||!path.startsWith('/')||path.startsWith('//')||path.split('/').includes('..'))throw new TypeError('SPL path must be local');
+    const cached=sources.get(key);
+    if(cached){
+      if(cached.path!==path||cached.expectedName!==expectedName)throw new Error('SPL key reused for a different source: '+key);
+      return cached.pending;
+    }
     const pending=(async()=>{
       const text=await fetchText(path);
       const parsed=parse(text);
       if(expectedName&&parsed?.SetLang?.Name!==expectedName)throw new Error('SPL identity mismatch: '+key);
       return {text,parsed};
     })().catch(error=>{sources.delete(key);throw error});
-    sources.set(key,pending);
+    sources.set(key,{path,expectedName,pending});
     return pending;
   }
   async function prepare(skin){
+    const descriptor=engine.getDescriptor?.();
     const connected=engine.connect({
-      GenerationId:'pcode.layout-group.v1',SerializationVersion:1,
+      GenerationId:descriptor?.GenerationId??'pcode.layout-group.v1',SerializationVersion:descriptor?.SupportedSerializationVersions?.at(-1)??1,
       RequiredCapabilities:skin.SetLang.Requires??[],OptionalCapabilities:[]
     });
     if(connected.Acceptance.Status!=='Accepted')throw new Error(JSON.stringify(connected.Acceptance.Failure));
@@ -35,5 +41,5 @@ export function createPCodeHost({engine,parse,fetchText=async path=>{
       return {connection,runtime:result.Runtime};
     }catch(error){await connection.close().catch(()=>{});throw error}
   }
-  return Object.freeze({load,prepare,getCached:key=>sources.get(key)});
+  return Object.freeze({load,prepare,getCached:key=>sources.get(key)?.pending});
 }

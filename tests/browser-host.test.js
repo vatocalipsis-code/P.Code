@@ -22,3 +22,10 @@ test('failed identity does not poison later loads',async()=>{
   await assert.rejects(host.load({key:'main',path:'/main.SPL',expectedName:'wrong'}),/identity/);
   assert.equal((await host.load({key:'main',path:'/main.SPL',expectedName:'correct'})).parsed.SetLang.Name,'correct');
 });
+
+test('a cached style key cannot silently switch its source',async()=>{
+  const host=createPCodeHost({engine:{connect(){}},parse:text=>({SetLang:{Name:text}}),fetchText:async()=>"skin"});
+  await host.load({key:'main',path:'/skins/main.SPL',expectedName:'skin'});
+  await assert.rejects(host.load({key:'main',path:'/skins/other.SPL',expectedName:'skin'}),/different source/);
+  await assert.rejects(host.load({key:'remote',path:'https://example.test/skin.SPL'}),/local/);
+});
