@@ -226,3 +226,31 @@ Native `moveBefore` is used when available, with retained-control focus/selectio
 restoration for older browsers. Nested-repeat templates retain their existing
 rebuild path. Reproduce with `tests/check-repeat-continuity-browser.mjs` in
 Chromium and WebKit; this fixture defines no application skin.
+
+## `pcode.action-menu.v1`
+
+An `ActivePanel` may declare `ActionMenu`. The renderer owns its transient DOM,
+focus, keyboard navigation, outside dismissal, hold timer and disposal. The
+application receives only the opaque `OffPress` command and optional repeated
+record `ItemId`. No product action is executed by the renderer.
+
+`Trigger` is `Press` (exclusive anchor activation) or `Context` (right click /
+long press; normal `OffPress` remains the primary action). NativeButton anchors
+are not supported because menu buttons must not be nested in a native button.
+`Class` is required; `AnchorClass`, `ButtonClass`, `BodyClass`, `AriaLabel`,
+`WidthLabel` / `WidthPadding`, `HoldDelay` and `MoveTolerance` are optional.
+`Items` is an ordered dictionary of 1–32 entries. Each entry has `Text` or a
+semantic `Source` and optional Text `Format`, local canonical `Picture`,
+`OffPress`, `EnabledSource`, `VisibleSource`. The menu itself may also have
+`EnabledSource`. Semantic bindings require `pcode.semantic-model.v1`.
+
+Updates preserve menu button identity. Permission revocation, route hiding,
+record removal, back consumption and runtime disposal close the menu. The
+runtime rechecks live availability before emitting a command; it never derives
+business permissions. Application API authorization remains independently
+required. Movement cancels a pending hold, and a hold suppresses the primary
+record action. Captured outside clicks dismiss without activating background
+controls.
+
+Checks: `node --test tests/action-menu.test.js` and
+`PLAYWRIGHT_MODULE=... UI_BROWSER=chromium|webkit node tests/check-action-menu-browser.mjs`.

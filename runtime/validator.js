@@ -1,3 +1,4 @@
+import {validateActionMenu} from './action-menu.js';
 import {validateSceneEffects} from './scene-effects.js';
 import {validateVector} from './vector.js';
 /** P.Code contract validators. */
@@ -31,7 +32,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalExit","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
+  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -123,6 +124,11 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.Repeat!==undefined&&(! /^(ActivePanel|SimplePanel|Flow) /.test(label)||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires a panel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
+  if(rule.ActionMenu!==undefined){
+    if(!label.startsWith('ActivePanel ')||rule.NativeButton===true)fail('ActionMenu requires a non-native ActivePanel anchor');
+    if(rule.ActionMenu.Trigger==='Press'&&(rule.OffPress||rule.OnPress))fail('Press ActionMenu owns anchor activation');
+    validateActionMenu(rule.ActionMenu,{picture:isCanonicalImageFile,format:validateFormat,event:validateEventToken});
+  }
   if(rule.NumericEditor!==undefined)validateNumericEditor(rule.NumericEditor,label);
   if(rule.DecimalInput!==undefined)validateDecimalInput(rule.DecimalInput,label);
   if(rule.Feedback!==undefined){
@@ -323,6 +329,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.numeric-editor.v1'))fail('NumericEditor requires pcode.numeric-editor.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
+    if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.action-menu.v1'))fail('ActionMenu requires pcode.action-menu.v1');
+    if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.semantic-model.v1')&&(node.Properties.ActionMenu.EnabledSource||Object.values(node.Properties.ActionMenu.Items??{}).some(item=>item.Source||item.EnabledSource||item.VisibleSource)))fail('ActionMenu sources require pcode.semantic-model.v1');
     if(node.Properties?.TitleSource&&!capabilitySet.has('pcode.semantic-title.v1'))fail('Semantic titles require pcode.semantic-title.v1');
     if((node.Properties?.PressedSource||node.Properties?.LabelSource)&&!capabilitySet.has('pcode.semantic-accessibility.v1'))fail('Semantic accessibility requires pcode.semantic-accessibility.v1');
     if(usesNegativeSign(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-sign.v1'))fail('NegativeSign requires pcode.decimal-sign.v1');

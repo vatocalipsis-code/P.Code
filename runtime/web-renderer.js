@@ -1,3 +1,4 @@
+import {bindActionMenu,consumeActionMenuBack} from './action-menu.js';
 import {installSceneEffects,beforeSceneUpdate,updateSceneEffects,disposeSceneEffects,appendLinkedText} from './scene-effects.js';
 import {applySequence} from './sequence.js';
 import {renderVector} from './vector.js';
@@ -334,6 +335,7 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
   }
   if(node.type==="SimplePanel"&&node.OffPress)bindSemanticAction(el,node,interaction,repeatedItem);
   if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers,repeatedItem);
+  if(rule.ActionMenu){el.__planeMenu=bindActionMenu(el,node,interaction,dataSet,repeatedItem);cancellers.push(()=>el.__planeMenu.cancel())}
   return el;
 }
 // Update the authored subtree without replacing a keyed control or its focus.
@@ -350,6 +352,7 @@ function patchElementSource(el,dataSet,renderSet,resources,item=null){
 }
 function patchRepeatedSubtree(el,dataSet,renderSet,resources,item){
   el.__planeCancelPress?.();
+  el.__planeMenu?.update(dataSet,item);
   if(el.__planeVisual)applySemanticState(el,el.__planeVisual,dataSet,item);
   if(el.__planeInput||el.__planeFlow||el.dataset.planeDataSlot!==undefined)patchElementSource(el,dataSet,renderSet,resources,item);
   for(const child of el.children)patchRepeatedSubtree(child,dataSet,renderSet,resources,item);
@@ -452,7 +455,7 @@ export function requestTiltParallax(root){
   });
 }
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
-export function consumePlaneCodeBack(root){return consumeNumericBack(root)}
+export function consumePlaneCodeBack(root){return consumeActionMenuBack(root)||consumeNumericBack(root)}
 export function disposePlaneCode(root){
   disposeSceneEffects(root);
   disposeNumericEditor(root);disposeDecimalPreviews(root);
@@ -503,4 +506,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
   }
   for(const record of activeRepeatLists.get(root)??[]){if(frozen(record.list))continue;record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
   updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root,nextData);
+  for(const el of root.querySelectorAll('[data-plane-menu]'))el.__planeMenu?.update(nextData);
 }
