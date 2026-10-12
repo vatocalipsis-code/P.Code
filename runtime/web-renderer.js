@@ -261,6 +261,8 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   });
   el.addEventListener("pointerdown",event=>{
     if(event.button!==undefined&&event.button!==0||!isEnabled())return;
+    const child=event.target?.closest?.('a[href],button,input,textarea,select,[role="button"]');
+    if(child&&child!==el&&el.contains(child))return;
     pointer=event.pointerId;startX=event.clientX??0;startY=event.clientY??0;cancelled=false;
     el.setAttribute("data-plane-pressed","");el.setPointerCapture?.(event.pointerId);
     if(interaction&&node.OnPress!==undefined&&node.OnPress!==null)interaction.emit("OnPress",node.Login,node.OnPress,repeatedItem?{ItemId:repeatedItem.Id}:null);

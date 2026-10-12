@@ -6,7 +6,7 @@ try{
   const {PlaneCodeEngine}=await import('/runtime/public-runtime.js');
   const caps=['pcode.repeat-subset.v1','pcode.editable-input.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.semantic-controls.v1','pcode.semantic-accessibility.v1','pcode.semantic-title.v1','pcode.flow-layout.v1'];
   const handshake=PlaneCodeEngine.connect({GenerationId:'pcode.layout-group.v1',SerializationVersion:1,RequiredCapabilities:caps,OptionalCapabilities:[]});if(!handshake.Connection)throw Error(JSON.stringify(handshake));const connection=handshake.Connection;
-  const prepared=await connection.prepare({SetLang:{Name:'Keyed record contract',Version:1,Requires:caps,Data:[{Login:'Scene',Layout:[],SimplePanels:[{Login:'Records',Layout:[],ActivePanels:[{Login:'Record',Properties:{Repeat:'$.items',RepeatIds:['two','one'],PressedSource:'@.selected',EnabledSource:'@.allowed',LabelSource:'@.name',TitleSource:'@.name',OffPress:'record.toggle'},Layout:[{Type:'Flow',Login:'Name',Properties:{Tag:'span',Source:'@.name'}},{Type:'EditableInput',Login:'Field',Properties:{InputType:'Text',Source:'@.value',OnInput:'record.edit'}}]}]}]}]},SetData:{Name:'data',Version:1,Data:{}},SetRender:{Name:'render',Version:1,Data:{Transparency:0,TextTransparency:0,PictureTransparency:0}}});
+  const prepared=await connection.prepare({SetLang:{Name:'Keyed record contract',Version:1,Requires:caps,Data:[{Login:'Scene',Layout:[],SimplePanels:[{Login:'Records',Layout:[],ActivePanels:[{Login:'Record',Properties:{Repeat:'$.items',RepeatIds:['two','one'],PressedSource:'@.selected',EnabledSource:'@.allowed',LabelSource:'@.name',TitleSource:'@.name',OffPress:'record.toggle'},Layout:[{Type:'Flow',Login:'Name',Properties:{Tag:'span',Source:'@.name'}},{Type:'Flow',Login:'Nested action',Properties:{Tag:'button',Text:'Nested',OffPress:'record.nested'}},{Type:'EditableInput',Login:'Field',Properties:{InputType:'Text',Source:'@.value',OnInput:'record.edit'}}]}]}]}]},SetData:{Name:'data',Version:1,Data:{}},SetRender:{Name:'render',Version:1,Data:{Transparency:0,TextTransparency:0,PictureTransparency:0}}});
   if(prepared.Outcome!=='Completed')throw Error(JSON.stringify(prepared));window.runtime=prepared.Runtime;
   window.model={items:[{id:'one',name:'One',value:'alphabet',selected:false,allowed:true},{id:'two',name:'Two',value:'second',selected:false,allowed:true}]};
   window.events=[];await runtime.setEventSink(event=>events.push(event));await runtime.applyModel(model);await runtime.mount(document.getElementById('root'));await runtime.enableInteraction();
@@ -18,6 +18,9 @@ try{
  await page.evaluate(async()=>{model.items.push({id:'excluded',name:'Must not render',value:'private',allowed:true});model.items.reverse();await runtime.applyModel(model)});
  assert.equal((await continuity()).focused,true);assert.deepEqual((await continuity()).selection,[2,5]);
  assert.deepEqual(await page.locator('[data-plane-repeat] > [data-plane-item-id]').evaluateAll(rows=>rows.map(row=>row.dataset.planeItemId)),['two','one']);
+ await page.locator('[data-plane-active][data-plane-item-id="one"] button').click();
+ assert.deepEqual(await page.evaluate(()=>events.filter(e=>e.EventType==='OffPress').map(e=>[e.OpaqueValue,e.ItemId])),[['record.nested','one']]);
+ await page.evaluate(()=>events.length=0);
  await page.locator('[data-plane-active][data-plane-item-id="one"]').focus();await page.keyboard.press('Enter');
  assert.equal(await page.evaluate(()=>events.at(-1).ItemId),'one');
  await page.evaluate(async()=>{model.items.find(row=>row.id==='one').allowed=false;await runtime.applyModel(model)});
