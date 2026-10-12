@@ -285,3 +285,13 @@ and completes the exit immediately. Existing Fade exits remain compatible.
 
 Checks: `node --test tests/modal-slide.test.js` and
 `UI_MODAL_SLIDE=1 PLAYWRIGHT_MODULE=... UI_BROWSER=chromium|webkit node tests/check-modal-transition-browser.mjs`.
+
+### `pcode.decimal-projection.v1` (2.40)
+
+Decimal formats may author `Precision` (integer 0–12) and an explicit `Rounding`
+(`Truncate` or `HalfTowardZero`). `ReciprocalSource` optionally references a global
+boolean semantic path. These are display projections only: input/state values
+are never rewritten. Projection uses exact integer arithmetic, supports source
+scale up to 24, and returns the authored text `Fallback` for the reciprocal of
+zero. Nested Composite formats must negotiate the capability too. Omitted
+projection properties preserve the original decimal contract.
