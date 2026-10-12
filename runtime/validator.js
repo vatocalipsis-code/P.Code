@@ -1,3 +1,4 @@
+import {validateControlAction,validateControlTargets} from './control-action.js';
 import {validateActionMenu} from './action-menu.js';
 import {validateSceneEffects} from './scene-effects.js';
 import {validateVector} from './vector.js';
@@ -28,11 +29,11 @@ const VISUAL_RULES=new Set([
   "Height","TextOverflow","FontWeight","Alignment","Distribution","Direction",
   "Parallax","PanelTransparency","Shadow","OnPress","OffPress",
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
-  "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
+  "Font","OpenPickerOnClick","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
+  "Text","Role","AriaLevel","Sequence","Vector","ControlAction","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -191,6 +192,8 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
     if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
     validateEventToken(rule.Dismiss,label+'.Dismiss');
   }else if(rule.ModalClass!==undefined||rule.Dismiss!==undefined)fail('ModalClass and Dismiss require Modal');
+  if(rule.OpenPickerOnClick!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.OpenPickerOnClick!=='boolean'))fail('OpenPickerOnClick requires a Date input and boolean');
+  if(rule.ControlAction!==undefined){if(!/^(?:ActivePanel|SimplePanel|Flow) /.test(label))fail('ControlAction requires an interactive panel');validateControlAction(rule.ControlAction)}
   if(rule.Text!==undefined&&((!rule.NativeButton&&!label.startsWith('Flow '))||typeof rule.Text!=='string'))fail('Text requires a NativeButton');
   if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput|Flow) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
@@ -344,6 +347,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
     if(node.Properties?.RepeatIds&&!capabilitySet.has('pcode.repeat-subset.v1'))fail('RepeatIds requires pcode.repeat-subset.v1');
+    if(node.Properties?.ControlAction?.WhenSource&&!capabilitySet.has('pcode.semantic-model.v1'))fail('ControlAction condition requires pcode.semantic-model.v1');
+    if((node.Properties?.ControlAction||node.Properties?.OpenPickerOnClick!==undefined)&&!capabilitySet.has('pcode.control-action.v1'))fail('ControlAction requires pcode.control-action.v1');
     if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.action-menu.v1'))fail('ActionMenu requires pcode.action-menu.v1');
     if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.semantic-model.v1')&&(node.Properties.ActionMenu.EnabledSource||Object.values(node.Properties.ActionMenu.Items??{}).some(item=>item.Source||item.EnabledSource||item.VisibleSource)))fail('ActionMenu sources require pcode.semantic-model.v1');
     if(node.Properties?.TitleSource&&!capabilitySet.has('pcode.semantic-title.v1'))fail('Semantic titles require pcode.semantic-title.v1');
@@ -375,6 +380,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     for(const key of ["InputType","Placeholder","Disabled","Required","AriaLabel","InputMode","OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])delete p[key];
     validateVisualRule(p,"EditableInput "+input.Login,false);checkFill(p,"EditableInput "+input.Login);
     const source=input.Properties??{};
+    if(source.OpenPickerOnClick!==undefined&&source.InputType!=='Date')fail('OpenPickerOnClick requires a Date input');
     if(source.DecimalInput&&!['Number','Text'].includes(source.InputType??'Text'))fail('DecimalInput requires text or number input');
     if(source.InputType!==undefined&&!INPUT_TYPES.has(source.InputType))fail("invalid InputType for EditableInput "+input.Login);
     if(['Choice','Multiline','Range','Checkbox'].includes(source.InputType)&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Input type requires pcode.semantic-controls.v1');
@@ -393,11 +399,11 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(depth>32)fail('Flow nesting exceeds 32');
     add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
     if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
-    const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','RepeatIds','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
+    const allowed=new Set(['ControlAction','Tag','Class','Text','Source','Format','Repeat','RepeatIds','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
     for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
     if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');
     if(p.Repeat!==undefined&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(p.Repeat))fail('Flow Repeat must be semantic');
-    if(p.OffPress&&tag!=='button'&&(p.Role!=='button'||!capabilitySet.has('pcode.panel-action.v1')))fail('Flow actions require a native button or a negotiated button role');
+    if((p.OffPress||p.ControlAction)&&tag!=='button'&&(p.Role!=='button'||!capabilitySet.has('pcode.panel-action.v1')))fail('Flow actions require a native button or a negotiated button role');
     if([p.Text,p.Source,p.Vector].filter(value=>value!==undefined).length>1||(p.Text!==undefined||p.Source!==undefined||p.Vector!==undefined)&&node.Layout?.length)fail('Flow content must have one owner');
     delete p.Tag;validateVisualRule(p,'Flow '+node.Login,false,tag==='button'||p.Role==='button');
     checkLayout(node.Layout??[],node.Login,depth);
@@ -407,7 +413,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const panelLayout=(node,label,depth=0)=>{if(node.Layout!==undefined&&node.Containers!==undefined)fail(label+" cannot define both Layout and legacy Containers");if(node.Layout!==undefined)checkLayout(node.Layout,label,depth);else{if(!Array.isArray(node.Containers))fail(label+".Layout or legacy Containers required");node.Containers.forEach(checkContainer)}};
   const checkActive=(a,aggregate=false,depth=0)=>{if(depth>32)fail("Panel nesting exceeds 32");if(a.Properties?.Text!==undefined&&(a.Layout?.length||a.Containers?.length))fail('NativeButton Text cannot have a child layout');add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel");validateVisualRule(a.Properties??{},(aggregate?"AggregateActivePanel ":"ActivePanel ")+a.Login,true,true);panelLayout(a,a.Login,depth)};
   const checkSimple=(sp,depth=0)=>{if(depth>32)fail("Panel nesting exceeds 32");add(sp.Login,"SimplePanel");const p={...(sp.Properties??{})};const ag=p.AggregateActivePanels??[];delete p.AggregateActivePanels;if(p.OffPress&&!capabilitySet.has("pcode.panel-action.v1"))fail("Panel action requires pcode.panel-action.v1");if(p.OnPress!==undefined)fail("SimplePanel only supports OffPress");validateVisualRule(p,"SimplePanel "+sp.Login,true,Boolean(p.OffPress));if(!Array.isArray(ag)||ag.length>1)fail(sp.Login+".Properties.AggregateActivePanels must contain 0..1 item");ag.forEach(x=>checkActive(x,true,depth+1));panelLayout(sp,sp.Login,depth);if(!Array.isArray(sp.ActivePanels))fail(sp.Login+".ActivePanels required");sp.ActivePanels.forEach(x=>checkActive(x,false,depth+1));if(sp.SimplePanels!==undefined){if(!Array.isArray(sp.SimplePanels))fail("SimplePanels must be an array");sp.SimplePanels.forEach(x=>checkSimple(x,depth+1))}};
-  for(const bp of pLang){add(bp.Login,"BasePanel");validateVisualRule(bp.Properties??{},"BasePanel "+bp.Login,false);panelLayout(bp,bp.Login);if(!Array.isArray(bp.SimplePanels))fail(bp.Login+".SimplePanels required");bp.SimplePanels.forEach(x=>checkSimple(x))}
+  for(const bp of pLang){validateControlTargets(bp);add(bp.Login,"BasePanel");validateVisualRule(bp.Properties??{},"BasePanel "+bp.Login,false);panelLayout(bp,bp.Login);if(!Array.isArray(bp.SimplePanels))fail(bp.Login+".SimplePanels required");bp.SimplePanels.forEach(x=>checkSimple(x))}
   for(const login of Object.keys(setData))if(!logins.has(login)&&!repeats.has(login))fail("SetData references unknown Login "+login);
   return true;
 }

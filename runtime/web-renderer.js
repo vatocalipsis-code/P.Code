@@ -1,3 +1,4 @@
+import {invokeControlAction} from './control-action.js';
 import {bindActionMenu,consumeActionMenuBack} from './action-menu.js';
 import {installSceneEffects,beforeSceneUpdate,updateSceneEffects,disposeSceneEffects,appendLinkedText} from './scene-effects.js';
 import {applySequence} from './sequence.js';
@@ -166,7 +167,8 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource||rule.TitleSource)el.dataset.planeSemanticState='';
+  if(rule.ControlAction||rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource||rule.TitleSource)el.dataset.planeSemanticState='';
+  if(rule.ControlAction)el.__planeControlAction=(!rule.ControlAction.WhenSource||semanticValue(rule.ControlAction.WhenSource,dataSet[MODEL],item)===true)?rule.ControlAction:null;
   if(rule.Role)el.setAttribute('role',rule.Role);
   if(rule.AriaLevel)el.setAttribute('aria-level',String(rule.AriaLevel));
   if(rule.Sequence)applySequence(el,rule.Sequence,dataSet[MODEL]);
@@ -257,6 +259,7 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.addEventListener('keydown',event=>{
     if(event.target&&event.target!==el||!['Enter',' '].includes(event.key)||event.repeat||!isEnabled())return;
     event.preventDefault?.();
+    if(invokeControlAction(el))return;
     if(interaction&&node.OffPress!=null)interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
   });
   el.addEventListener("pointerdown",event=>{
@@ -274,6 +277,7 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.addEventListener("pointerup",event=>{
     const success=pointer===event.pointerId&&!cancelled&&isEnabled();
     el.removeAttribute("data-plane-pressed");pointer=null;cancelled=true;
+    if(success&&invokeControlAction(el))return;
     if(success&&interaction&&node.OffPress!==undefined&&node.OffPress!==null)interaction.emit("OffPress",node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
   });
   el.addEventListener("pointercancel",release);el.addEventListener("lostpointercapture",release);
@@ -283,9 +287,9 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
 function bindSemanticAction(el,node,interaction,repeatedItem=null){
   const native=el.tagName==='BUTTON';if(native)el.type='button';else{el.setAttribute('role','button');el.tabIndex=0}
   const activate=event=>{
-    if(el.disabled||el.getAttribute('aria-disabled')==='true'||!interaction?.isEnabled()||!node.OffPress)return;
+    if(el.disabled||el.getAttribute('aria-disabled')==='true'||!interaction?.isEnabled()||!node.OffPress&&!node.Visual?.ControlAction)return;
     const child=event.target?.closest?.('a[href],button,input,textarea,select,[role="button"]');if(child&&child!==el&&el.contains(child))return;
-    event.stopPropagation();interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
+    event.stopPropagation();if(invokeControlAction(el))return;if(!node.OffPress)return;interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
   };
   el.addEventListener('click',activate);
   if(!native)el.addEventListener('keydown',event=>{if(event.target===el&&!event.repeat&&['Enter',' '].includes(event.key)){event.preventDefault();activate(event)}});
@@ -304,7 +308,7 @@ function renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,
   if(rule.AriaLabel)el.setAttribute('aria-label',rule.AriaLabel);
   if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;
   if(rule.Source){el.dataset.planeSemanticSource='';el.dataset.planeDataSlot=node.dataSlot}
-  if(rule.Tag==='button'||node.OffPress)bindSemanticAction(el,node,interaction,repeatedItem);
+  if(rule.Tag==='button'||node.OffPress||rule.ControlAction)bindSemanticAction(el,node,interaction,repeatedItem);
   if(rule.Vector)el.append(renderVector(rule.Vector));
   applySemanticState(el,rule,dataSet,repeatedItem);patchFlowContent(el,node,dataSet,renderSet,resources,repeatedItem);
   for(const child of node.layout)el.append(renderLayoutItem(child,null,dataSet,renderSet,parallaxNodes,0,interaction,cancellers,resources,repeatedItem,repeatLists));
@@ -335,7 +339,7 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
     if(child.Repeat){el.append(renderRepeat(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists));
     }else el.append(renderPanel(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem));
   }
-  if(node.type==="SimplePanel"&&node.OffPress)bindSemanticAction(el,node,interaction,repeatedItem);
+  if(node.type==="SimplePanel"&&(node.OffPress||rule.ControlAction))bindSemanticAction(el,node,interaction,repeatedItem);
   if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers,repeatedItem);
   if(rule.ActionMenu){el.__planeMenu=bindActionMenu(el,node,interaction,dataSet,repeatedItem);cancellers.push(()=>el.__planeMenu.cancel())}
   return el;

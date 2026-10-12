@@ -1,3 +1,4 @@
+import {openNativePicker} from './control-action.js';
 /** Native controls implement SPL-authored behavior and emit semantic values. */
 import {formatValue} from './value-format.js';
 import {patchDecimalInput} from './numeric-editor.js';
@@ -12,6 +13,7 @@ export function createInputElement(config){
   if(type==='Multiline'&&config.Rows!==undefined)el.rows=config.Rows;
   if(config.Autocomplete)el.autocomplete=config.Autocomplete;
   if(config.MaxLength!==undefined)el.maxLength=config.MaxLength;
+  if(config.OpenPickerOnClick)el.addEventListener('click',()=>openNativePicker(el));
   el.placeholder=config.Placeholder??'';return el;
 }
 export function patchInputElement(el,node,dataSet,item=null){

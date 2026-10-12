@@ -297,3 +297,15 @@ zero. Nested Composite formats must negotiate the capability too. Omitted
 projection properties preserve the original decimal contract.
 
 Decimal projection also accepts `Output: "Text"` to emit the formatted quantity as a single text segment. Composite text parts then wrap as one uninterrupted text run; the semantic quantity is unchanged. This option requires `pcode.decimal-projection.v1`.
+
+### `pcode.control-action.v1` (2.41)
+
+An interactive ActivePanel, SimplePanel or Flow can author `ControlAction` with
+`Kind: "OpenPicker"`, a fixed `Target` Login in the same BasePanel and optional
+boolean `WhenSource`. A true condition consumes activation, focuses the editable
+target and opens its native picker where supported. Disabled/read-only/hidden
+targets do not activate. Missing picker support or browser restrictions retain
+normal focus. A false condition leaves the authored semantic OffPress intact.
+The application never resolves visual targets or requests browser picker DOM.
+
+Date EditableInput can author `OpenPickerOnClick: true` under this capability. Picot owns the direct-click behavior and respects the field's disabled/read-only state.
