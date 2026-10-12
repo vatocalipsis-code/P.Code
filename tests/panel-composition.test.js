@@ -28,13 +28,13 @@ test('ordered records group SPL pieces without leaking visual order into the mod
 });
 test('native text buttons keep a single accessible label and reject duplicate content',()=>{
  const lang=[{Login:'Scene',Layout:[],SimplePanels:[{Login:'Section',Layout:[],ActivePanels:[{Login:'Run',Properties:{NativeButton:true,Text:'Run'},Layout:[]}]}]}];
- assert.equal(validatePLang(lang,{},['pcode.semantic-controls.v1']),true);
+ assert.equal(validatePLang(lang,{},['pcode.semantic-controls.v1','pcode.native-button-text.v1']),true);
  const plan=compileSetLang(lang);assert.equal(plan[0].children[0].children[0].Visual.Text,'Run');
- lang[0].SimplePanels[0].ActivePanels[0].Layout=[{Login:'Duplicate'}];assert.throws(()=>validatePLang(lang,{},['pcode.semantic-controls.v1']),/child layout/);
+ lang[0].SimplePanels[0].ActivePanels[0].Layout=[{Login:'Duplicate'}];assert.throws(()=>validatePLang(lang,{},['pcode.semantic-controls.v1','pcode.native-button-text.v1']),/child layout/);
 });
 test('field groups bind visibility as a unit without inventing application wrappers',()=>{
  const lang=[{Login:'Scene',Layout:[{Type:'Group',Properties:{Orientation:'Horizontal',VisibleSource:'$.applicable'},Layout:[{Login:'Caption',Properties:{Source:'$.caption'}}]}],SimplePanels:[]}];
- assert.throws(()=>validatePLang(lang,{},[]),/semantic-model/);
- assert.equal(validatePLang(lang,{},['pcode.semantic-model.v1']),true);
+ assert.throws(()=>validatePLang(lang,{},[]),/group-state/);
+ assert.equal(validatePLang(lang,{},['pcode.semantic-model.v1','pcode.group-state.v1']),true);
  assert.equal(compileSetLang(lang)[0].layout[0].Layout.VisibleSource,'$.applicable');
 });

@@ -295,6 +295,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(Array.isArray(node)){node.forEach(checkVisualCapabilities);return}
     if(!node||typeof node!=="object")return;
     if((node.Properties?.Role||node.Properties?.Sequence||node.SimplePanels?.length&&!pLang.includes(node)||node.Properties?.Repeat&&node.ActivePanels)&&!capabilitySet.has('pcode.panel-composition.v1'))fail('Panel composition requires pcode.panel-composition.v1');
+    if(node.Properties?.Text!==undefined&&!capabilitySet.has('pcode.native-button-text.v1'))fail('Native button text requires pcode.native-button-text.v1');
+    if(node.Type==='Group'&&node.Properties?.VisibleSource&&!capabilitySet.has('pcode.group-state.v1'))fail('Group visibility requires pcode.group-state.v1');
     if(node.Properties?.Vector&&!capabilitySet.has('pcode.vector.v1'))fail('Vector requires pcode.vector.v1');
     if(node.Properties?.CornerRadius!==undefined&&!capabilitySet.has("pcode.corner-radius.v1"))
       fail("CornerRadius requires negotiated pcode.corner-radius.v1");

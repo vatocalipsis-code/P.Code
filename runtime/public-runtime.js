@@ -9,7 +9,7 @@ const descriptor={
   ComponentVersion:"2.26.0",
   GenerationId:"pcode.layout-group.v1",
   SupportedSerializationVersions:[1],
-  Capabilities:["pcode.panel-composition.v1","pcode.format-library.v1","pcode.vector.v1","pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1","pcode.semantic-repeat.v1","pcode.semantic-model.v1","pcode.semantic-controls.v1","pcode.semantic-routes.v1","pcode.composite-format.v1","pcode.control-feedback.v1","pcode.numeric-editor.v1","pcode.decimal-preview.v1","pcode.semantic-accessibility.v1","pcode.decimal-unit-layout.v1"]
+  Capabilities:["pcode.native-button-text.v1","pcode.group-state.v1","pcode.panel-composition.v1","pcode.format-library.v1","pcode.vector.v1","pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1","pcode.semantic-repeat.v1","pcode.semantic-model.v1","pcode.semantic-controls.v1","pcode.semantic-routes.v1","pcode.composite-format.v1","pcode.control-feedback.v1","pcode.numeric-editor.v1","pcode.decimal-preview.v1","pcode.semantic-accessibility.v1","pcode.decimal-unit-layout.v1"]
 };
 
 const renderer={
