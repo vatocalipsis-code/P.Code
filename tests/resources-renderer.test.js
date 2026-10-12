@@ -169,7 +169,7 @@ test('SPL owns model binding, decimal formatting, picture selection and repeated
   const {patchSetData}=await import('../runtime/web-renderer.js');
   const {validatePLang}=await import('../runtime/validator.js');
   const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement('div',doc),events=[];
-  const lang=[{Login:'Base',Properties:{},Layout:[{Login:'Count',Properties:{Source:'$.count'}}],SimplePanels:[{Login:'Section',Properties:{},Layout:[],ActivePanels:[{
+  const lang=[{Login:'Base',Properties:{},Layout:[{Login:'Count',Properties:{Source:'$.count'}},{Login:'Path',Properties:{Source:'$.path',Format:{Kind:'Text',ListSeparator:' / ',Prefix:'← / '}}}],SimplePanels:[{Login:'Section',Properties:{},Layout:[],ActivePanels:[{
     Login:'Entry',Properties:{Repeat:'$.items',Class:'entry',OffPress:'record.open',StateSource:'@.state',VisibleSource:'@.available'},Layout:[
       {Login:'Name',Properties:{Source:'@.name'}},
       {Login:'Icon',Properties:{Source:'@.icon',Format:{Kind:'Picture',Map:{one:'./assets/one.png'},Fallback:'./assets/default.png'}}},
@@ -179,10 +179,11 @@ test('SPL owns model binding, decimal formatting, picture selection and repeated
   validatePLang(lang,{},['pcode.semantic-repeat.v1','pcode.semantic-model.v1']);
   assert.throws(()=>validatePLang(lang,{},['pcode.semantic-repeat.v1']),/semantic-model/);
   const item={id:'entry:1',name:'One',icon:'one',state:'pending',available:true,quantity:{units:'-1234567890123456789',scale:3,precision:2,unit:'ABC'}};
-  const data=withModel({},{count:1,items:[item]});
+  const data=withModel({},{count:1,path:['Start','Entry'],items:[item]});
   renderPlaneCode(root,compileSetLang(lang),data,render,{isEnabled:()=>true,emit:(...args)=>events.push(args)});
   const list=find(root,n=>n.dataset.planeRepeat==='$.items'),first=list.children[0];
   assert.equal(first.className,'entry');assert.equal(first.dataset.planeState,'pending');assert.equal(first.hidden,false);
+  assert.equal(find(root,n=>n.dataset.planeLogin==='Path').children[0].children[0].textContent,'← / Start / Entry');
   assert.equal(find(first,n=>n.dataset.planeNumberWhole!==undefined).textContent,'−1 234 567 890 123 456');
   assert.equal(find(first,n=>n.dataset.planeNumberFraction!==undefined).textContent,'.78');
   assert.equal(find(first,n=>n.dataset.planeSource==='Picture').src,'./assets/one.png');

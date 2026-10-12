@@ -146,6 +146,10 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
       return [{kind:'Text',value:text}];
     }
     if(format.Template)return [{kind:'Text',value:textTemplate(value,format.Template)}];
+    if(format.ListSeparator!==undefined){
+      if(!Array.isArray(value)||value.some(item=>!['string','number','boolean'].includes(typeof item)))throw Error('List text Source must resolve to scalar entries');
+      return [{kind:'Text',value:(format.Prefix??'')+value.join(format.ListSeparator)+(format.Suffix??'')}];
+    }
     if(!['string','number','boolean'].includes(typeof value))throw Error('Text Source must resolve to a scalar');
     return [{kind:'Text',value:String(value)}];
   }
@@ -258,6 +262,7 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
 }
 function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists=[],repeatedItem=null){
   const el=document.createElement(node.Visual?.NativeButton?'button':'div');if(node.Visual?.NativeButton)el.type='button';el.dataset.planeType=node.type;el.dataset.planeLogin=node.Login;const rule=node.Visual??{};el.__planeVisual=rule;
+  if(rule.AriaLabel)el.setAttribute('aria-label',rule.AriaLabel);
   if(rule.Class)el.className=rule.Class;
   applySemanticState(el,rule,dataSet,repeatedItem);
   if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;

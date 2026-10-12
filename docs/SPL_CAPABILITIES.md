@@ -99,3 +99,7 @@ background inert state, focus trapping/restoration and Escape/backdrop handling.
 The application decides whether the dismissal command changes semantic state;
 it never removes the dialog DOM. `Format.Template` interpolates scalar fields
 and fallback paths without HTML or executable expressions.
+For breadcrumb-like text, `Format.ListSeparator`, `Prefix` and `Suffix` format
+an array of scalar semantic values. The application supplies the path values;
+SPL supplies the separator and decoration. ActivePanel `AriaLabel` is applied by
+the renderer, including native buttons.

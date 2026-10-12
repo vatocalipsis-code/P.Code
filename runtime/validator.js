@@ -101,14 +101,14 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Format!==undefined){
     const f=rule.Format;
     if(!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime'].includes(f.Kind))fail('Invalid Format for '+label);
-    if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template'].includes(key)))fail('Unknown Format property for '+label);
+    if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix'].includes(key)))fail('Unknown Format property for '+label);
     if(f.Kind==='Picture'){
       if(!f.Map||typeof f.Map!=='object'||Array.isArray(f.Map))fail('Picture Format requires a map');
       for(const url of Object.values(f.Map))if(!isCanonicalImageFile(url))fail('Picture Format must use local images');
       if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
     }
     for(const key of ['Absolute','ShowUnit'])if(f[key]!==undefined&&typeof f[key]!=='boolean')fail(key+' must be boolean');
-    for(const key of ['GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator','Template'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
+    for(const key of ['GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
     if(f.Options!==undefined&&(!f.Options||typeof f.Options!=='object'||Array.isArray(f.Options)))fail('DateTime Options must be an object');
   }
   if(rule.PanelTransparency!==undefined){
