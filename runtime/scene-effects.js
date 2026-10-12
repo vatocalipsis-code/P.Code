@@ -25,10 +25,10 @@ export function installSceneEffects(root,plan,interaction){
   const get=login=>[panel,...panel.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===login);
   const record={panel,wrapper,rules,get,open:false,scroll:null};records.push(record);
   const listen=(target,type,handler)=>target?.addEventListener(type,handler,{signal:abort.signal});
-  if(rules.Viewport){const r=rules.Viewport;const update=()=>{wrapper.style.setProperty(r.TopVariable,(win.visualViewport?.offsetTop??0)+'px');wrapper.style.setProperty(r.HeightVariable,(win.visualViewport?.height??win.innerHeight)+'px')};listen(win.visualViewport,'resize',update);listen(win.visualViewport,'scroll',update);listen(win,'resize',update);update()}
+  if(rules.Viewport){const r=rules.Viewport;const update=()=>{if(wrapper.hidden)return;wrapper.style.setProperty(r.TopVariable,(win.visualViewport?.offsetTop??0)+'px');wrapper.style.setProperty(r.HeightVariable,(win.visualViewport?.height??win.innerHeight)+'px')};listen(win.visualViewport,'resize',update);listen(win.visualViewport,'scroll',update);listen(win,'resize',update);record.viewport=update;update()}
   if(rules.AutoSize){
    const r=rules.AutoSize,area=get(r.Target);if(!area)throw Error('Unknown AutoSize target '+r.Target);
-   const resize=()=>{if(!area.getClientRects().length)return;const parent=area.parentElement;parent.classList.remove(r.MultilineClass);area.style.setProperty('height','0px','important');const multiple=area.scrollHeight>r.RowHeight;parent.classList.toggle(r.MultilineClass,multiple);area.style.setProperty('height','0px','important');area.style.setProperty('height',Math.max(multiple?r.MultilineHeight:r.RowHeight,area.scrollHeight)+'px','important')};
+   const resize=()=>{if(wrapper.hidden||panel.getAttribute('aria-hidden')==='true'||!area.isConnected)return;const parent=area.parentElement;parent.classList.remove(r.MultilineClass);area.style.setProperty('height','0px','important');const multiple=area.scrollHeight>r.RowHeight;parent.classList.toggle(r.MultilineClass,multiple);area.style.setProperty('height','0px','important');area.style.setProperty('height',Math.max(multiple?r.MultilineHeight:r.RowHeight,area.scrollHeight)+'px','important')};
    listen(area,'input',resize);let width=0;const observer=new win.ResizeObserver(()=>{const next=area.parentElement.clientWidth;if(next!==width){width=next;resize()}});observer.observe(area.parentElement);record.resize=resize;record.observer=observer;
   }
   if(rules.Resize){const r=rules.Resize,handle=get(r.Handle),target=get(r.Target);if(!handle||!target)throw Error('Unknown Resize target');let drag=null;listen(handle,'pointerdown',e=>{e.preventDefault();handle.setPointerCapture(e.pointerId);drag={id:e.pointerId,y:e.clientY,height:target.getBoundingClientRect().height}});listen(handle,'pointermove',e=>{if(drag?.id===e.pointerId)target.style.height=Math.max(r.MinHeight,Math.min(win.innerHeight-r.ViewportMargin,drag.height+e.clientY-drag.y))+'px'});for(const event of ['pointerup','pointercancel','lostpointercapture'])listen(handle,event,()=>{drag=null})}
@@ -36,10 +36,11 @@ export function installSceneEffects(root,plan,interaction){
  }
  scenes.set(root,{records,abort});updateSceneEffects(root);
 }
-export function beforeSceneUpdate(root){for(const r of scenes.get(root)?.records??[]){if(!r.rules.Scroll)continue;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:el.scrollTop,bottom:el.scrollHeight-el.clientHeight-el.scrollTop<r.rules.Scroll.Threshold}}}
+export function beforeSceneUpdate(root){for(const r of scenes.get(root)?.records??[]){if(!r.rules.Scroll||r.wrapper.hidden||!r.open)continue;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:el.scrollTop,bottom:el.scrollHeight-el.clientHeight-el.scrollTop<r.rules.Scroll.Threshold}}}
 export function updateSceneEffects(root){
  for(const r of scenes.get(root)?.records??[]){
-  const open=!r.wrapper.hidden&&r.panel.getClientRects().length>0;r.resize?.();
+  const open=!r.wrapper.hidden&&r.panel.getAttribute('aria-hidden')!=='true'&&r.panel.isConnected;
+  if(open){if(!r.open)r.viewport?.();r.resize?.();if(!r.open&&r.rules.Scroll){const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   if(open&&!r.open&&r.rules.Focus){const rule=r.rules.Focus;const target=r.get(root.ownerDocument.defaultView.innerWidth<=rule.CompactWidth?rule.CompactTarget:rule.Target);queueMicrotask(()=>{if(target?.isConnected&&!r.wrapper.hidden){if(!target.matches('input,textarea,select,button,a,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true})}})}
   r.open=open;
   if(r.scroll){const {el,top,bottom}=r.scroll;queueMicrotask(()=>{if(el.isConnected)el.scrollTop=bottom?el.scrollHeight:top});r.scroll=null}
