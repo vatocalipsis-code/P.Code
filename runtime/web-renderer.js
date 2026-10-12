@@ -135,9 +135,9 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   const rule=node.Visual??{};
   if(/^[$@]\./.test(rule.Source??'')){
     const value=semanticValue(rule.Source,dataSet[MODEL],repeatedItem),format=rule.Format??{Kind:'Text'};
+    if(format.Kind==='Picture'){const url=Object.hasOwn(format.Map??{},value)?format.Map[value]:format.Fallback;return url?[{kind:'Picture',value:url}]:[]}
     if(value===null||value===undefined||value==='')return [];
     if(format.Kind==='Decimal')return [{kind:'Decimal',value}];
-    if(format.Kind==='Picture'){const url=format.Map?.[value]??format.Fallback;return url?[{kind:'Picture',value:url}]:[]}
     if(format.Kind==='DateTime'){
       let text=new Intl.DateTimeFormat(format.Locale,format.Options).format(new Date(value));
       if(format.DateTimeSeparator!==undefined)text=text.replace(',',format.DateTimeSeparator);
