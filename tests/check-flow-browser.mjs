@@ -19,7 +19,7 @@ try{
   const connection=PlaneCodeEngine.connect({GenerationId:'pcode.layout-group.v1',SerializationVersion:1,RequiredCapabilities:caps,OptionalCapabilities:[]}).Connection;
   const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Layout:[flow('Section',{Tag:'section',Class:'section',Role:'button',OffPress:'parent'},[
    flow('Notice',{Tag:'p',Source:'$.notice',Linkify:true}),flow('Action',{Tag:'button',Source:'$.buttonText',OffPress:'activate',EnabledSource:'$.allowed'}),
-   {Type:'EditableInput',Login:'Input',Properties:{Source:'$.draft',OnInput:'edit'}},
+   {Type:'EditableInput',Login:'Input',Properties:{Source:'$.draft',OnInput:'edit',AriaLabel:'Draft',EnabledSource:'$.allowed'}},
    flow('Record',{Tag:'article',Repeat:'$.records'},[flow('Name',{Tag:'strong',Source:'@.name'}),flow('Choose',{Tag:'button',Text:'Choose',OffPress:'choose',EnabledSource:'@.allowed'})])
   ])],SimplePanels:[]}]},SetData:{Name:'Flow data',Version:1,Data:{}},SetRender:{Name:'Flow render',Version:1,Data:{Transparency:0,TextTransparency:0,PictureTransparency:0}}});
   if(result.Outcome!=='Completed')throw Error(JSON.stringify(result));
@@ -36,6 +36,7 @@ try{
  assert.equal(await page.evaluate(()=>flowEvents.find(e=>e.OpaqueValue==='choose').ItemId),'x');
  assert.equal(await page.evaluate(()=>flowEvents.findLast(e=>e.OpaqueValue==='edit').Value),'edited');
  await page.evaluate(async()=>{window.savedRow=document.querySelector('[data-plane-login="Record"]');await flowRuntime.applyModel({...flowModel,notice:'updated',buttonText:'Changed',allowed:false,records:[...flowModel.records].reverse()})});
+ assert.equal(await page.getByRole('textbox',{name:'Draft',exact:true}).isDisabled(),true);assert.equal(await node('Input').getAttribute('inert'),null);
  assert.equal(await node('Notice').innerText(),'updated');assert.equal(await node('Action').innerText(),'Changed');assert.equal(await node('Action').isDisabled(),true);assert.deepEqual(await node('Name').allTextContents(),['Beta','Alpha']);
  assert.equal(await page.evaluate(()=>savedRow===document.querySelectorAll('[data-plane-login="Record"]')[1]),true);
  await node('Section').focus();await page.keyboard.press('Enter');await page.keyboard.press(' ');

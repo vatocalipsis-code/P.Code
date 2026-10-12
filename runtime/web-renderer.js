@@ -174,7 +174,7 @@ function applySemanticState(el,rule,dataSet,item=null){
   if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));
   if(rule.LabelSource){const value=semanticValue(rule.LabelSource,dataSet[MODEL],item);el.setAttribute('aria-label',textTemplate(value,rule.LabelTemplate))}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));
-  if(rule.EnabledSource){const disabled=semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-disabled',String(disabled));if(el.tagName==='BUTTON')el.disabled=disabled;else el.inert=disabled}
+  if(rule.EnabledSource){const disabled=semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-disabled',String(disabled));if(el.tagName==='BUTTON')el.disabled=disabled;else if(!['INPUT','TEXTAREA','SELECT'].includes(el.tagName))el.inert=disabled}
 }
 function applyTextLayout(el,body,rule){
   const constrained=rule.FillHorizontal===true||rule.Width!==undefined;
