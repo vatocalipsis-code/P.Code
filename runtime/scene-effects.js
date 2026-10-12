@@ -1,3 +1,4 @@
+import {installAudioCapture} from './audio-capture.js';
 import {installSteppedFields} from './stepped-fields.js';
 import {MODEL,semanticValue} from './semantic-model.js';
 /** Optional, SPL-authored browser behavior. No application state or commands are interpreted. */
@@ -5,15 +6,18 @@ const scenes=new WeakMap();
 export function validateSceneEffects(effects){
  const fail=()=>{throw Error('Invalid SceneEffects')};
  if(!effects||typeof effects!=='object'||Array.isArray(effects))fail();
- const schemas={SteppedFields:['Selector','UnitVariable','DefaultUnit','Class'],Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command'],Confirm:['Source','Messages','Accept','Reject']};
+ const schemas={AudioCapture:['Source','SessionSource','ColorScope','Command','Waveform','Width','Height','Bars','BarInset','BarWidth','SampleStride','Divisor','MinBarHeight','ColorVariable','FallbackColor'],SteppedFields:['Selector','UnitVariable','DefaultUnit','Class'],Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command'],Confirm:['Source','Messages','Accept','Reject']};
  for(const [kind,rule] of Object.entries(effects)){
   const fields=schemas[kind];if(!fields||!rule||typeof rule!=='object'||Array.isArray(rule)||Object.keys(rule).some(key=>!fields.includes(key))||fields.some(key=>key!=='LatestSource'&&!Object.hasOwn(rule,key)))fail();
+  if(kind==='AudioCapture'&&(!Number.isInteger(rule.Bars)||!Number.isInteger(rule.SampleStride)||rule.Bars*rule.SampleStride>128))fail();
   for(const [key,value]of Object.entries(rule)){
    if(kind==='Confirm'&&key==='Messages'){if(!value||typeof value!=='object'||Array.isArray(value)||!Object.keys(value).length||Object.values(value).some(text=>typeof text!=='string'||!text||text.length>4000))fail();continue}
-   if(['DefaultUnit','RowHeight','MultilineHeight','Threshold','MinHeight','ViewportMargin','CompactWidth'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>10000)fail()}
+   if(['Width','Height','Bars','BarInset','BarWidth','SampleStride','Divisor','MinBarHeight','DefaultUnit','RowHeight','MultilineHeight','Threshold','MinHeight','ViewportMargin','CompactWidth'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>10000)fail()}
    else if(typeof value!=='string'||!value.trim()||value.length>256)fail();
-   if((key==='LatestSource'||key==='Source')&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(value))fail();
-   if(key==='DefaultUnit'&&value<=0)fail();
+   if((key==='LatestSource'||key==='Source'||key==='SessionSource')&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(value))fail();
+   if(['DefaultUnit','Width','Height','Bars','BarWidth','SampleStride','Divisor'].includes(key)&&value<=0)fail();
+   if(kind==='AudioCapture'&&key==='ColorScope'&&!['Root','Panel'].includes(value))fail();
+   if(kind==='AudioCapture'&&key==='FallbackColor'&&!/^#[0-9a-fA-F]{6}$/.test(value))fail();
    if(key.endsWith('Variable')&&!/^--[-a-zA-Z0-9]+$/.test(value))fail();
    if(key.endsWith('Class')&&!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value))fail();
   }
@@ -31,6 +35,7 @@ export function installSceneEffects(root,plan,interaction){
   const record={panel,wrapper,rules,get,interaction,login:node.Login,open:false,scroll:null};records.push(record);
   const listen=(target,type,handler)=>target?.addEventListener(type,handler,{signal:abort.signal});
   if(rules.Viewport){const r=rules.Viewport;const update=()=>{if(wrapper.hidden)return;wrapper.style.setProperty(r.TopVariable,(win.visualViewport?.offsetTop??0)+'px');wrapper.style.setProperty(r.HeightVariable,(win.visualViewport?.height??win.innerHeight)+'px')};listen(win.visualViewport,'resize',update);listen(win.visualViewport,'scroll',update);listen(win,'resize',update);record.viewport=update;update()}
+  if(rules.AudioCapture){const rule=rules.AudioCapture;record.audio=installAudioCapture(panel,rule,value=>{if(interaction?.isEnabled())interaction.emit('OnInput',node.Login,rule.Command,{Payload:value})},root)}
   if(rules.SteppedFields)record.stepped=installSteppedFields(panel,rules.SteppedFields,abort.signal);
   if(rules.AutoSize){
    const r=rules.AutoSize,area=get(r.Target);if(!area)throw Error('Unknown AutoSize target '+r.Target);
@@ -45,7 +50,7 @@ export function installSceneEffects(root,plan,interaction){
 export function beforeSceneUpdate(root){for(const r of scenes.get(root)?.records??[]){if(!r.rules.Scroll||r.wrapper.hidden||!r.open)continue;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:el.scrollTop,bottom:el.scrollHeight-el.clientHeight-el.scrollTop<r.rules.Scroll.Threshold}}}
 export function updateSceneEffects(root,data={}){
  for(const r of scenes.get(root)?.records??[]){
-  const open=!r.wrapper.hidden&&r.panel.getAttribute('aria-hidden')!=='true'&&r.panel.isConnected;
+  const open=!r.wrapper.hasAttribute('data-plane-exiting')&&!r.wrapper.hidden&&r.panel.getAttribute('aria-hidden')!=='true'&&r.panel.isConnected;
   if(open){if(!r.open)r.viewport?.();r.resize?.();r.stepped?.resize();if(!r.open&&r.rules.Scroll){const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   if(open&&!r.open&&r.rules.Focus){const rule=r.rules.Focus;const target=r.get(root.ownerDocument.defaultView.innerWidth<=rule.CompactWidth?rule.CompactTarget:rule.Target);queueMicrotask(()=>{if(target?.isConnected&&!r.wrapper.hidden){if(!target.matches('input,textarea,select,button,a,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true})}})}
   if(open&&r.rules.Scroll?.LatestSource){const latest=semanticValue(r.rules.Scroll.LatestSource,data[MODEL]);if(latest!==r.latest){r.latest=latest;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
@@ -60,11 +65,12 @@ export function updateSceneEffects(root,data={}){
     });
    }
   }
+  if(r.audio){if(open&&r.interaction?.isEnabled())r.audio.update(semanticValue(r.rules.AudioCapture.Source,data[MODEL]),semanticValue(r.rules.AudioCapture.SessionSource,data[MODEL]));else r.audio.cancel()}
   r.open=open;
   if(r.scroll){const {el,top,bottom}=r.scroll;queueMicrotask(()=>{if(el.isConnected)el.scrollTop=bottom?el.scrollHeight:top});r.scroll=null}
  }
 }
-export function disposeSceneEffects(root){const state=scenes.get(root);state?.abort.abort();for(const r of state?.records??[]){r.observer?.disconnect();r.stepped?.dispose()}scenes.delete(root)}
+export function disposeSceneEffects(root){const state=scenes.get(root);state?.abort.abort();for(const r of state?.records??[]){r.observer?.disconnect();r.stepped?.dispose();r.audio?.dispose()}scenes.delete(root)}
 export function appendLinkedText(el,value){
  const text=String(value??''),pattern=/https?:\/\/[^\s]+/gu;let cursor=0;
  for(const match of text.matchAll(pattern)){el.append(el.ownerDocument.createTextNode(text.slice(cursor,match.index)));const a=el.ownerDocument.createElement('a');a.href=match[0];a.textContent=match[0];a.target='_blank';a.rel='noopener noreferrer';el.append(a);cursor=match.index+match[0].length}

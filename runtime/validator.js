@@ -31,7 +31,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
+  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalExit","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -165,6 +165,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.SceneEffects!==undefined){if(!label.startsWith('BasePanel '))fail('SceneEffects require BasePanel');validateSceneEffects(rule.SceneEffects)}
   if(rule.Linkify!==undefined&&(!label.startsWith('Flow ')||typeof rule.Linkify!=='boolean'))fail('Linkify requires Flow');
   if(rule.Rows!==undefined&&(!label.startsWith('EditableInput ')||!Number.isInteger(rule.Rows)||rule.Rows<1||rule.Rows>100))fail('Invalid input Rows');
+  if(rule.ModalExit!==undefined){const r=rule.ModalExit;if(rule.Modal!==true||!r||typeof r!=='object'||Array.isArray(r)||Object.keys(r).some(k=>!['Effect','Duration'].includes(k))||r.Effect!=='Fade'||!Number.isFinite(r.Duration)||r.Duration<0||r.Duration>1000)fail('Invalid ModalExit')}
   if(rule.Modal!==undefined){
     if(!label.startsWith('BasePanel ')||rule.Modal!==true||!rule.VisibleSource)fail('Modal requires a BasePanel and VisibleSource');
     if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
@@ -302,6 +303,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(!node||typeof node!=="object")return;
     if((node.Properties?.Role||node.Properties?.Sequence||node.SimplePanels?.length&&!pLang.includes(node)||node.Properties?.Repeat&&node.ActivePanels)&&!capabilitySet.has('pcode.panel-composition.v1'))fail('Panel composition requires pcode.panel-composition.v1');
     if(node.Type!=='Flow'&&node.Properties?.Text!==undefined&&!capabilitySet.has('pcode.native-button-text.v1'))fail('Native button text requires pcode.native-button-text.v1');
+    if(node.Properties?.SceneEffects?.AudioCapture&&!capabilitySet.has('pcode.structured-events.v1'))fail('AudioCapture requires pcode.structured-events.v1');
+    if((node.Properties?.SceneEffects?.AudioCapture||node.Type==='Flow'&&node.Properties?.Tag==='canvas')&&!capabilitySet.has('pcode.audio-capture.v1'))fail('AudioCapture requires pcode.audio-capture.v1');
     if(node.Properties?.SceneEffects?.SteppedFields&&!capabilitySet.has('pcode.stepped-fields.v1'))fail('SteppedFields requires pcode.stepped-fields.v1');
     if(node.Type==='Group'&&node.Properties?.VisibleSource&&!capabilitySet.has('pcode.group-state.v1'))fail('Group visibility requires pcode.group-state.v1');
     if(node.Properties?.SceneEffects?.Confirm&&!capabilitySet.has('pcode.native-confirm.v1'))fail('Confirm requires pcode.native-confirm.v1');
@@ -324,6 +327,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(usesUnitPlacement(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-unit-layout.v1'))fail('UnitPlacement requires pcode.decimal-unit-layout.v1');
     if(node.Properties?.DecimalInput?.Preview&&!capabilitySet.has('pcode.decimal-preview.v1'))fail('DecimalInput Preview requires pcode.decimal-preview.v1');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
+    if(node.Properties?.ModalExit&&!capabilitySet.has('pcode.modal-transition.v1'))fail('ModalExit requires pcode.modal-transition.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
     if((node.Properties?.Format?.Kind==='Composite'||node.Properties?.Format?.Kind==='Text'&&node.Properties.Format.Map||node.Properties?.Format?.TrimFraction)&&!capabilitySet.has('pcode.composite-format.v1'))fail('Extended Format requires pcode.composite-format.v1');
     if(node.Properties?.Route&&!capabilitySet.has('pcode.semantic-routes.v1'))fail('Route requires pcode.semantic-routes.v1');
@@ -361,7 +365,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkFlow=(node,depth)=>{
     if(depth>32)fail('Flow nesting exceeds 32');
     add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
-    if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3'].includes(tag))fail('Invalid Flow Tag');
+    if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
     const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
     for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
     if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');

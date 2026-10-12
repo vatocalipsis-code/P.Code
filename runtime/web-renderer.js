@@ -7,7 +7,7 @@ import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} fro
 import {formatValue} from './value-format.js';
 import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
 import {createInputElement,patchInputElement,patchInputState,inputValue} from './semantic-controls.js';
-import {createModalScene,installModalScenes,updateModalScenes,disposeModalScenes} from './modal-scene.js';
+import {createModalScene,installModalScenes,prepareModalUpdate,updateModalScenes,disposeModalScenes} from './modal-scene.js';
 import {installRouteScenes,updateRouteScenes,disposeRouteScenes} from './route-scene.js';
 const activeParallax=new WeakMap();
 const activeTilt=new WeakMap();
@@ -452,10 +452,11 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
 }
 export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticOnly=false}={}){
   beforeSceneUpdate(root);
+  const exiting=prepareModalUpdate(root,nextData),frozen=el=>exiting&&el.closest?.('[data-plane-exiting]');
   const resources=prepareResources(root,resourceSet);
-  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!el.closest?.('[data-plane-repeat]')){applySemanticState(el,el.__planeVisual??{},nextData);if(semanticOnly&&el.__planeInput&&(el.__planeVisual.EnabledSource||el.__planeVisual.ReadOnlySource||el.__planeVisual.ErrorSource))patchInputState(el,el.__planeInput,nextData)}
+  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!frozen(el)&&!el.closest?.('[data-plane-repeat]')){applySemanticState(el,el.__planeVisual??{},nextData);if(semanticOnly&&el.__planeInput&&(el.__planeVisual.EnabledSource||el.__planeVisual.ReadOnlySource||el.__planeVisual.ErrorSource))patchInputState(el,el.__planeInput,nextData)}
   for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source],[data-plane-decimal]':'[data-plane-data-slot]')){
-    if(el.closest?.('[data-plane-repeat]'))continue;
+    if(frozen(el)||el.closest?.('[data-plane-repeat]'))continue;
     if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??'')){if(el.__planeVisual?.DecimalInput)patchDecimalInput(el,el.__planeInput,nextData);continue;}
     if(el.__planeFlow){patchFlowContent(el,el.__planeFlow,nextData,renderSet,resources);continue}
     if(el.dataset.planeType==="EditableInput"){patchInputElement(el,el.__planeInput,nextData);continue}
@@ -470,6 +471,6 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     const sources=sourceData.map(source=>renderSource(source,renderSet,visual,shadow,resources));
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
-  for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
+  for(const record of activeRepeatLists.get(root)??[]){if(frozen(record.list))continue;record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
   updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root,nextData);
 }

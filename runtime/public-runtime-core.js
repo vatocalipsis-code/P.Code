@@ -69,6 +69,10 @@ export function createPlaneCodeEngine(dependencies){
         event.Value=Details.Value;event.InputType=Details.InputType??"Text";
         if(Details.IsComposing!==undefined)event.IsComposing=Boolean(Details.IsComposing);
       }
+      if(Details?.Payload!==undefined){
+        if(!this.connection.capabilities.includes('pcode.structured-events.v1'))return;
+        try{validateSemanticModel({payload:Details.Payload});event.Payload=structuredClone(Details.Payload)}catch{return}
+      }
       if(Details&&typeof Details.ItemId==="string")event.ItemId=Details.ItemId;
       try{this.sink(event)}catch{}
     }

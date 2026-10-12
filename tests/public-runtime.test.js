@@ -283,3 +283,15 @@ test('Back is offered to presentation only while its runtime is active',async()=
  await runtime.enableInteraction();assert.equal(runtime.consumeBack(),true);assert.equal(runtime.consumeBack(),false);
  await runtime.dispose();pending=true;assert.equal(runtime.consumeBack(),false);
 });
+
+test('structured event payload is negotiated, JSON validated and isolated from the emitter',async()=>{
+ for(const enabled of [false,true]){
+  const caps=enabled?['pcode.structured-events.v1']:[],h=harness({capabilities:caps});
+  const prepared=await connect(h.engine,caps).Connection.prepare({SetLang:setLang,SetData:setData,SetRender:setRender}),runtime=prepared.Runtime,events=[];
+  await runtime.setEventSink(e=>events.push(e));await runtime.mount({});await runtime.enableInteraction();
+  const payload={sessionId:'one',data:['encoded']};h.sessions[0].interaction.emit('OnInput','Base','capture',{Payload:payload});payload.data.push('mutated');
+  assert.equal(events.length,enabled?1:0);if(enabled)assert.deepEqual(events[0].Payload,{sessionId:'one',data:['encoded']});
+  h.sessions[0].interaction.emit('OnInput','Base','capture',{Payload:{unsafe:()=>{}}});assert.equal(events.length,enabled?1:0);
+  await runtime.dispose();
+ }
+});

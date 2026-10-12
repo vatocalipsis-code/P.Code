@@ -181,3 +181,24 @@ SteppedFields {
 ```
 
 The selector is scoped to the declaring panel. The positive CSS unit is read from the document root, with a positive numeric fallback. The runtime batches field writes, measurements and final writes in one animation frame; height is the number of text lines times the selected unit. Value, width, font and unit form the measurement cache key. Input, scene updates, resize and font loading invalidate measurements as needed. Hidden scenes are not measured. Runtime disposal cancels pending frames and observers. No application data or command names are interpreted.
+
+### `pcode.structured-events.v1` (2.34.0)
+
+Runtime events may include `Payload` containing validated JSON data. The public boundary clones the payload; it neither interprets nor stores it as a text input value. Unsupported, executable or unsafe payloads are rejected before delivery. Existing string `Value` / `ItemId` events retain their contracts.
+
+### `pcode.audio-capture.v1` (2.34.0)
+
+`SceneEffects.AudioCapture` owns browser microphone acquisition, MediaRecorder and an SPL-authored canvas waveform. It requires `pcode.structured-events.v1`. The `Source` semantic object supplies a session `id`, supported `formats`, `bitsPerSecond`, `maxBytes`, `durationMs` and optional `stop`. `SessionSource` identifies the surrounding input session even before capture starts; a different session clears the previous waveform. Closing or disposing the scene releases streams and cancels timers/frames, including streams returned after a late permission resolution.
+
+The effect emits `Command` as an `OnInput` event with structured `Payload`: `sessionId` plus `status` (`recording`, `recorded`, `error`). A recorded result carries `mime` and base64 `audio`; an error carries a machine code. It does not call a transcription service or interpret the result. The application owns API requests, authorization and any use of the input.
+
+`Waveform` names an authored Flow canvas. `Width`, `Height`, `Bars`, `BarInset`, `BarWidth`, `SampleStride`, `Divisor`, `MinBarHeight`, `ColorVariable`, `ColorScope` (`Root` or `Panel`) and `FallbackColor` belong exclusively to SPL. No product, theme, text label or service endpoint is embedded in the runtime.
+
+### `pcode.modal-transition.v1`
+
+A modal BasePanel may declare `ModalExit: { Effect: "Fade", Duration: 140 }`.
+Duration is bounded to 0–1000 milliseconds. On semantic closure Picot stops scene
+input effects and restores focus immediately, while keeping the outgoing DOM
+unchanged and inert until its fade ends. Reopening cancels the old exit; disposal
+cancels every pending animation. This rule contains no application commands or
+business state transitions. Screens without it retain immediate closure.

@@ -33,6 +33,24 @@ export function installModalScenes(root,records){
     }
   },{signal:abort.signal});
 }
+// Freeze an outgoing scene before semantic patches can replace its contents.
+export function prepareModalUpdate(root,data){
+  const state=scenes.get(root);if(!state)return false;
+  for(const record of state.records){
+    const open=semanticValue(record.node.Visual.VisibleSource,data[MODEL])===true;
+    if(open&&record.exit){record.exit.cancel();record.exit=null;delete record.wrapper.dataset.planeExiting;record.wrapper.inert=false;record.wrapper.style.pointerEvents=''}
+    if(!open&&record.open&&record.node.Visual.ModalExit&&record.wrapper.animate){
+      const animation=record.wrapper.animate([{opacity:1},{opacity:0}],{duration:record.node.Visual.ModalExit.Duration,easing:'ease',fill:'forwards'});
+      record.exit=animation;record.wrapper.dataset.planeExiting='';record.wrapper.style.pointerEvents='none';
+      animation.finished.then(()=>{
+        if(record.exit!==animation)return;
+        record.wrapper.hidden=true;record.wrapper.style.display='none';record.panel.hidden=true;record.panel.setAttribute('aria-hidden','true');
+        record.exit=null;delete record.wrapper.dataset.planeExiting;record.wrapper.style.pointerEvents='';animation.cancel();
+      },()=>{});
+    }
+  }
+  return state.records.some(record=>record.exit);
+}
 export function updateModalScenes(root,data){
   const state=scenes.get(root);if(!state)return;
   const doc=root.ownerDocument??globalThis.document,previousActive=state.stack.at(-1),opened=[];
@@ -41,6 +59,7 @@ export function updateModalScenes(root,data){
     if(open&&!record.open){record.focus=doc.activeElement;opened.push(record)}
     record.open=open;
     // Avoid style invalidation on unrelated semantic updates.
+    if(record.exit)continue;
     if(record.wrapper.hidden===open){record.wrapper.hidden=!open;record.wrapper.style.display=open?'':'none'}
     if(record.panel.hidden===open)record.panel.hidden=!open;
     if(record.panel.getAttribute('aria-hidden')!==String(!open))record.panel.setAttribute('aria-hidden',String(!open));
@@ -64,6 +83,7 @@ export function updateModalScenes(root,data){
   }
   for(const record of state.records)if(!record.open&&record.previousZ!==undefined){record.wrapper.style.zIndex=record.previousZ;delete record.previousZ}
   if(!active&&state.previous){for(const [node,inert]of state.previous)if(node.inert!==inert)node.inert=inert;state.previous=null}
+  for(const record of state.records)if(record.exit)record.wrapper.inert=true;
   if(active!==previousActive){
     const restore=active?(previousActive?.focus&&active.wrapper.contains(previousActive.focus)?previousActive.focus:null):state.initialFocus;
     queueMicrotask(()=>{
@@ -77,6 +97,7 @@ export function updateModalScenes(root,data){
 export function disposeModalScenes(root){
   const state=scenes.get(root);if(state?.previous)for(const [node,inert]of state.previous)node.inert=inert;
   for(const record of state?.records??[])if(record.previousZ!==undefined){record.wrapper.style.zIndex=record.previousZ;delete record.previousZ}
+  for(const record of state?.records??[]){record.exit?.cancel();record.exit=null}
   state?.abort.abort();
   scenes.delete(root);
 }

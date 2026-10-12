@@ -27,3 +27,18 @@ test('stepped native fields require an explicit capability and a positive bounde
  assert.throws(()=>validatePLang(Data,{},['pcode.scene-effects.v1']),/stepped-fields/);
  assert.equal(validatePLang(Data,{},['pcode.scene-effects.v1','pcode.stepped-fields.v1']),true);
 });
+
+test('audio acquisition is explicit, bounded and requires structured event support',()=>{
+ const AudioCapture={Source:'$.capture',SessionSource:'$.sessionId',Command:'input.capture',Waveform:'Wave',ColorScope:'Root',Width:320,Height:64,Bars:32,BarInset:2,BarWidth:6,SampleStride:3,Divisor:4,MinBarHeight:3,ColorVariable:'--meter',FallbackColor:'#6AAAF0'};
+ validateSceneEffects({AudioCapture});
+ for(const bad of [{...AudioCapture,Bars:129},{...AudioCapture,Bars:1.5},{...AudioCapture,Divisor:0},{...AudioCapture,ColorScope:'Document'},{...AudioCapture,FallbackColor:'url(anything)'},{...AudioCapture,SessionSource:'session'}])assert.throws(()=>validateSceneEffects({AudioCapture:bad}));
+ const Data=[{Login:'Scene',Properties:{SceneEffects:{AudioCapture}},Layout:[{Type:'Flow',Login:'Wave',Properties:{Tag:'canvas'}}],SimplePanels:[]}],caps=['pcode.flow-layout.v1','pcode.scene-effects.v1','pcode.audio-capture.v1'];
+ assert.throws(()=>validatePLang(Data,{},caps),/structured-events/);assert.equal(validatePLang(Data,{},[...caps,'pcode.structured-events.v1']),true);
+});
+
+test('modal exit is an explicitly negotiated bounded presentation rule',()=>{
+ const Properties={Modal:true,VisibleSource:'$.open',ModalExit:{Effect:'Fade',Duration:140}},Data=[{Login:'Scene',Properties,Layout:[],SimplePanels:[]}],caps=['pcode.semantic-controls.v1','pcode.semantic-model.v1','pcode.modal-transition.v1'];
+ assert.throws(()=>validatePLang(Data,{},caps.slice(0,2)),/modal-transition/);assert.equal(validatePLang(Data,{},caps),true);
+ const spl={SetLang:{Name:'fixture',Version:1,Data},SetData:{Name:'data',Version:1,Data:{}},SetRender:{Name:'render',Version:1,Data:{}}};assert.deepEqual(parseSPL(serializeSPL(spl)).SetLang.Data,Data);
+ for(const ModalExit of [{Effect:'script',Duration:140},{Effect:'Fade',Duration:1001},{Effect:'Fade',Duration:-1},{Effect:'Fade',Duration:140,Code:'x'}])assert.throws(()=>validatePLang([{...Data[0],Properties:{...Properties,ModalExit}}],{},caps),/ModalExit/);
+});
