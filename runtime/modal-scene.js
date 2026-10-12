@@ -19,11 +19,11 @@ export function createModalScene(panel,node,interaction){
   panel.tabIndex=-1;return scene;
 }
 export function installModalScenes(root,records){
-  const abort=new AbortController();scenes.set(root,{records,previous:null,abort});
+  const abort=new AbortController();scenes.set(root,{records,stack:[],previous:null,initialFocus:null,abort});
   if(!records.length)return;
   const doc=root.ownerDocument??globalThis.document;
   doc.addEventListener('keydown',event=>{
-    const active=records.filter(record=>record.open).at(-1);
+    const active=scenes.get(root)?.stack.at(-1);
     if(!active||event.defaultPrevented)return;
     // Disabling a focused submit control can move focus to the document body.
     // Modal dismissal and focus containment must still belong to the runtime.
@@ -35,23 +35,48 @@ export function installModalScenes(root,records){
 }
 export function updateModalScenes(root,data){
   const state=scenes.get(root);if(!state)return;
-  let opened=null,closed=null;
+  const doc=root.ownerDocument??globalThis.document,previousActive=state.stack.at(-1),opened=[];
   for(const record of state.records){
     const open=semanticValue(record.node.Visual.VisibleSource,data[MODEL])===true;
-    if(open&&!record.open){record.focus=document.activeElement;opened=record}
-    if(!open&&record.open)closed=record;
-    record.open=open;record.wrapper.hidden=!open;record.wrapper.style.display=open?'':'none';record.panel.hidden=!open;record.panel.setAttribute('aria-hidden',String(!open));
+    if(open&&!record.open){record.focus=doc.activeElement;opened.push(record)}
+    record.open=open;
+    // Avoid style invalidation on unrelated semantic updates.
+    if(record.wrapper.hidden===open){record.wrapper.hidden=!open;record.wrapper.style.display=open?'':'none'}
+    if(record.panel.hidden===open)record.panel.hidden=!open;
+    if(record.panel.getAttribute('aria-hidden')!==String(!open))record.panel.setAttribute('aria-hidden',String(!open));
   }
-  const active=state.records.filter(record=>record.open).at(-1);
+  state.stack=state.stack.filter(record=>record.open);
+  state.stack.push(...opened);
+  const active=state.stack.at(-1);
   if(active){
-    if(!state.previous)state.previous=new Map([...root.children].map(node=>[node,node.inert]));
-    for(const node of root.children)node.inert=node!==active.wrapper;
-  }else if(state.previous){for(const [node,inert]of state.previous)node.inert=inert;state.previous=null}
-  if(opened)queueMicrotask(()=>{if(opened.open&&opened.wrapper.isConnected)(focusable(opened.panel)[0]??opened.panel).focus({preventScroll:true})});
-  else if(closed&&closed.focus?.isConnected)closed.focus.focus({preventScroll:true});
+    if(!state.previous){state.previous=new Map();state.initialFocus=opened[0]?.focus??doc.activeElement}
+    for(const node of root.children){
+      if(!state.previous.has(node))state.previous.set(node,node.inert);
+      const inert=node!==active.wrapper;if(node.inert!==inert)node.inert=inert;
+    }
+    if(opened.length){
+      // Preserve authored stacking as a floor, then order nested scenes by activation.
+      // Reading computed style happens only when opening, never on data updates.
+      const level=record=>Number(doc.defaultView.getComputedStyle(record.wrapper).zIndex)||0;
+      let top=Math.max(0,...state.stack.filter(record=>!opened.includes(record)).map(level));
+      for(const record of opened){record.previousZ=record.wrapper.style.zIndex;top=Math.max(top+1,level(record));record.wrapper.style.zIndex=String(top)}
+    }
+  }
+  for(const record of state.records)if(!record.open&&record.previousZ!==undefined){record.wrapper.style.zIndex=record.previousZ;delete record.previousZ}
+  if(!active&&state.previous){for(const [node,inert]of state.previous)if(node.inert!==inert)node.inert=inert;state.previous=null}
+  if(active!==previousActive){
+    const restore=active?(previousActive?.focus&&active.wrapper.contains(previousActive.focus)?previousActive.focus:null):state.initialFocus;
+    queueMicrotask(()=>{
+      if(scenes.get(root)!==state||state.stack.at(-1)!==active)return;
+      const target=restore?.isConnected&&!restore.disabled?restore:active?.wrapper.isConnected?(focusable(active.panel)[0]??active.panel):null;
+      target?.focus({preventScroll:true});
+    });
+  }
+  if(!active)state.initialFocus=null;
 }
 export function disposeModalScenes(root){
   const state=scenes.get(root);if(state?.previous)for(const [node,inert]of state.previous)node.inert=inert;
+  for(const record of state?.records??[])if(record.previousZ!==undefined){record.wrapper.style.zIndex=record.previousZ;delete record.previousZ}
   state?.abort.abort();
   scenes.delete(root);
 }

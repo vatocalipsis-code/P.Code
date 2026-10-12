@@ -150,3 +150,7 @@ Closed scenes do not read scroll geometry.
 choices. The default still supplies the existing empty/placeholder option.
 The option policy belongs to SPL; selected values and allowed records remain
 application data. Non-boolean policies and use on other input types are rejected.
+
+## Modal activation order (2.30.1)
+
+Modal focus, inert background and stacking follow opening order, independently of declaration order. Closing the stack restores its original opener; newly mounted background children have their initial inert state restored. Unchanged semantic updates do not rewrite modal display, hidden, aria-hidden or inert state. Reproduce with `PLAYWRIGHT_MODULE=... node tests/check-modal-stack-browser.mjs` and `UI_BROWSER=webkit` for WebKit. This fixture defines no application theme.
