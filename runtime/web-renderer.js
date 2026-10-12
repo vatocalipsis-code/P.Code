@@ -239,7 +239,7 @@ function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const body=document.createElement("div");body.dataset.planeContainerContent="";applyContainerContentLayout(body,rule);
   const sources=sourcesFromData(node,dataSet,repeatedItem);
-  if(/^[$@]\./.test(rule.Source??''))el.__planeSourceSignature=JSON.stringify(sources);
+  el.__planeSourceSignature=JSON.stringify(sources);el.__planeSourceResources=resources;el.__planeSourceRender=renderSet;
   for(const source of sources)body.append(renderSource(source,renderSet,rule,ownerShadow,resources));
   applyTextLayout(el,body,rule);
   el.append(body);return el;
@@ -287,8 +287,8 @@ function patchFlowContent(el,node,dataSet,renderSet,resources,item=null){
   const rule=node.Visual;
   if(rule.Source===undefined&&rule.Text===undefined)return;
   const sources=rule.Text!==undefined?[{kind:'Text',value:rule.Text}]:sourcesFromData(node,dataSet,item);
-  const signature=JSON.stringify(sources);if(el.__planeSourceSignature===signature)return;
-  el.__planeSourceSignature=signature;
+  const signature=JSON.stringify(sources);if(el.__planeSourceSignature===signature&&el.__planeSourceResources===resources&&el.__planeSourceRender===renderSet)return;
+  el.__planeSourceSignature=signature;el.__planeSourceResources=resources;el.__planeSourceRender=renderSet;
   el.replaceChildren();for(const source of sources){if(source.kind==='Text'&&rule.Linkify)appendLinkedText(el,source.value);else el.append(source.kind==='Text'?document.createTextNode(source.value):renderSource(source,renderSet,rule,0,resources))}
 }
 function renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem){
@@ -463,8 +463,9 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;
     const shadow=owner?.__planeVisual?.Shadow??0;
     const sourceData=sourcesFromData(node,nextData);
-    if(semanticOnly){const signature=JSON.stringify(sourceData);if(el.__planeSourceSignature===signature)continue;el.__planeSourceSignature=signature;}
-    else if(/^[$@]\./.test(visual.Source??''))el.__planeSourceSignature=JSON.stringify(sourceData);
+    const signature=JSON.stringify(sourceData);
+    if(el.__planeSourceSignature===signature&&el.__planeSourceResources===resources&&el.__planeSourceRender===renderSet)continue;
+    el.__planeSourceSignature=signature;el.__planeSourceResources=resources;el.__planeSourceRender=renderSet;
     const sources=sourceData.map(source=>renderSource(source,renderSet,visual,shadow,resources));
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }

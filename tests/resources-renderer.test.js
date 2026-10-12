@@ -225,3 +225,16 @@ test('semantic accessibility follows model updates without replacing controls',a
 });
 
 });
+
+test('unchanged SetData preserves source nodes but resource replacement invalidates the cache',async()=>{
+ const {patchSetData}=await import('../runtime/web-renderer.js');
+ const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement('div',doc);
+ const plan=compileSetLang([{Login:'Base',Properties:{},Layout:[{Login:'Text',Properties:{}},{Login:'Image',Properties:{}}],SimplePanels:[]}]);
+ const data={Text:{SourceText:'Stable'},Image:{SourcePicture:'icon.add'}};
+ renderPlaneCode(root,plan,data,render,null,resources);
+ const first=find(root,n=>n.dataset?.planeSource==='Text'),picture=find(root,n=>n.dataset?.planeSource==='Picture');
+ patchSetData(root,structuredClone(data),render,resources);assert.equal(find(root,n=>n.dataset?.planeSource==='Text'),first);assert.equal(find(root,n=>n.dataset?.planeSource==='Picture'),picture);
+ patchSetData(root,{...data,Text:{SourceText:'Changed'}},render,resources);assert.notEqual(find(root,n=>n.dataset?.planeSource==='Text'),first);assert.equal(find(root,n=>n.dataset?.planeSource==='Picture'),picture);
+ const nextResources=structuredClone(resources);nextResources.Pictures[0].Data='aW1hZ2U=';patchSetData(root,data,render,nextResources);assert.notEqual(find(root,n=>n.dataset?.planeSource==='Picture'),picture);
+ disposePlaneCode(root);delete globalThis.document;
+});
