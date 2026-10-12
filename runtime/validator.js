@@ -82,9 +82,10 @@ function validateEventToken(value,label){
 function usesUnitPlacement(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return Boolean(format?.UnitPlacement)||Object.values(format?.Parts??{}).some(part=>usesUnitPlacement(part?.Format,depth+1))}
 function usesDecimalProjection(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return format?.Precision!==undefined||format?.Output!==undefined||Object.values(format?.Parts??{}).some(part=>usesDecimalProjection(part?.Format,depth+1))}
 function usesNegativeSign(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return format?.NegativeSign!==undefined||Object.values(format?.Parts??{}).some(part=>usesNegativeSign(part?.Format,depth+1))}
+function usesTextSlice(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return format?.SliceStart!==undefined||Object.values(format?.Parts??{}).some(part=>usesTextSlice(part?.Format,depth+1))}
 export function validateFormat(f,label='Format',depth=0){
  if(depth>8||!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime','Composite'].includes(f.Kind))fail('Invalid Format for '+label);
- if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction','UnitPlacement','NegativeSign','Precision','Rounding','ReciprocalSource','Output'].includes(key)))fail('Unknown Format property for '+label);
+ if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction','UnitPlacement','NegativeSign','Precision','Rounding','ReciprocalSource','Output','SliceStart'].includes(key)))fail('Unknown Format property for '+label);
  if(f.Kind==='Composite'){
   if(!f.Parts||typeof f.Parts!=='object'||Array.isArray(f.Parts)||Object.keys(f.Parts).length>64)fail('Composite Format requires up to 64 named parts');
   for(const part of Object.values(f.Parts)){
@@ -105,6 +106,7 @@ export function validateFormat(f,label='Format',depth=0){
   if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
  }
  if(f.Output!==undefined&&(f.Kind!=='Decimal'||f.Output!=='Text'))fail('Output requires Decimal and Text');
+ if(f.SliceStart!==undefined&&(f.Kind!=='Text'||!Number.isInteger(f.SliceStart)||f.SliceStart<-256||f.SliceStart>256))fail('SliceStart requires Text and an integer -256..256');
  if(f.Precision!==undefined&&(f.Kind!=='Decimal'||!Number.isInteger(f.Precision)||f.Precision<0||f.Precision>12))fail('Precision requires Decimal and an integer 0..12');
  if(f.Rounding!==undefined&&(f.Precision===undefined||!['Truncate','HalfTowardZero'].includes(f.Rounding)))fail('Rounding requires Precision and a supported rounding rule');
  if(f.Precision!==undefined&&f.Rounding===undefined)fail('Precision requires explicit Rounding');
@@ -366,6 +368,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(node.Properties?.DecimalInput?.Preview&&!capabilitySet.has('pcode.decimal-preview.v1'))fail('DecimalInput Preview requires pcode.decimal-preview.v1');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
     if(usesDecimalProjection(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-projection.v1'))fail('Decimal projection requires pcode.decimal-projection.v1');
+    if(usesTextSlice(node.Properties?.Format)&&!capabilitySet.has('pcode.text-slice.v1'))fail('Text slice requires pcode.text-slice.v1');
     if((node.Properties?.ModalEnter||node.Properties?.ModalExit?.Effect==='Slide')&&!capabilitySet.has('pcode.modal-slide.v1'))fail('Modal slide requires pcode.modal-slide.v1');
     if(node.Properties?.ModalExit&&!capabilitySet.has('pcode.modal-transition.v1'))fail('ModalExit requires pcode.modal-transition.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');

@@ -62,5 +62,6 @@ export function formatValue(value,format={Kind:'Text'},model={}){
   if(!['string','number','boolean'].includes(typeof value))throw Error('Text Source must resolve to a scalar');
   text=String(value);
  }
+ if(format.SliceStart!==undefined)text=text.slice(format.SliceStart);
  return [{kind:'Text',value:(format.Prefix??'')+text+(format.Suffix??'')}];
 }
