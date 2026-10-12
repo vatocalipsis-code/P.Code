@@ -2,6 +2,7 @@
 import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
 import {createInputElement,patchInputElement,inputValue} from './semantic-controls.js';
 import {createModalScene,installModalScenes,updateModalScenes,disposeModalScenes} from './modal-scene.js';
+import {installRouteScenes,updateRouteScenes,disposeRouteScenes} from './route-scene.js';
 const activeParallax=new WeakMap();
 const activeTilt=new WeakMap();
 const tiltScenes=new WeakMap();
@@ -364,10 +365,12 @@ export function requestTiltParallax(root){
 }
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
+  disposeRouteScenes(root);
   disposeModalScenes(root);
   cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
+  disposeRouteScenes(root);
   cancelPlaneCodeInteraction(root);
   disposeModalScenes(root);
   if(!renderSet.TiltParallax)stopTilt(root);
@@ -375,14 +378,16 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   prepareSkinStyle(root,skinStyleSheet);
   root.style.setProperty("--panel-spacing",px(renderSet.PanelSpacing));root.style.setProperty("--background-color",renderSet.BackgroundColor);root.style.setProperty("--panel-color",renderSet.PanelColor);root.style.setProperty("--border-color",renderSet.BorderColor);root.style.setProperty("--text-color",renderSet.TextColor);
   const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[],repeatLists=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];
-  const modals=[];
+  const modals=[],routes=[];
   const panels=roots.map(node=>{
     const panel=renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists);
+    if(node.Visual?.Route)routes.push({panel,node,route:node.Visual.Route});
     if(!node.Visual?.Modal)return panel;
     const scene=createModalScene(panel,node,interaction);modals.push(scene);return scene.wrapper;
   });
   releaseDeferredPictures(root);
   root.replaceChildren(...panels);
+  installRouteScenes(root,routes,interaction);updateRouteScenes(root,dataSet);
   installModalScenes(root,modals);updateModalScenes(root,dataSet);
   activeInteraction.set(root,{cancel(){for(const cancel of cancellers)cancel()}});
   activeRepeatLists.set(root,repeatLists);
@@ -406,5 +411,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
   for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
-  updateModalScenes(root,nextData);
+  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);
 }

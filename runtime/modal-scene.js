@@ -7,6 +7,7 @@ export function createModalScene(panel,node,interaction){
   panel.dataset.planeManaged='';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',node.Visual.AriaLabel??node.Login);wrapper.append(panel);
   const scene={wrapper,panel,node,open:false,focus:null};
   const dismiss=()=>{if(scene.open&&interaction?.isEnabled()&&node.Visual.Dismiss)interaction.emit('OffPress',node.Login,node.Visual.Dismiss)};
+  scene.dismiss=dismiss;
   wrapper.addEventListener('click',event=>{if(event.target===wrapper){event.preventDefault();event.stopPropagation();dismiss()}});
   wrapper.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dismiss();return}
@@ -17,7 +18,21 @@ export function createModalScene(panel,node,interaction){
   });
   panel.tabIndex=-1;return scene;
 }
-export function installModalScenes(root,records){scenes.set(root,{records,previous:null})}
+export function installModalScenes(root,records){
+  const abort=new AbortController();scenes.set(root,{records,previous:null,abort});
+  if(!records.length)return;
+  const doc=root.ownerDocument??globalThis.document;
+  doc.addEventListener('keydown',event=>{
+    const active=records.filter(record=>record.open).at(-1);
+    if(!active||event.defaultPrevented)return;
+    // Disabling a focused submit control can move focus to the document body.
+    // Modal dismissal and focus containment must still belong to the runtime.
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();active.dismiss()}
+    else if(event.key==='Tab'&&!active.wrapper.contains(doc.activeElement)){
+      event.preventDefault();const nodes=focusable(active.panel);((event.shiftKey?nodes.at(-1):nodes[0])??active.panel).focus();
+    }
+  },{signal:abort.signal});
+}
 export function updateModalScenes(root,data){
   const state=scenes.get(root);if(!state)return;
   let opened=null,closed=null;
@@ -37,5 +52,6 @@ export function updateModalScenes(root,data){
 }
 export function disposeModalScenes(root){
   const state=scenes.get(root);if(state?.previous)for(const [node,inert]of state.previous)node.inert=inert;
+  state?.abort.abort();
   scenes.delete(root);
 }

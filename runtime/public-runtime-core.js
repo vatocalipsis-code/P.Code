@@ -11,7 +11,7 @@ let nextConnectionId=1;
 
 function hasEventToken(plan){
   const visit=node=>{
-    if(node?.Visual?.Dismiss)return true;
+    if(node?.Visual?.Dismiss||node?.Visual?.Route?.Dismiss||['Back','Menu','Refresh'].some(key=>node?.Visual?.Route?.Gestures?.[key]))return true;
     if(node&&(node.OnPress!==undefined&&node.OnPress!==null||node.OffPress!==undefined&&node.OffPress!==null))return true;
     if(node?.Events&&Object.values(node.Events).some(value=>value!==undefined&&value!==null))return true;
     return [...(node?.layout??[]),...(node?.children??[])].some(visit);

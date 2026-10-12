@@ -28,7 +28,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Modal","ModalClass","Dismiss","NativeButton"
+  "Modal","ModalClass","Dismiss","NativeButton","Route"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -90,6 +90,33 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.Repeat!==undefined&&(!label.startsWith("ActivePanel ")||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires an ActivePanel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
+  if(rule.Route!==undefined){
+    const r=rule.Route;
+    if(!label.startsWith('BasePanel ')||rule.Modal||!r||typeof r!=='object'||Array.isArray(r))fail('Route requires a non-modal BasePanel');
+    const keys=['Id','Source','Mode','EnabledSource','DismissEnabledSource','Fallback','PanelClass','ContextClass','GroupClass','RootClass','LayerClass','ActiveClass','ExitClass','Label','LabelSelector','Speed','Acceleration','Enter','Exit','Dismiss','Outside','Escape','Exclude','Gestures'];
+    if(Object.keys(r).some(key=>!keys.includes(key)))fail('Unknown Route property');
+    if(!isNonEmptyString(r.Id)||!['Stack','Replace'].includes(r.Mode)||!/^\$\.[a-zA-Z0-9_.-]+$/.test(r.Source??''))fail('Invalid Route identity, source or mode');
+    for(const key of ['EnabledSource','DismissEnabledSource'])if(r[key]!==undefined&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(r[key]))fail('Invalid Route '+key);
+    for(const key of keys.filter(key=>key.endsWith('Class')))if(r[key]!==undefined&&(typeof r[key]!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(r[key])))fail('Invalid Route class');
+    for(const key of ['Fallback','Label','LabelSelector','Exclude'])if(r[key]!==undefined&&!isNonEmptyString(r[key]))fail('Invalid Route '+key);
+    for(const key of ['Enter','Exit','Escape'])if(r[key]!==undefined&&typeof r[key]!=='boolean')fail('Invalid Route '+key);
+    if(r.Speed!==undefined&&(!isFiniteNumber(r.Speed)||r.Speed<=0))fail('Invalid Route speed');
+    if(r.Acceleration!==undefined&&(!isNonNegativeNumber(r.Acceleration)||!r.Speed||r.Acceleration*r.Speed>2))fail('Invalid Route acceleration');
+    if(r.Outside!==undefined&&!['Dismiss','Consume'].includes(r.Outside))fail('Invalid Route outside action');
+    validateEventToken(r.Dismiss,label+'.Route.Dismiss');
+    if((r.Outside||r.Escape)&&!r.Dismiss)fail('Route dismissal requires a command');
+    if(r.Gestures!==undefined){
+      const g=r.Gestures,fields=['Back','Menu','Refresh','RefreshEnabledSource','LoadingSource','BackRegion','MenuRegion','PullRegion','Target','Exclude','ScrollBoundary','RootBack','PreventZoom','IntentDistance','AxisRatio','NoticeDistance','SwipeDistance','PullDistance','IndicatorClass','SpinnerClass','FadingClass','FadeDuration','Label'];
+      if(!g||typeof g!=='object'||Array.isArray(g)||Object.keys(g).some(key=>!fields.includes(key)))fail('Invalid Route gestures');
+      for(const key of ['Back','Menu','Refresh'])validateEventToken(g[key],'Route gesture '+key);
+      for(const key of ['RefreshEnabledSource','LoadingSource'])if(!/^\$\.[a-zA-Z0-9_.-]+$/.test(g[key]??''))fail('Invalid Route gesture source');
+      for(const key of ['BackRegion','MenuRegion','PullRegion'])if(!Array.isArray(g[key])||g[key].length!==2||g[key].some(value=>!isFiniteNumber(value)||value<0||value>1)||g[key][0]>g[key][1])fail('Invalid Route gesture region');
+      for(const key of ['IntentDistance','AxisRatio','NoticeDistance','SwipeDistance','PullDistance'])if(!isFiniteNumber(g[key])||g[key]<=0)fail('Invalid Route gesture threshold');
+      for(const key of ['RootBack','PreventZoom'])if(g[key]!==undefined&&typeof g[key]!=='boolean')fail('Invalid Route gesture flag');
+      if(g.FadeDuration!==undefined&&!isNonNegativeNumber(g.FadeDuration))fail('Invalid Route gesture duration');
+      for(const key of ['Target','Exclude','ScrollBoundary','IndicatorClass','SpinnerClass','FadingClass','Label'])if(g[key]!==undefined&&!isNonEmptyString(g[key]))fail('Invalid Route gesture string');
+    }
+  }
   if(rule.Modal!==undefined){
     if(!label.startsWith('BasePanel ')||rule.Modal!==true||!rule.VisibleSource)fail('Modal requires a BasePanel and VisibleSource');
     if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
@@ -219,6 +246,8 @@ export function validateSetData(data,pLang,capabilities=[],resources=null){
 }
 
 export function validatePLang(pLang,setData={},capabilities=[],resources=null){
+  const routeIds=new Set();
+  for(const panel of pLang??[]){const route=panel.Properties?.Route;if(route){const key=route.Source+'\0'+route.Id;if(routeIds.has(key))fail('Duplicate Route identity');routeIds.add(key)}}
   if(!Array.isArray(pLang))fail("SetLang.Data must be BasePanel[]");
   const capabilitySet=new Set(capabilities);
   const checkVisualCapabilities=node=>{
@@ -232,6 +261,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
       fail("Repeat requires negotiated pcode.semantic-repeat.v1");
     if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
+    if(node.Properties?.Route&&!capabilitySet.has('pcode.semantic-routes.v1'))fail('Route requires pcode.semantic-routes.v1');
+    if(node.Properties?.Route&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Route requires pcode.semantic-model.v1');
     if(node.Properties?.NativeButton&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('NativeButton requires pcode.semantic-controls.v1');
     for(const [key,value] of Object.entries(node))if(key!=="Properties")checkVisualCapabilities(value);
     checkVisualCapabilities(node.Properties?.AggregateActivePanels);

@@ -8,7 +8,7 @@ const descriptor={
   ComponentVersion:"2.18.0",
   GenerationId:"pcode.layout-group.v1",
   SupportedSerializationVersions:[1],
-  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1","pcode.semantic-repeat.v1","pcode.semantic-model.v1","pcode.semantic-controls.v1"]
+  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1","pcode.semantic-repeat.v1","pcode.semantic-model.v1","pcode.semantic-controls.v1","pcode.semantic-routes.v1"]
 };
 
 const renderer={
