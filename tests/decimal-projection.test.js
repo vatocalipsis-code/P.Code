@@ -17,3 +17,14 @@ test('decimal projection contract rejects missing rounding, wrong paths and unbo
  const data=[{Login:'Screen',Layout:[{Login:'Value',Properties:{Source:'$.number',Format:{Kind:'Composite',Parts:{number:{Source:'@.number',Format:format}}}}}]}];
  assert.throws(()=>validatePLang(data,{},['pcode.semantic-model.v1','pcode.composite-format.v1','pcode.decimal-sign.v1']),/decimal-projection/);
 });
+
+test('decimal text projection composes a single wrapping text run without mutating the quantity',()=>{
+ const quantity={units:'0',scale:3};
+ const f={Kind:'Composite',Parts:{label:{Text:'Unit, '},precision:{Source:'@.quantity',Format:{Kind:'Decimal',Output:'Text'}}}};
+ validateFormat(f);assert.deepEqual(formatValue({quantity},f),[{kind:'Text',value:'Unit, 0.000'}]);
+ assert.deepEqual(quantity,{units:'0',scale:3});
+ assert.deepEqual(formatValue({units:'-12345',scale:2,unit:'kg'},{Kind:'Decimal',Output:'Text',ShowUnit:true}),[{kind:'Text',value:'−123.45 kg'}]);
+ for(const bad of [{Kind:'Text',Output:'Text'},{Kind:'Decimal',Output:'HTML'}])assert.throws(()=>validateFormat(bad));
+ const data=[{Login:'Screen',Layout:[{Login:'Value',Properties:{Source:'$.number',Format:f}}]}];
+ assert.throws(()=>validatePLang(data,{},['pcode.semantic-model.v1','pcode.composite-format.v1']),/decimal-projection/);
+});

@@ -79,11 +79,11 @@ function validateEventToken(value,label){
   if(value==="NOT_YET_SPECIFIED")fail(label+" must not use NOT_YET_SPECIFIED");
 }
 function usesUnitPlacement(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return Boolean(format?.UnitPlacement)||Object.values(format?.Parts??{}).some(part=>usesUnitPlacement(part?.Format,depth+1))}
-function usesDecimalProjection(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return format?.Precision!==undefined||Object.values(format?.Parts??{}).some(part=>usesDecimalProjection(part?.Format,depth+1))}
+function usesDecimalProjection(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return format?.Precision!==undefined||format?.Output!==undefined||Object.values(format?.Parts??{}).some(part=>usesDecimalProjection(part?.Format,depth+1))}
 function usesNegativeSign(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return format?.NegativeSign!==undefined||Object.values(format?.Parts??{}).some(part=>usesNegativeSign(part?.Format,depth+1))}
 export function validateFormat(f,label='Format',depth=0){
  if(depth>8||!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime','Composite'].includes(f.Kind))fail('Invalid Format for '+label);
- if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction','UnitPlacement','NegativeSign','Precision','Rounding','ReciprocalSource'].includes(key)))fail('Unknown Format property for '+label);
+ if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction','UnitPlacement','NegativeSign','Precision','Rounding','ReciprocalSource','Output'].includes(key)))fail('Unknown Format property for '+label);
  if(f.Kind==='Composite'){
   if(!f.Parts||typeof f.Parts!=='object'||Array.isArray(f.Parts)||Object.keys(f.Parts).length>64)fail('Composite Format requires up to 64 named parts');
   for(const part of Object.values(f.Parts)){
@@ -103,6 +103,7 @@ export function validateFormat(f,label='Format',depth=0){
   for(const url of Object.values(f.Map))if(!isCanonicalImageFile(url))fail('Picture Format must use local images');
   if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
  }
+ if(f.Output!==undefined&&(f.Kind!=='Decimal'||f.Output!=='Text'))fail('Output requires Decimal and Text');
  if(f.Precision!==undefined&&(f.Kind!=='Decimal'||!Number.isInteger(f.Precision)||f.Precision<0||f.Precision>12))fail('Precision requires Decimal and an integer 0..12');
  if(f.Rounding!==undefined&&(f.Precision===undefined||!['Truncate','HalfTowardZero'].includes(f.Rounding)))fail('Rounding requires Precision and a supported rounding rule');
  if(f.Precision!==undefined&&f.Rounding===undefined)fail('Precision requires explicit Rounding');

@@ -46,6 +46,7 @@ export function formatValue(value,format={Kind:'Text'},model={}){
   if(format.Precision!==undefined){value=decimalProjection(value,format,model);if(value===null)return format.Fallback?[{kind:'Text',value:format.Fallback}]:[]}
   let parts=decimalParts(value,format);
   if(format.TrimFraction)parts={...parts,fraction:parts.fraction.replace(/0+$/,'').replace(/[.,]$/,'')};
+  if(format.Output==='Text')return [{kind:'Text',value:parts.whole+parts.fraction+parts.unit}];
   return [{kind:'Decimal',value,parts,...(format.UnitPlacement?{unitPlacement:format.UnitPlacement}:{})}];
  }
  let text;

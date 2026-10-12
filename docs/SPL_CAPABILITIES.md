@@ -295,3 +295,5 @@ are never rewritten. Projection uses exact integer arithmetic, supports source
 scale up to 24, and returns the authored text `Fallback` for the reciprocal of
 zero. Nested Composite formats must negotiate the capability too. Omitted
 projection properties preserve the original decimal contract.
+
+Decimal projection also accepts `Output: "Text"` to emit the formatted quantity as a single text segment. Composite text parts then wrap as one uninterrupted text run; the semantic quantity is unchanged. This option requires `pcode.decimal-projection.v1`.
