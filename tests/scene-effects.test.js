@@ -9,3 +9,12 @@ test('scene behavior is declarative, bounded and capability-negotiated',()=>{
  const spl={SetLang:{Name:'fixture',Version:1,Data},SetData:{Name:'data',Version:1,Data:{}},SetRender:{Name:'render',Version:1,Data:{}}};assert.deepEqual(parseSPL(serializeSPL(spl)).SetLang.Data,Data);
  for(const value of [{Execute:{Code:'x'}},{AutoSize:{...effects.AutoSize,RowHeight:-1}},{Resize:{...effects.Resize,ViewportMargin:Infinity}},{Viewport:{...effects.Viewport,TopVariable:'color'}},{Focus:{...effects.Focus,JavaScript:'x'}},{Outside:{Scope:'Subject',Command:'dismiss'}}])assert.throws(()=>validateSceneEffects(value),/Invalid SceneEffects/);
 });
+
+test('native decisions require explicit SPL messages and capability',()=>{
+ const Confirm={Source:'$.decision',Messages:{discard:'Discard?'},Accept:'accept',Reject:'reject'};
+ validateSceneEffects({Confirm});
+ for(const bad of [{...Confirm,Source:'eval()'},{...Confirm,Messages:{}},{...Confirm,Messages:{discard:1}},{...Confirm,Unknown:true}])assert.throws(()=>validateSceneEffects({Confirm:bad}));
+ const Data=[{Login:'Scene',Properties:{SceneEffects:{Confirm}},Layout:[],SimplePanels:[]}];
+ assert.throws(()=>validatePLang(Data,{},['pcode.scene-effects.v1']),/native-confirm/);
+ assert.equal(validatePLang(Data,{},['pcode.scene-effects.v1','pcode.native-confirm.v1']),true);
+});

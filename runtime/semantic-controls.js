@@ -1,6 +1,7 @@
 /** Native controls implement SPL-authored behavior and emit semantic values. */
+import {formatValue} from './value-format.js';
 import {patchDecimalInput} from './numeric-editor.js';
-import {MODEL,semanticValue,textTemplate} from './semantic-model.js';
+import {MODEL,semanticValue} from './semantic-model.js';
 
 export function createInputElement(config){
   const type=config.InputType??'Text';
@@ -28,7 +29,7 @@ export function patchInputElement(el,node,dataSet,item=null){
       const options=choices.map(choice=>{
         const id=String(semanticValue('@.'+(config.ChoiceValue??'id'),null,choice)??'');
         if(!id||ids.has(id))throw Error('Choice records require unique non-empty IDs');ids.add(id);
-        const text=rule.Format?.Template?textTemplate(choice,rule.Format.Template):String(semanticValue('@.'+(config.ChoiceLabel??'name'),null,choice)??'');
+        const text=rule.Format?formatValue(choice,rule.Format,dataSet[MODEL]).map(segment=>{if(segment.kind!=='Text')throw Error('Native choices require text formatting');return segment.value}).join(''):String(semanticValue('@.'+(config.ChoiceLabel??'name'),null,choice)??'');
         const unavailable=config.ChoiceAvailableField&&semanticValue('@.'+config.ChoiceAvailableField,null,choice)===false;
         return option(id,text+(unavailable?config.UnavailableSuffix??'':''));
       });

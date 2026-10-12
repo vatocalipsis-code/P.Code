@@ -154,3 +154,11 @@ application data. Non-boolean policies and use on other input types are rejected
 ## Modal activation order (2.30.1)
 
 Modal focus, inert background and stacking follow opening order, independently of declaration order. Closing the stack restores its original opener; newly mounted background children have their initial inert state restored. Unchanged semantic updates do not rewrite modal display, hidden, aria-hidden or inert state. Reproduce with `PLAYWRIGHT_MODULE=... node tests/check-modal-stack-browser.mjs` and `UI_BROWSER=webkit` for WebKit. This fixture defines no application theme.
+
+## Native decisions and choice text (2.31.0)
+
+`pcode.native-confirm.v1`: a BasePanel may declare `SceneEffects.Confirm` with a semantic `Source`, a `Messages` map authored by the skin, and opaque `Accept` / `Reject` commands. A newly requested decision opens the browser's native confirmation; its string key returns as `Value`. Unrelated model updates do not repeat it. Closed/disposed scenes cannot prompt. The runtime does not interpret the decision key or perform the requested action.
+
+`pcode.choice-format.v1`: a native Choice can use a Text or Composite format for option text. Formatting is owned by SPL, while available option records and stable IDs remain semantic data. Picture/markup option results are rejected; native options contain plain text only. Existing template-only choices remain compatible.
+
+Verification: 85 unit tests; `tests/check-scene-effects-browser.mjs` passes native acceptance/rejection and duplicate-prompt prevention in Chromium and WebKit. `tests/check-modal-stack-browser.mjs` covers reverse declaration order, nested stacking, Escape, Tab and focus restoration in both engines.

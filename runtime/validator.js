@@ -303,6 +303,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if((node.Properties?.Role||node.Properties?.Sequence||node.SimplePanels?.length&&!pLang.includes(node)||node.Properties?.Repeat&&node.ActivePanels)&&!capabilitySet.has('pcode.panel-composition.v1'))fail('Panel composition requires pcode.panel-composition.v1');
     if(node.Type!=='Flow'&&node.Properties?.Text!==undefined&&!capabilitySet.has('pcode.native-button-text.v1'))fail('Native button text requires pcode.native-button-text.v1');
     if(node.Type==='Group'&&node.Properties?.VisibleSource&&!capabilitySet.has('pcode.group-state.v1'))fail('Group visibility requires pcode.group-state.v1');
+    if(node.Properties?.SceneEffects?.Confirm&&!capabilitySet.has('pcode.native-confirm.v1'))fail('Confirm requires pcode.native-confirm.v1');
+    if(node.Properties?.InputType==='Choice'&&node.Properties?.Format&&!node.Properties.Format.Template&&!capabilitySet.has('pcode.choice-format.v1'))fail('Choice formatting requires pcode.choice-format.v1');
     if(node.Properties?.SceneEffects&&!capabilitySet.has('pcode.scene-effects.v1'))fail('SceneEffects requires pcode.scene-effects.v1');
     if(node.Type==='Flow'&&!capabilitySet.has('pcode.flow-layout.v1'))fail('Flow requires pcode.flow-layout.v1');
     if(node.Properties?.Vector&&!capabilitySet.has('pcode.vector.v1'))fail('Vector requires pcode.vector.v1');

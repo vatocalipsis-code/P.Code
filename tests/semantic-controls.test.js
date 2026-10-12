@@ -61,3 +61,12 @@ test('SPL can exclude the empty choice without changing existing choice defaults
  const Data=[{Login:'Page',Layout:[{Type:'EditableInput',Login:'Choice',Properties:{InputType:'Choice',EmptyChoice:false,ChoicesSource:'$.items'}}],SimplePanels:[]}],caps=['pcode.editable-input.v1','pcode.semantic-controls.v1','pcode.semantic-model.v1'];
  assert.throws(()=>validatePLang(Data,{},caps),/choice-empty/);assert.equal(validatePLang(Data,{},[...caps,'pcode.choice-empty.v1']),true);
 });
+
+test('native choices use SPL composite text without application display labels',()=>{
+ const original=globalThis.document;globalThis.document={createElement:tag=>({tag,children:[],append(...children){this.children.push(...children)},replaceChildren(...children){this.children=children},setAttribute(){},removeAttribute(){},dataset:{}})};
+ try{
+ const node={Input:{InputType:'Choice',EmptyChoice:false},Visual:{Source:'$.selection',ChoicesSource:'$.items',Format:{Kind:'Composite',Parts:{flag:{Source:'@.id',Format:{Kind:'Text',Map:{UAH:'🇺🇦',USD:'🇺🇸'}}},name:{Source:'@.name',Format:{Kind:'Text',Prefix:' · '}}}}}};
+ const el=createInputElement(node.Input);patchInputElement(el,node,withModel({},{selection:'UAH',items:[{id:'UAH',name:'Гривна'},{id:'USD',name:'Доллар'}]}));
+ assert.deepEqual(el.children.map(n=>n.textContent),['🇺🇦 · Гривна','🇺🇸 · Доллар']);assert.equal(el.value,'UAH');
+ }finally{if(original===undefined)delete globalThis.document;else globalThis.document=original}
+});

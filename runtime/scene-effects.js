@@ -4,13 +4,14 @@ const scenes=new WeakMap();
 export function validateSceneEffects(effects){
  const fail=()=>{throw Error('Invalid SceneEffects')};
  if(!effects||typeof effects!=='object'||Array.isArray(effects))fail();
- const schemas={Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command']};
+ const schemas={Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command'],Confirm:['Source','Messages','Accept','Reject']};
  for(const [kind,rule] of Object.entries(effects)){
   const fields=schemas[kind];if(!fields||!rule||typeof rule!=='object'||Array.isArray(rule)||Object.keys(rule).some(key=>!fields.includes(key))||fields.some(key=>key!=='LatestSource'&&!Object.hasOwn(rule,key)))fail();
   for(const [key,value]of Object.entries(rule)){
+   if(kind==='Confirm'&&key==='Messages'){if(!value||typeof value!=='object'||Array.isArray(value)||!Object.keys(value).length||Object.values(value).some(text=>typeof text!=='string'||!text||text.length>4000))fail();continue}
    if(['RowHeight','MultilineHeight','Threshold','MinHeight','ViewportMargin','CompactWidth'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>10000)fail()}
    else if(typeof value!=='string'||!value.trim()||value.length>256)fail();
-   if(key==='LatestSource'&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(value))fail();
+   if((key==='LatestSource'||key==='Source')&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(value))fail();
    if(key.endsWith('Variable')&&!/^--[-a-zA-Z0-9]+$/.test(value))fail();
    if(key.endsWith('Class')&&!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value))fail();
   }
@@ -25,7 +26,7 @@ export function installSceneEffects(root,plan,interaction){
   const panel=[...root.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===node.Login);if(!panel)continue;
   const wrapper=panel.closest('[data-plane-modal]')??panel;
   const get=login=>[panel,...panel.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===login);
-  const record={panel,wrapper,rules,get,open:false,scroll:null};records.push(record);
+  const record={panel,wrapper,rules,get,interaction,login:node.Login,open:false,scroll:null};records.push(record);
   const listen=(target,type,handler)=>target?.addEventListener(type,handler,{signal:abort.signal});
   if(rules.Viewport){const r=rules.Viewport;const update=()=>{if(wrapper.hidden)return;wrapper.style.setProperty(r.TopVariable,(win.visualViewport?.offsetTop??0)+'px');wrapper.style.setProperty(r.HeightVariable,(win.visualViewport?.height??win.innerHeight)+'px')};listen(win.visualViewport,'resize',update);listen(win.visualViewport,'scroll',update);listen(win,'resize',update);record.viewport=update;update()}
   if(rules.AutoSize){
@@ -45,6 +46,17 @@ export function updateSceneEffects(root,data={}){
   if(open){if(!r.open)r.viewport?.();r.resize?.();if(!r.open&&r.rules.Scroll){const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   if(open&&!r.open&&r.rules.Focus){const rule=r.rules.Focus;const target=r.get(root.ownerDocument.defaultView.innerWidth<=rule.CompactWidth?rule.CompactTarget:rule.Target);queueMicrotask(()=>{if(target?.isConnected&&!r.wrapper.hidden){if(!target.matches('input,textarea,select,button,a,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true})}})}
   if(open&&r.rules.Scroll?.LatestSource){const latest=semanticValue(r.rules.Scroll.LatestSource,data[MODEL]);if(latest!==r.latest){r.latest=latest;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
+  if(r.rules.Confirm){
+   const rule=r.rules.Confirm,value=open?semanticValue(rule.Source,data[MODEL]):null;
+   if(value!==r.decision){
+    r.decision=value;
+    if(typeof value==='string'&&Object.hasOwn(rule.Messages,value))queueMicrotask(()=>{
+     if(r.decision!==value||r.wrapper.hidden||!r.panel.isConnected||!r.interaction?.isEnabled()||!scenes.get(root)?.records.includes(r))return;
+     const accepted=root.ownerDocument.defaultView.confirm(rule.Messages[value]);
+     if(r.decision===value)r.interaction.emit('OffPress',r.login,accepted?rule.Accept:rule.Reject,{Value:value});
+    });
+   }
+  }
   r.open=open;
   if(r.scroll){const {el,top,bottom}=r.scroll;queueMicrotask(()=>{if(el.isConnected)el.scrollTop=bottom?el.scrollHeight:top});r.scroll=null}
  }
