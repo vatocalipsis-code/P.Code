@@ -202,3 +202,12 @@ input effects and restores focus immediately, while keeping the outgoing DOM
 unchanged and inert until its fade ends. Reopening cancels the old exit; disposal
 cancels every pending animation. This rule contains no application commands or
 business state transitions. Screens without it retain immediate closure.
+
+### `pcode.group-presentation.v1`
+
+Anonymous layout Groups accept authored `Class`, semantic `StateSource` and
+`EnabledSource`. Picot applies state, aria-disabled and inert to the group,
+including subsequent model updates; descendants cannot receive browser focus or
+pointer input while the group is disabled. Child field rules remain independent.
+Group visibility continues to require `pcode.group-state.v1`. No application
+identifiers or domain permission calculations occur in the renderer.

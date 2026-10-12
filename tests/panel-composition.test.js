@@ -38,3 +38,8 @@ test('field groups bind visibility as a unit without inventing application wrapp
  assert.equal(validatePLang(lang,{},['pcode.semantic-model.v1','pcode.group-state.v1']),true);
  assert.equal(compileSetLang(lang)[0].layout[0].Layout.VisibleSource,'$.applicable');
 });
+test('group presentation has explicit capability, valid classes and semantic state paths',()=>{
+ const Properties={Orientation:'Horizontal',Class:'field-row',StateSource:'$.mode',EnabledSource:'$.allowed'},lang=[{Login:'Panel',Layout:[{Type:'Group',Properties,Layout:[]}],SimplePanels:[]}],caps=['pcode.group-presentation.v1','pcode.semantic-model.v1'];
+ assert.throws(()=>validatePLang(lang,{},['pcode.semantic-model.v1']),/group-presentation/);assert.equal(validatePLang(lang,{},caps),true);
+ for(const patch of [{Class:'x; display:none'},{StateSource:'arbitrary'},{EnabledSource:4}])assert.throws(()=>validatePLang([{...lang[0],Layout:[{Type:'Group',Properties:{...Properties,...patch},Layout:[]}]}],{},caps));
+});

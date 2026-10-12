@@ -224,7 +224,8 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
     if(rule.Height!==undefined)applyLayoutValue(el,"height","height",rule.Height==="Auto"?"auto":px(rule.Height));
     if(rule.MinHeight!==undefined)applyLayoutValue(el,"minHeight","min-height",px(rule.MinHeight));
     applyFill(el,rule,parentOrientation);
-    if(rule.VisibleSource){el.__planeVisual=rule;applySemanticState(el,rule,dataSet,repeatedItem)}
+    if(rule.Class)el.className=rule.Class;
+    if(rule.VisibleSource||rule.StateSource||rule.EnabledSource){el.__planeVisual=rule;applySemanticState(el,rule,dataSet,repeatedItem)}
     for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem,repeatLists));
     return el;
   }
