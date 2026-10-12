@@ -5,6 +5,7 @@ const tiltScenes=new WeakMap();
 const activeInteraction=new WeakMap();
 const activeResourceStyles=new WeakMap();
 const activeSkinStyles=new WeakMap();
+const activeRepeatLists=new WeakMap();
 let resourceScopeCounter=0;
 const pictureObserver=typeof globalThis.IntersectionObserver==='function'?new IntersectionObserver(entries=>{
   for(const entry of entries)if(entry.isIntersecting){
@@ -121,8 +122,8 @@ function renderSource(source,renderSet,rule,shadow=0,resources=null){
   }
   throw new Error("WebRenderer: unsupported source kind "+source.kind);
 }
-function sourcesFromData(node,dataSet){
-  const item=dataSet[node.dataSlot]??{};
+function sourcesFromData(node,dataSet,repeatedItem=null){
+  const item=repeatedItem&&node.Visual?.Source?repeatedItem.Fields?.[node.Visual.Source]??{}:dataSet[node.dataSlot]??{};
   const text=typeof item.SourceText==="string"&&item.SourceText.length?{kind:"Text",value:item.SourceText}:null;
   const picture=typeof item.SourcePicture==="string"&&item.SourcePicture.length?{kind:"Picture",value:item.SourcePicture}:null;
   if(text&&picture)return node.Order==="Negative"?[text,picture]:[picture,text];
@@ -172,7 +173,7 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
   cancellers.push(()=>{composing=false;el.blur?.()});
   return el;
 }
-function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources){
+function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem=null){
   if(node.type==="Group"){
     const rule=node.Layout??{};const el=document.createElement("div");el.dataset.planeType="Group";el.dataset.planeGroup="";el.style.display="flex";el.style.flexDirection=rule.Orientation==="Horizontal"?"row":"column";
     if(rule.Gap!==undefined)applyLayoutValue(el,"gap","gap",px(rule.Gap));
@@ -181,22 +182,22 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
     if(rule.Height!==undefined)applyLayoutValue(el,"height","height",rule.Height==="Auto"?"auto":px(rule.Height));
     if(rule.MinHeight!==undefined)applyLayoutValue(el,"minHeight","min-height",px(rule.MinHeight));
     applyFill(el,rule,parentOrientation);
-    for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources));
+    for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem));
     return el;
   }
   if(node.type==="EditableInput")return renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers,resources);
-  return renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources);
+  return renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources,repeatedItem);
 }
-function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources){
+function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources,repeatedItem=null){
   const rule=node.Visual??{};const el=document.createElement("div");el.dataset.planeType="Container";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.dataset.planeOrder=node.Order;el.__planeVisual=rule;
   el.style.setProperty("--plane-structural-opacity",structuralPercent(combinedPanelTransparency(renderSet,0)));el.style.setProperty("--plane-panel-surface-opacity","1");applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const body=document.createElement("div");body.dataset.planeContainerContent="";applyContainerContentLayout(body,rule);
-  for(const source of sourcesFromData(node,dataSet))body.append(renderSource(source,renderSet,rule,ownerShadow,resources));
+  for(const source of sourcesFromData(node,dataSet,repeatedItem))body.append(renderSource(source,renderSet,rule,ownerShadow,resources));
   applyTextLayout(el,body,rule);
   el.append(body);return el;
 }
-function bindActivePanel(el,node,interaction,cancellers){
+function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.dataset.planeActive="";
   let pointer=null,startX=0,startY=0,cancelled=false;
   const release=()=>{el.removeAttribute("data-plane-pressed");pointer=null;cancelled=true};
@@ -205,7 +206,7 @@ function bindActivePanel(el,node,interaction,cancellers){
     if(event.button!==undefined&&event.button!==0||!isEnabled())return;
     pointer=event.pointerId;startX=event.clientX??0;startY=event.clientY??0;cancelled=false;
     el.setAttribute("data-plane-pressed","");el.setPointerCapture?.(event.pointerId);
-    if(interaction&&node.OnPress!==undefined&&node.OnPress!==null)interaction.emit("OnPress",node.Login,node.OnPress);
+    if(interaction&&node.OnPress!==undefined&&node.OnPress!==null)interaction.emit("OnPress",node.Login,node.OnPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
   });
   el.addEventListener("pointermove",event=>{
     if(pointer!==event.pointerId||cancelled)return;
@@ -214,21 +215,37 @@ function bindActivePanel(el,node,interaction,cancellers){
   el.addEventListener("pointerup",event=>{
     const success=pointer===event.pointerId&&!cancelled&&isEnabled();
     el.removeAttribute("data-plane-pressed");pointer=null;cancelled=true;
-    if(success&&interaction&&node.OffPress!==undefined&&node.OffPress!==null)interaction.emit("OffPress",node.Login,node.OffPress);
+    if(success&&interaction&&node.OffPress!==undefined&&node.OffPress!==null)interaction.emit("OffPress",node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
   });
   el.addEventListener("pointercancel",release);el.addEventListener("lostpointercapture",release);
   cancellers.push(release);
 }
-function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources){
+function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists=[],repeatedItem=null){
   const el=document.createElement("div");el.dataset.planeType=node.type;el.dataset.planeLogin=node.Login;const rule=node.Visual??{};el.__planeVisual=rule;
+  if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;
   const panelEffects=["SimplePanel","ActivePanel","AggregateActivePanel"].includes(node.type);const pt=panelEffects?(rule.PanelTransparency??0):0;
   el.style.setProperty("--plane-structural-opacity",structuralPercent(combinedPanelTransparency(renderSet,pt)));el.style.setProperty("--plane-panel-surface-opacity",String(1-pt));applyBoxRule(el,rule,renderSet,panelEffects);applyPanelLayout(el,rule);
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const orientation=rule.Direction??"Vertical";const shadow=panelEffects?(rule.Shadow??0):0;
-  for(const item of node.layout??[])el.append(renderLayoutItem(item,orientation,dataSet,renderSet,parallaxNodes,shadow,interaction,cancellers,resources));
-  for(const child of node.children??[])el.append(renderPanel(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources));
-  if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers);
+  for(const item of node.layout??[])el.append(renderLayoutItem(item,orientation,dataSet,renderSet,parallaxNodes,shadow,interaction,cancellers,resources,repeatedItem));
+  for(const child of node.children??[]){
+    if(child.Repeat){
+      const list=document.createElement("div");list.dataset.planeRepeat=child.Repeat;list.style.display="contents";
+      const record={list,node:child,signature:null,renderSet,interaction,resources};repeatLists.push(record);
+      renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists);
+      el.append(list);
+    }else el.append(renderPanel(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem));
+  }
+  if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers,repeatedItem);
   return el;
+}
+function renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists){
+  const items=dataSet[record.node.Repeat]?.Items??[];
+  const signature=JSON.stringify(items);
+  if(record.signature===signature)return;
+  record.signature=signature;
+  const template={...record.node,Repeat:undefined};
+  record.list.replaceChildren(...items.map(item=>renderPanel(template,dataSet,record.renderSet,parallaxNodes,record.interaction,cancellers,record.resources,repeatLists,item)));
 }
 function bindParallax(root,nodes){
   activeParallax.get(root)?.cancel();
@@ -289,7 +306,7 @@ export function requestTiltParallax(root){
 }
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
-  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeSkinStyles.get(root)?.remove?.();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
+  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
   cancelPlaneCodeInteraction(root);
@@ -297,16 +314,18 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   tiltScenes.set(root,renderSet.TiltParallax??null);
   prepareSkinStyle(root,skinStyleSheet);
   root.style.setProperty("--panel-spacing",px(renderSet.PanelSpacing));root.style.setProperty("--background-color",renderSet.BackgroundColor);root.style.setProperty("--panel-color",renderSet.PanelColor);root.style.setProperty("--border-color",renderSet.BorderColor);root.style.setProperty("--text-color",renderSet.TextColor);
-  const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];
-  const panels=roots.map(node=>renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources));
+  const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[],repeatLists=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];
+  const panels=roots.map(node=>renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists));
   releaseDeferredPictures(root);
   root.replaceChildren(...panels);
   activeInteraction.set(root,{cancel(){for(const cancel of cancellers)cancel()}});
+  activeRepeatLists.set(root,repeatLists);
   bindParallax(root,parallaxNodes);
 }
 export function patchSetData(root,nextData,renderSet,resourceSet=null){
   const resources=prepareResources(root,resourceSet);
   for(const el of root.querySelectorAll("[data-plane-data-slot]")){
+    if(el.closest?.('[data-plane-repeat]'))continue;
     if(el.dataset.planeType==="EditableInput"){applyEditableState(el,nextData[el.dataset.planeDataSlot]);continue}
     const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
     const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive"};const visual=el.__planeVisual??{};
@@ -315,4 +334,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null){
     const sources=sourcesFromData(node,nextData).map(source=>renderSource(source,renderSet,visual,shadow,resources));
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
+  for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
 }

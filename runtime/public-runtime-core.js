@@ -67,6 +67,7 @@ export function createPlaneCodeEngine(dependencies){
         event.Value=Details.Value;event.InputType=Details.InputType??"Text";
         if(Details.IsComposing!==undefined)event.IsComposing=Boolean(Details.IsComposing);
       }
+      if(Details&&typeof Details.ItemId==="string")event.ItemId=Details.ItemId;
       try{this.sink(event)}catch{}
     }
     mount(RenderTarget){

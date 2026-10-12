@@ -26,7 +26,7 @@ const VISUAL_RULES=new Set([
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
   "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
-  "CornerRadius"
+  "CornerRadius","Repeat"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -86,6 +86,8 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Direction!==undefined&&!DIRECTIONS.has(rule.Direction))fail("invalid Direction for "+label);
   if(rule.Parallax!==undefined&&!isFiniteNumber(rule.Parallax))fail("invalid Parallax for "+label);
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
+  if(rule.Repeat!==undefined&&(!label.startsWith("ActivePanel ")||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires an ActivePanel and a collection Login");
+  if(rule.Source!==undefined&&(!label.startsWith("Container ")||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container and a field name");
   if(rule.PanelTransparency!==undefined){
     if(!allowPanelEffects)fail("PanelTransparency is not allowed for "+label);
     if(!isTransparency(rule.PanelTransparency))fail("PanelTransparency for "+label+" must be 0..1");
@@ -136,6 +138,17 @@ function collectEditableLogins(pLang){
   };
   visit(pLang);return result;
 }
+function collectRepeatLogins(pLang){
+  const result=new Set();
+  const visit=value=>{
+    if(Array.isArray(value)){for(const item of value)visit(item);return}
+    if(!value||typeof value!=="object")return;
+    if(value.Properties?.Repeat)result.add(value.Properties.Repeat);
+    for(const [key,item] of Object.entries(value))if(key!=="Properties")visit(item);
+    visit(value.Properties?.AggregateActivePanels);
+  };
+  visit(pLang);return result;
+}
 function validateValidationState(value,label){
   if(!value||typeof value!=="object"||Array.isArray(value))fail("ValidationState for "+label+" must be an object");
   if(!VALIDATION_STATES.has(value.Status))fail("ValidationState.Status for "+label+" must be None, Valid, or Invalid");
@@ -146,8 +159,23 @@ export function validateSetData(data,pLang,capabilities=[],resources=null){
   const resourceIndex=validateResources(resources);
   validatePLang(pLang,data,capabilities,resources);
   const editable=collectEditableLogins(pLang);
+  const repeats=collectRepeatLogins(pLang);
   for(const [login,item] of Object.entries(data)){
     if(!item||typeof item!=="object"||Array.isArray(item))fail("SetData entry for "+login+" must be an object");
+    if(repeats.has(login)){
+      if(!Array.isArray(item.Items)||item.Items.length>5000)fail("Items for "+login+" must be an array of at most 5000 records");
+      const ids=new Set();
+      for(const row of item.Items){
+        if(!row||typeof row!=="object"||Array.isArray(row)||typeof row.Id!=="string"||!row.Id||ids.has(row.Id)||!row.Fields||typeof row.Fields!=="object"||Array.isArray(row.Fields))fail("invalid or duplicate repeated item in "+login);
+        ids.add(row.Id);
+        for(const [field,value] of Object.entries(row.Fields)){
+          if(!field||!value||typeof value!=="object"||Array.isArray(value)||Object.keys(value).some(key=>!["SourceText","SourcePicture"].includes(key)))fail("invalid repeated field in "+login);
+          if(value.SourceText!==undefined&&typeof value.SourceText!=="string")fail("SourceText for "+login+"."+field+" must be string");
+          if(value.SourcePicture!==undefined&&!isCanonicalImageFile(value.SourcePicture))fail("SourcePicture for "+login+"."+field+" must be local image");
+        }
+      }
+      continue;
+    }
     if(editable.has(login)){
       if(item.SourceText!==undefined||item.SourcePicture!==undefined)fail("editable input data for "+login+" must use InputValue");
       if(item.InputValue!==undefined&&typeof item.InputValue!=="string")fail("InputValue for "+login+" must be a string");
@@ -177,12 +205,14 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
       fail("CornerRadius requires negotiated pcode.corner-radius.v1");
     if(node.Properties?.Parallax&&!capabilitySet.has("pcode.parallax.v1"))
       fail("Parallax requires negotiated pcode.parallax.v1");
+    if(node.Properties?.Repeat&&!capabilitySet.has("pcode.semantic-repeat.v1"))
+      fail("Repeat requires negotiated pcode.semantic-repeat.v1");
     for(const [key,value] of Object.entries(node))if(key!=="Properties")checkVisualCapabilities(value);
     checkVisualCapabilities(node.Properties?.AggregateActivePanels);
   };
   checkVisualCapabilities(pLang);
   const resourceIndex=validateResources(resources);
-  const logins=new Set();
+  const logins=new Set(),repeats=collectRepeatLogins(pLang);
   const add=(login,label)=>{if(!isNonEmptyString(login))fail(label+".Login required");if(logins.has(login))fail("duplicate Login "+login);logins.add(login)};
   const checkFill=(p,label)=>{for(const key of ["FillHorizontal","FillVertical"])if(p[key]!==undefined&&typeof p[key]!=="boolean")fail(key+" for "+label+" must be boolean")};
   const checkContainer=c=>{add(c.Login,"Container");const p=c.Properties??{};validateVisualRule(p,"Container "+c.Login,false);if(p.Font!==undefined){if(!isNonEmptyString(p.Font))fail("Font for Container "+c.Login+" must be a resource name");if(resourceIndex===true||!resourceIndex.fontNames.has(p.Font))fail("Font for Container "+c.Login+" references missing font resource "+p.Font)}checkFill(p,"Container "+c.Login);if(p.Order!==undefined&&!ORDERS.has(p.Order))fail("invalid Order for Container "+c.Login);if(p.HorizontalAlignment!==undefined&&!H_ALIGN.has(p.HorizontalAlignment))fail("invalid HorizontalAlignment for Container "+c.Login);if(p.VerticalAlignment!==undefined&&!V_ALIGN.has(p.VerticalAlignment))fail("invalid VerticalAlignment for Container "+c.Login);if(p.Flip!==undefined||p.Orientation!==undefined)fail("Container "+c.Login+" uses obsolete Flip/Orientation layout properties")};
@@ -204,7 +234,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkActive=(a,aggregate=false)=>{add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel");validateVisualRule(a.Properties??{},(aggregate?"AggregateActivePanel ":"ActivePanel ")+a.Login,true,true);panelLayout(a,a.Login)};
   const checkSimple=sp=>{add(sp.Login,"SimplePanel");const p={...(sp.Properties??{})};const ag=p.AggregateActivePanels??[];delete p.AggregateActivePanels;validateVisualRule(p,"SimplePanel "+sp.Login,true);if(!Array.isArray(ag)||ag.length>1)fail(sp.Login+".Properties.AggregateActivePanels must contain 0..1 item");ag.forEach(x=>checkActive(x,true));panelLayout(sp,sp.Login);if(!Array.isArray(sp.ActivePanels))fail(sp.Login+".ActivePanels required");sp.ActivePanels.forEach(x=>checkActive(x,false))};
   for(const bp of pLang){add(bp.Login,"BasePanel");validateVisualRule(bp.Properties??{},"BasePanel "+bp.Login,false);panelLayout(bp,bp.Login);if(!Array.isArray(bp.SimplePanels))fail(bp.Login+".SimplePanels required");bp.SimplePanels.forEach(checkSimple)}
-  for(const login of Object.keys(setData))if(!logins.has(login))fail("SetData references unknown Login "+login);
+  for(const login of Object.keys(setData))if(!logins.has(login)&&!repeats.has(login))fail("SetData references unknown Login "+login);
   return true;
 }
 

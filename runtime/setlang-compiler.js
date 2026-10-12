@@ -26,9 +26,9 @@ function compileLayoutNode(node){
   return compileContainer(node);
 }
 function compileActive(node,aggregate=false){
-  const p={...(node.Properties??{})};const OnPress=p.OnPress;const OffPress=p.OffPress;delete p.OnPress;delete p.OffPress;
+  const p={...(node.Properties??{})};const OnPress=p.OnPress;const OffPress=p.OffPress;const Repeat=p.Repeat;delete p.OnPress;delete p.OffPress;delete p.Repeat;
   const out={type:aggregate?"AggregateActivePanel":"ActivePanel",Login:node.Login,Visual:freeze(p),layout:freeze(authoredLayout(node).map(compileLayoutNode)),children:freeze([])};
-  if(OnPress!==undefined) out.OnPress=OnPress;if(OffPress!==undefined) out.OffPress=OffPress;return freeze(out);
+  if(OnPress!==undefined) out.OnPress=OnPress;if(OffPress!==undefined) out.OffPress=OffPress;if(Repeat!==undefined)out.Repeat=Repeat;return freeze(out);
 }
 function compileSimple(node){
   const p={...(node.Properties??{})};const aggregates=p.AggregateActivePanels??[];delete p.AggregateActivePanels;

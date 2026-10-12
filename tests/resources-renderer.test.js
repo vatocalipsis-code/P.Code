@@ -12,7 +12,8 @@ class FakeElement {
   replaceChildren(...nodes){for(const old of this.children)old.parentElement=null;this.children=[];this.append(...nodes)}
   setAttribute(name,value){this.attributes[name]=String(value)}
   removeAttribute(name){delete this.attributes[name]}
-  addEventListener(){}
+  addEventListener(type,handler){(this.listeners??=new Map()).set(type,handler)}
+  dispatch(type,event={}){this.listeners?.get(type)?.({pointerId:1,clientX:0,clientY:0,button:0,...event})}
   querySelectorAll(selector){
     const nodes=[];
     const matches=child=>selector==='[data-plane-source="Text"]'&&child.dataset.planeSource==='Text'||selector==='[data-plane-data-slot]'&&child.dataset.planeDataSlot!==undefined||selector==='[data-plane-deferred-src]'&&child.dataset.planeDeferredSrc!==undefined;
@@ -131,4 +132,33 @@ test("content-sized rows and wrapped text survive SetData patches",async()=>{
   assert.equal(updated.style.whiteSpace,"normal");
   assert.equal(updated.style.overflowWrap,"anywhere");
   disposePlaneCode(root);delete globalThis.document;
+});
+
+test("P.Code renders and patches semantic repeated rows without host DOM construction",async()=>{
+  const {patchSetData}=await import("../runtime/web-renderer.js");
+  const {validateSetData}=await import("../runtime/validator.js");
+  const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement("div",doc);
+  const lang=[{Login:"Base",Properties:{Direction:"Vertical"},Layout:[],SimplePanels:[{
+    Login:"Section",Properties:{Direction:"Vertical"},Layout:[],ActivePanels:[{
+      Login:"Item",Properties:{Direction:"Horizontal",Repeat:"semantic.items",OffPress:"item.open"},Layout:[
+        {Login:"Item Name",Properties:{Source:"name",FillHorizontal:true}}
+      ]
+    }]
+  }]}];
+  const first={"semantic.items":{Items:[{Id:"op:1",Fields:{name:{SourceText:"First"}}}]}};
+  validateSetData(first,lang,["pcode.semantic-repeat.v1"]);
+  const events=[];
+  renderPlaneCode(root,compileSetLang(lang),first,render,{isEnabled:()=>true,emit:(...args)=>events.push(args)});
+  const list=find(root,n=>n.dataset.planeRepeat==="semantic.items");
+  assert.equal(list.children.length,1);
+  assert.equal(list.children[0].dataset.planeItemId,"op:1");
+  assert.equal(find(list,n=>n.dataset.planeSource==="Text").textContent,"First");
+  list.children[0].dispatch("pointerdown");list.children[0].dispatch("pointerup");
+  assert.deepEqual(events,[ ["OffPress","Item","item.open",{ItemId:"op:1"}] ]);
+  const second={"semantic.items":{Items:[{Id:"op:2",Fields:{name:{SourceText:"Second"}}},{Id:"op:3",Fields:{name:{SourceText:"Third"}}}]}};
+  validateSetData(second,lang,["pcode.semantic-repeat.v1"]);
+  patchSetData(root,second,render);
+  assert.deepEqual(list.children.map(n=>n.dataset.planeItemId),["op:2","op:3"]);
+  assert.equal(find(list.children[1],n=>n.dataset.planeSource==="Text").textContent,"Third");
+  disposePlaneCode(root);
 });

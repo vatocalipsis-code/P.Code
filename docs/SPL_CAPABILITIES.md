@@ -49,3 +49,12 @@ Multiline CSS can be written between triple quotes. `SetLang.ThemeContract` is
 optional: `SelfContained` keeps all authored colors, while `HostMapped` signals a
 legacy host palette transform. New skins should use `SelfContained` and theme
 variables in their own stylesheet.
+
+`pcode.semantic-repeat.v1` lets an SPL own a repeated `ActivePanel` template.
+The template declares `Repeat = "collection.login"`; child `Container` nodes
+declare `Source = "field"`. The host sends `SetData.Data["collection.login"].Items`
+as records with stable string `Id` and `Fields` containing `SourceText` or
+`SourcePicture`. P.Code creates and patches every row. A press event carries the
+opaque action token plus `ItemId`, so the host handles the selected entity without
+knowing which visual node was pressed. Repeated collections are limited to 5000
+items and cannot contain HTML or layout values.
