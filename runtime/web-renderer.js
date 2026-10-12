@@ -273,6 +273,16 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.addEventListener("pointercancel",release);el.addEventListener("lostpointercapture",release);
   cancellers.push(release);
 }
+function bindSemanticAction(el,node,interaction,repeatedItem=null){
+  const native=el.tagName==='BUTTON';if(native)el.type='button';else{el.setAttribute('role','button');el.tabIndex=0}
+  const activate=event=>{
+    if(el.disabled||el.getAttribute('aria-disabled')==='true'||!interaction?.isEnabled()||!node.OffPress)return;
+    const child=event.target?.closest?.('a[href],button,input,textarea,select,[role="button"]');if(child&&child!==el&&el.contains(child))return;
+    event.stopPropagation();interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
+  };
+  el.addEventListener('click',activate);
+  if(!native)el.addEventListener('keydown',event=>{if(event.target===el&&!event.repeat&&['Enter',' '].includes(event.key)){event.preventDefault();activate(event)}});
+}
 function patchFlowContent(el,node,dataSet,renderSet,resources,item=null){
   const rule=node.Visual;
   if(rule.Source===undefined&&rule.Text===undefined)return;
@@ -287,10 +297,7 @@ function renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,
   if(rule.AriaLabel)el.setAttribute('aria-label',rule.AriaLabel);
   if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;
   if(rule.Source){el.dataset.planeSemanticSource='';el.dataset.planeDataSlot=node.dataSlot}
-  if(rule.Tag==='button'){
-    el.type='button';
-    el.addEventListener('click',event=>{if(!el.disabled&&interaction?.isEnabled()&&node.OffPress){event.stopPropagation();interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null)}});
-  }
+  if(rule.Tag==='button'||node.OffPress)bindSemanticAction(el,node,interaction,repeatedItem);
   if(rule.Vector)el.append(renderVector(rule.Vector));
   applySemanticState(el,rule,dataSet,repeatedItem);patchFlowContent(el,node,dataSet,renderSet,resources,repeatedItem);
   for(const child of node.layout)el.append(renderLayoutItem(child,null,dataSet,renderSet,parallaxNodes,0,interaction,cancellers,resources,repeatedItem,repeatLists));
@@ -321,6 +328,7 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
     if(child.Repeat){el.append(renderRepeat(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists));
     }else el.append(renderPanel(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem));
   }
+  if(node.type==="SimplePanel"&&node.OffPress)bindSemanticAction(el,node,interaction,repeatedItem);
   if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers,repeatedItem);
   return el;
 }
@@ -461,5 +469,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
   for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
-  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root);
+  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root,nextData);
 }

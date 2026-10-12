@@ -17,7 +17,7 @@ try{
   const flow=(Login,Properties,Layout=[])=>({Type:'Flow',Login,Properties,Layout});
   const caps=['pcode.scene-effects.v1','pcode.semantic-controls.v1','pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.editable-input.v1'];
   const connection=PlaneCodeEngine.connect({GenerationId:'pcode.layout-group.v1',SerializationVersion:1,RequiredCapabilities:caps,OptionalCapabilities:[]}).Connection;
-  const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Properties:{Modal:true,VisibleSource:'$.open',SceneEffects:{AutoSize:{Target:'Input',RowHeight:44,MultilineHeight:88,MultilineClass:'multiline'},Scroll:{Target:'Records',Threshold:8},Resize:{Handle:'Handle',Target:'Records',MinHeight:96,ViewportMargin:180},Focus:{Target:'Input',CompactTarget:'Section',CompactWidth:600},Viewport:{TopVariable:'--top',HeightVariable:'--height'}}},Layout:[flow('Section',{Tag:'section',Class:'fixture'},[
+  const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Properties:{Modal:true,VisibleSource:'$.open',SceneEffects:{AutoSize:{Target:'Input',RowHeight:44,MultilineHeight:88,MultilineClass:'multiline'},Scroll:{Target:'Records',Threshold:8,LatestSource:'$.latest'},Resize:{Handle:'Handle',Target:'Records',MinHeight:96,ViewportMargin:180},Focus:{Target:'Input',CompactTarget:'Section',CompactWidth:600},Viewport:{TopVariable:'--top',HeightVariable:'--height'}}},Layout:[flow('Section',{Tag:'section',Class:'fixture'},[
    {Type:'EditableInput',Login:'Input',Properties:{InputType:'Multiline',Rows:1,Source:'$.draft',OnInput:'edit'}},
    flow('Records',{Tag:'div',Class:'records'},[flow('Record',{Tag:'p',Repeat:'$.records',Source:'@.name'})]),flow('Handle',{Tag:'div',Class:'handle'})
   ])],SimplePanels:[]}]},SetData:{Name:'Flow data',Version:1,Data:{}},SetRender:{Name:'Flow render',Version:1,Data:{Transparency:0,TextTransparency:0,PictureTransparency:0}}});
@@ -40,6 +40,7 @@ try{
  await update({draft:'One\nTwo'});assert.ok(await node('Input').evaluate(n=>n.getBoundingClientRect().height>=88));
  assert.ok(await node('Records').evaluate(n=>n.scrollHeight-n.clientHeight-n.scrollTop<=1));
  await node('Records').evaluate(n=>n.scrollTop=100);await update({records:Array.from({length:31},(_,i)=>({id:String(i),name:'Record '+i}))});assert.equal(await node('Records').evaluate(n=>n.scrollTop),100);
+ await update({latest:'new-record'});assert.ok(await node('Records').evaluate(n=>n.scrollHeight-n.clientHeight-n.scrollTop<=1),'A changed latest record pins the end');
  const before=await node('Records').evaluate(n=>n.clientHeight),box=await node('Handle').boundingBox();await page.mouse.move(box.x+10,box.y+10);await page.mouse.down();await page.mouse.move(box.x+10,box.y+50);await page.mouse.up();assert.ok(await node('Records').evaluate(n=>n.clientHeight)>before);
  await update({open:false});await page.evaluate(()=>closedMeasurements=[]);await update({draft:'closed again'});assert.deepEqual(await page.evaluate(()=>closedMeasurements),[]);
  await page.evaluate(()=>flowRuntime.dispose());assert.equal(await node('Section').count(),0);assert.deepEqual(errors,[]);

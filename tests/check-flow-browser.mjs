@@ -15,10 +15,10 @@ try{
  await page.evaluate(async()=>{
   const {PlaneCodeEngine}=await import('/runtime/public-runtime.js');
   const flow=(Login,Properties,Layout=[])=>({Type:'Flow',Login,Properties,Layout});
-  const caps=['pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.editable-input.v1'];
+  const caps=['pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.panel-composition.v1','pcode.editable-input.v1','pcode.panel-action.v1'];
   const connection=PlaneCodeEngine.connect({GenerationId:'pcode.layout-group.v1',SerializationVersion:1,RequiredCapabilities:caps,OptionalCapabilities:[]}).Connection;
-  const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Layout:[flow('Section',{Tag:'section',Class:'section'},[
-   flow('Notice',{Tag:'p',Source:'$.notice'}),flow('Action',{Tag:'button',Source:'$.buttonText',OffPress:'activate',EnabledSource:'$.allowed'}),
+  const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Layout:[flow('Section',{Tag:'section',Class:'section',Role:'button',OffPress:'parent'},[
+   flow('Notice',{Tag:'p',Source:'$.notice',Linkify:true}),flow('Action',{Tag:'button',Source:'$.buttonText',OffPress:'activate',EnabledSource:'$.allowed'}),
    {Type:'EditableInput',Login:'Input',Properties:{Source:'$.draft',OnInput:'edit'}},
    flow('Record',{Tag:'article',Repeat:'$.records'},[flow('Name',{Tag:'strong',Source:'@.name'}),flow('Choose',{Tag:'button',Text:'Choose',OffPress:'choose',EnabledSource:'@.allowed'})])
   ])],SimplePanels:[]}]},SetData:{Name:'Flow data',Version:1,Data:{}},SetRender:{Name:'Flow render',Version:1,Data:{Transparency:0,TextTransparency:0,PictureTransparency:0}}});
@@ -38,5 +38,11 @@ try{
  await page.evaluate(async()=>{window.savedRow=document.querySelector('[data-plane-login="Record"]');await flowRuntime.applyModel({...flowModel,notice:'updated',buttonText:'Changed',allowed:false,records:[...flowModel.records].reverse()})});
  assert.equal(await node('Notice').innerText(),'updated');assert.equal(await node('Action').innerText(),'Changed');assert.equal(await node('Action').isDisabled(),true);assert.deepEqual(await node('Name').allTextContents(),['Beta','Alpha']);
  assert.equal(await page.evaluate(()=>savedRow===document.querySelectorAll('[data-plane-login="Record"]')[1]),true);
+ await node('Section').focus();await page.keyboard.press('Enter');await page.keyboard.press(' ');
+ assert.equal(await page.evaluate(()=>flowEvents.filter(e=>e.OpaqueValue==='parent').length),2,'nested button commands do not bubble to the panel');
+ await page.evaluate(async()=>{await flowRuntime.applyModel({...flowModel,notice:'https://example.com/test'})});
+ await node('Notice').locator('a').evaluate(a=>{a.addEventListener('click',e=>e.preventDefault());a.click()});
+ assert.equal(await page.evaluate(()=>flowEvents.filter(e=>e.OpaqueValue==='parent').length),2,'links keep their own navigation');
+ await node('Notice').click();assert.equal(await page.evaluate(()=>flowEvents.filter(e=>e.OpaqueValue==='parent').length),3);
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'PASS',browser:engine,nativeStructure:true,textOnly:true,modelUpdates:true,stableRepeatIdentity:true,pointerKeyboardCommands:true}));
 }finally{await browser.close();await new Promise(r=>server.close(r))}

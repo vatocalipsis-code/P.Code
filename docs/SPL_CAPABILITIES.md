@@ -130,3 +130,15 @@ The runtime installs and disposes observers/listeners with its mounted scene.
 Numeric limits, CSS variable/class syntax, shape keys and commands are validated.
 EditableInput of InputType Multiline can declare Rows (1–100).
 Application models contain data and command results, not these presentation rules.
+
+## Semantic panel activation (2.29.0)
+
+`pcode.panel-action.v1` allows an opaque OffPress on SimplePanel or a Flow
+with Role button. Picot owns pointer and Enter/Space activation. Native nested
+buttons and links keep their own actions; a parent does not also emit a command.
+Disabled state and the global interaction gate are honored. Repeated panels
+emit their semantic ItemId. No application handler is attached to DOM nodes.
+
+SceneEffects.Scroll optionally accepts LatestSource, a semantic path. A changed
+record key pins the scroll target to its end; otherwise position is preserved.
+Closed scenes do not read scroll geometry.

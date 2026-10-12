@@ -1,14 +1,16 @@
+import {MODEL,semanticValue} from './semantic-model.js';
 /** Optional, SPL-authored browser behavior. No application state or commands are interpreted. */
 const scenes=new WeakMap();
 export function validateSceneEffects(effects){
  const fail=()=>{throw Error('Invalid SceneEffects')};
  if(!effects||typeof effects!=='object'||Array.isArray(effects))fail();
- const schemas={Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command']};
+ const schemas={Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command']};
  for(const [kind,rule] of Object.entries(effects)){
-  const fields=schemas[kind];if(!fields||!rule||typeof rule!=='object'||Array.isArray(rule)||Object.keys(rule).some(key=>!fields.includes(key))||fields.some(key=>!Object.hasOwn(rule,key)))fail();
+  const fields=schemas[kind];if(!fields||!rule||typeof rule!=='object'||Array.isArray(rule)||Object.keys(rule).some(key=>!fields.includes(key))||fields.some(key=>key!=='LatestSource'&&!Object.hasOwn(rule,key)))fail();
   for(const [key,value]of Object.entries(rule)){
    if(['RowHeight','MultilineHeight','Threshold','MinHeight','ViewportMargin','CompactWidth'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>10000)fail()}
    else if(typeof value!=='string'||!value.trim()||value.length>256)fail();
+   if(key==='LatestSource'&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(value))fail();
    if(key.endsWith('Variable')&&!/^--[-a-zA-Z0-9]+$/.test(value))fail();
    if(key.endsWith('Class')&&!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value))fail();
   }
@@ -37,11 +39,12 @@ export function installSceneEffects(root,plan,interaction){
  scenes.set(root,{records,abort});updateSceneEffects(root);
 }
 export function beforeSceneUpdate(root){for(const r of scenes.get(root)?.records??[]){if(!r.rules.Scroll||r.wrapper.hidden||!r.open)continue;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:el.scrollTop,bottom:el.scrollHeight-el.clientHeight-el.scrollTop<r.rules.Scroll.Threshold}}}
-export function updateSceneEffects(root){
+export function updateSceneEffects(root,data={}){
  for(const r of scenes.get(root)?.records??[]){
   const open=!r.wrapper.hidden&&r.panel.getAttribute('aria-hidden')!=='true'&&r.panel.isConnected;
   if(open){if(!r.open)r.viewport?.();r.resize?.();if(!r.open&&r.rules.Scroll){const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   if(open&&!r.open&&r.rules.Focus){const rule=r.rules.Focus;const target=r.get(root.ownerDocument.defaultView.innerWidth<=rule.CompactWidth?rule.CompactTarget:rule.Target);queueMicrotask(()=>{if(target?.isConnected&&!r.wrapper.hidden){if(!target.matches('input,textarea,select,button,a,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true})}})}
+  if(open&&r.rules.Scroll?.LatestSource){const latest=semanticValue(r.rules.Scroll.LatestSource,data[MODEL]);if(latest!==r.latest){r.latest=latest;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   r.open=open;
   if(r.scroll){const {el,top,bottom}=r.scroll;queueMicrotask(()=>{if(el.isConnected)el.scrollTop=bottom?el.scrollHeight:top});r.scroll=null}
  }

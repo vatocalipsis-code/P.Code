@@ -5,7 +5,7 @@ import {compileSetLang} from '../runtime/setlang-compiler.js';
 import {parseSPL,serializeSPL} from '../editor/spl.js';
 const flow=(Login,Properties,Layout=[])=>({Type:'Flow',Login,Properties,Layout});
 const scene=children=>[{Login:'Page',Layout:children,SimplePanels:[]}];
-const caps=['pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1'];
+const caps=['pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.panel-composition.v1'];
 test('Flow is declarative native structure with semantic sources and commands',()=>{
  const lang=scene([flow('Items',{Tag:'section',Class:'items'},[flow('Item',{Tag:'article',Repeat:'$.items'},[flow('Title',{Tag:'strong',Source:'@.name'}),flow('Choose',{Tag:'button',Text:'Choose',OffPress:'choose',EnabledSource:'@.allowed'})])])]);
  assert.equal(validatePLang(lang,{},caps),true);
@@ -21,4 +21,14 @@ test('Flow cannot smuggle executable nodes, attributes, HTML or mixed content',(
  assert.throws(()=>validatePLang(scene([flow('Mixed',{Tag:'p',Text:'one',Source:'$.two'})]),{},caps),/one owner/);
  assert.throws(()=>validatePLang(scene([flow('Mixed',{Tag:'p',Source:'$.two'},[flow('Child',{Tag:'span',Text:'child'})])]),{},caps),/one owner/);
  let nested=flow('leaf',{Tag:'span'});for(let i=0;i<34;i++)nested=flow('n'+i,{Tag:'div'},[nested]);assert.throws(()=>validatePLang(scene([nested]),{},caps),/nesting/);
+});
+
+test('panel actions require explicit capability and a button role for native flow containers',()=>{
+ const panel={Login:'Panel',Properties:{OffPress:'open'},Layout:[],ActivePanels:[]};const lang=[{Login:'Page',Layout:[],SimplePanels:[panel]}];
+ assert.throws(()=>validatePLang(lang,{},caps),/panel-action/);
+ assert.equal(validatePLang(lang,{},[...caps,'pcode.panel-action.v1']),true);
+ assert.equal(compileSetLang(lang)[0].children[0].OffPress,'open');
+ const item=scene([flow('Item',{Tag:'article',Role:'button',OffPress:'open'})]);
+ assert.throws(()=>validatePLang(item,{},caps),/negotiated button role/);
+ assert.equal(validatePLang(item,{},[...caps,'pcode.panel-action.v1']),true);
 });
