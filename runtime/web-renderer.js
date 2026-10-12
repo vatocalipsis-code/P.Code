@@ -1,3 +1,4 @@
+import {applySequence} from './sequence.js';
 import {renderVector} from './vector.js';
 import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput,installDecimalPreviews,updateDecimalPreviews,disposeDecimalPreviews} from './numeric-editor.js';
 import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} from './control-feedback.js';
@@ -163,7 +164,10 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
+  if(rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
+  if(rule.Role)el.setAttribute('role',rule.Role);
+  if(rule.AriaLevel)el.setAttribute('aria-level',String(rule.AriaLevel));
+  if(rule.Sequence)applySequence(el,rule.Sequence,dataSet[MODEL]);
   if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
   if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.setProperty('display',el.hidden?'none':'',el.hidden?'important':'')}
   if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));

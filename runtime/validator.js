@@ -30,7 +30,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","LabelTemplate",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Vector","Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
+  "Role","AriaLevel","Sequence","Vector","Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -118,7 +118,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Direction!==undefined&&!DIRECTIONS.has(rule.Direction))fail("invalid Direction for "+label);
   if(rule.Parallax!==undefined&&!isFiniteNumber(rule.Parallax))fail("invalid Parallax for "+label);
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
-  if(rule.Repeat!==undefined&&(!label.startsWith("ActivePanel ")||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires an ActivePanel and a collection Login");
+  if(rule.Repeat!==undefined&&(! /^(ActivePanel|SimplePanel) /.test(label)||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires a panel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
   if(rule.NumericEditor!==undefined)validateNumericEditor(rule.NumericEditor,label);
   if(rule.DecimalInput!==undefined)validateDecimalInput(rule.DecimalInput,label);
@@ -168,6 +168,12 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
   for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
   if(rule.LabelTemplate!==undefined&&(!rule.LabelSource||typeof rule.LabelTemplate!=='string'))fail('LabelTemplate requires LabelSource and text');
+  if(rule.Role!==undefined&&!['status','alert','log','heading','group','region','list','listitem','img','presentation'].includes(rule.Role))fail('Invalid semantic Role');
+  if(rule.AriaLevel!==undefined&&(rule.Role!=='heading'||!Number.isInteger(rule.AriaLevel)||rule.AriaLevel<1||rule.AriaLevel>6))fail('AriaLevel requires a heading level 1..6');
+  if(rule.Sequence!==undefined){
+    const q=rule.Sequence;
+    if(!q||typeof q!=='object'||Array.isArray(q)||Object.keys(q).some(k=>!['Source','Key','Part'].includes(k))||!/^\$\.[a-zA-Z0-9_.-]+$/.test(q.Source??'')||!isNonEmptyString(q.Key)||!Number.isInteger(q.Part??0)||(q.Part??0)<0||(q.Part??0)>99)fail('Invalid Sequence declaration');
+  }
   if(rule.Vector!==undefined){if(!label.startsWith("Container ")||rule.Source!==undefined||rule.Format!==undefined)fail("Vector requires a static Container");validateVector(rule.Vector)}
   if(rule.Format!==undefined)validateFormat(rule.Format,label);
   if(rule.PanelTransparency!==undefined){
@@ -287,6 +293,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkVisualCapabilities=node=>{
     if(Array.isArray(node)){node.forEach(checkVisualCapabilities);return}
     if(!node||typeof node!=="object")return;
+    if((node.Properties?.Role||node.Properties?.Sequence||node.SimplePanels?.length&&!pLang.includes(node)||node.Properties?.Repeat&&node.ActivePanels)&&!capabilitySet.has('pcode.panel-composition.v1'))fail('Panel composition requires pcode.panel-composition.v1');
     if(node.Properties?.Vector&&!capabilitySet.has('pcode.vector.v1'))fail('Vector requires pcode.vector.v1');
     if(node.Properties?.CornerRadius!==undefined&&!capabilitySet.has("pcode.corner-radius.v1"))
       fail("CornerRadius requires negotiated pcode.corner-radius.v1");
@@ -339,8 +346,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkGroup=g=>{const p=g.Properties??{};const allowed=new Set(["Orientation","Width","MinWidth","Height","MinHeight","FillHorizontal","FillVertical","Gap"]);for(const k of Object.keys(p))if(!allowed.has(k))fail("Group property "+k+" is not allowed");for(const k of ["Width","MinWidth","MinHeight","Gap"])if(p[k]!==undefined&&!isNonNegativeNumber(p[k]))fail("Group."+k+" must be non-negative");if(p.Height!==undefined&&p.Height!=="Auto"&&!isNonNegativeNumber(p.Height))fail("Group.Height must be Auto or non-negative");checkFill(p,"Group");if(!DIRECTIONS.has(p.Orientation))fail("Group.Properties.Orientation must be Horizontal or Vertical");if(g.Login!==undefined)fail("Group must not have Login");checkLayout(g.Layout??[],"Group")};
   const panelLayout=(node,label)=>{if(node.Layout!==undefined&&node.Containers!==undefined)fail(label+" cannot define both Layout and legacy Containers");if(node.Layout!==undefined)checkLayout(node.Layout,label);else{if(!Array.isArray(node.Containers))fail(label+".Layout or legacy Containers required");node.Containers.forEach(checkContainer)}};
   const checkActive=(a,aggregate=false)=>{add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel");validateVisualRule(a.Properties??{},(aggregate?"AggregateActivePanel ":"ActivePanel ")+a.Login,true,true);panelLayout(a,a.Login)};
-  const checkSimple=sp=>{add(sp.Login,"SimplePanel");const p={...(sp.Properties??{})};const ag=p.AggregateActivePanels??[];delete p.AggregateActivePanels;validateVisualRule(p,"SimplePanel "+sp.Login,true);if(!Array.isArray(ag)||ag.length>1)fail(sp.Login+".Properties.AggregateActivePanels must contain 0..1 item");ag.forEach(x=>checkActive(x,true));panelLayout(sp,sp.Login);if(!Array.isArray(sp.ActivePanels))fail(sp.Login+".ActivePanels required");sp.ActivePanels.forEach(x=>checkActive(x,false))};
-  for(const bp of pLang){add(bp.Login,"BasePanel");validateVisualRule(bp.Properties??{},"BasePanel "+bp.Login,false);panelLayout(bp,bp.Login);if(!Array.isArray(bp.SimplePanels))fail(bp.Login+".SimplePanels required");bp.SimplePanels.forEach(checkSimple)}
+  const checkSimple=(sp,depth=0)=>{if(depth>32)fail("Panel nesting exceeds 32");add(sp.Login,"SimplePanel");const p={...(sp.Properties??{})};const ag=p.AggregateActivePanels??[];delete p.AggregateActivePanels;validateVisualRule(p,"SimplePanel "+sp.Login,true);if(!Array.isArray(ag)||ag.length>1)fail(sp.Login+".Properties.AggregateActivePanels must contain 0..1 item");ag.forEach(x=>checkActive(x,true));panelLayout(sp,sp.Login);if(!Array.isArray(sp.ActivePanels))fail(sp.Login+".ActivePanels required");sp.ActivePanels.forEach(x=>checkActive(x,false));if(sp.SimplePanels!==undefined){if(!Array.isArray(sp.SimplePanels))fail("SimplePanels must be an array");sp.SimplePanels.forEach(x=>checkSimple(x,depth+1))}};
+  for(const bp of pLang){add(bp.Login,"BasePanel");validateVisualRule(bp.Properties??{},"BasePanel "+bp.Login,false);panelLayout(bp,bp.Login);if(!Array.isArray(bp.SimplePanels))fail(bp.Login+".SimplePanels required");bp.SimplePanels.forEach(x=>checkSimple(x))}
   for(const login of Object.keys(setData))if(!logins.has(login)&&!repeats.has(login))fail("SetData references unknown Login "+login);
   return true;
 }

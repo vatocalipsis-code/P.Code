@@ -89,3 +89,9 @@ not accepted. Vectors neither inspect application entities nor perform commands.
 
 Semantic `VisibleSource` now enforces hidden state with an inline important
 rule, so a skin's important display rule cannot expose an unavailable component.
+
+`pcode.panel-composition.v1` enables nested SimplePanels (depth bounded to 32),
+repeated SimplePanels with semantic item identity inherited by their actions,
+and SPL `Sequence { Source, Key, Part }`. Sequence reads an ordered list of
+semantic identifiers; its grouping into visual pieces remains authored in SPL.
+Missing keys clear the visual order; duplicate identities fail validation.

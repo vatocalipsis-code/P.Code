@@ -32,9 +32,9 @@ function compileActive(node,aggregate=false){
   if(OnPress!==undefined) out.OnPress=OnPress;if(OffPress!==undefined) out.OffPress=OffPress;if(Repeat!==undefined)out.Repeat=Repeat;return freeze(out);
 }
 function compileSimple(node){
-  const p={...(node.Properties??{})};const aggregates=p.AggregateActivePanels??[];delete p.AggregateActivePanels;
+  const p={...(node.Properties??{})};const aggregates=p.AggregateActivePanels??[];const Repeat=p.Repeat;delete p.Repeat;delete p.AggregateActivePanels;
   const panels=[...aggregates.filter(a=>a.Properties?.Visible!=="No").map(a=>compileActive(a,true)),...(node.ActivePanels??[]).map(a=>compileActive(a,false))];
-  return freeze({type:"SimplePanel",Login:node.Login,Visual:freeze(p),layout:freeze(authoredLayout(node).map(compileLayoutNode)),children:freeze(panels)});
+  return freeze({type:"SimplePanel",Login:node.Login,Visual:freeze(p),layout:freeze(authoredLayout(node).map(compileLayoutNode)),children:freeze([...panels,...(node.SimplePanels??[]).map(compileSimple)]),...(Repeat?{Repeat}:{})});
 }
 function compileBase(node){
   return freeze({type:"BasePanel",Login:node.Login,Visual:freeze({...node.Properties}),layout:freeze(authoredLayout(node).map(compileLayoutNode)),children:freeze((node.SimplePanels??[]).map(compileSimple))});
