@@ -1,5 +1,7 @@
 /** Browser renderer for compiled P.Code Object Plans. */
-import {MODEL,semanticValue,decimalParts} from './semantic-model.js';
+import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
+import {createInputElement,patchInputElement,inputValue} from './semantic-controls.js';
+import {createModalScene,installModalScenes,updateModalScenes,disposeModalScenes} from './modal-scene.js';
 const activeParallax=new WeakMap();
 const activeTilt=new WeakMap();
 const tiltScenes=new WeakMap();
@@ -143,6 +145,7 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
       if(format.DateTimeSeparator!==undefined)text=text.replace(',',format.DateTimeSeparator);
       return [{kind:'Text',value:text}];
     }
+    if(format.Template)return [{kind:'Text',value:textTemplate(value,format.Template)}];
     if(!['string','number','boolean'].includes(typeof value))throw Error('Text Source must resolve to a scalar');
     return [{kind:'Text',value:String(value)}];
   }
@@ -153,10 +156,11 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource)el.dataset.planeSemanticState='';
+  if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource)el.dataset.planeSemanticState='';
   if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
   if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.display=el.hidden?'none':''}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));
+  if(rule.EnabledSource){const disabled=semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-disabled',String(disabled));if(el.tagName==='BUTTON')el.disabled=disabled}
 }
 function applyTextLayout(el,body,rule){
   const constrained=rule.FillHorizontal===true||rule.Width!==undefined;
@@ -172,25 +176,17 @@ function applyTextLayout(el,body,rule){
   }
 }
 
-function applyEditableState(el,item={}){
-  const value=typeof item.InputValue==="string"?item.InputValue:"";
-  if(el.value!==value)el.value=value;
-  const validation=item.ValidationState??{Status:"None"};
-  el.dataset.planeValidation=validation.Status??"None";
-  if(validation.Status==="Invalid")el.setAttribute("aria-invalid","true");else el.removeAttribute("aria-invalid");
-  if(typeof validation.Message==="string"&&validation.Message)el.setAttribute("title",validation.Message);else el.removeAttribute("title");
-}
-function renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers,resources){
+function renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers,resources,repeatedItem=null){
   const rule=node.Visual??{},config=node.Input??{},events=node.Events??{};
-  const el=document.createElement("input");el.dataset.planeType="EditableInput";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.__planeVisual=rule;
-  el.type={Secret:"password",Number:"text",Date:"date",Text:"text"}[config.InputType]??"text";
-  if(config.InputType==="Number")el.inputMode=config.InputMode??"decimal";else if(config.InputMode)el.inputMode=config.InputMode;
-  el.placeholder=config.Placeholder??"";el.disabled=config.Disabled===true;el.required=config.Required===true;el.setAttribute("aria-label",config.AriaLabel??node.Login);
-  applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);applyEditableState(el,dataSet[node.dataSlot]);
+  const el=createInputElement(config);el.dataset.planeType="EditableInput";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.__planeVisual=rule;el.__planeInput=node;
+  if(rule.Class)el.className=rule.Class;
+  if(/^[$@]\./.test(rule.Source??''))el.dataset.planeSemanticSource='';
+  el.required=config.Required===true;el.setAttribute('aria-label',config.AriaLabel??node.Login);
+  applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);patchInputElement(el,node,dataSet,repeatedItem);applySemanticState(el,rule,dataSet,repeatedItem);
   let composing=false;
   const emit=(type,event)=>{
-    if(!interaction||!interaction.isEnabled()||events[type]===undefined||events[type]===null)return;
-    interaction.emit(type,node.Login,events[type],{Value:el.value,InputType:config.InputType??"Text",IsComposing:Boolean(event?.isComposing||composing)});
+    if(!interaction||!interaction.isEnabled()||el.disabled||events[type]===undefined||events[type]===null)return;
+    interaction.emit(type,node.Login,events[type],{Value:inputValue(el,config),InputType:config.InputType??"Text",IsComposing:Boolean(event?.isComposing||composing),...(repeatedItem?{ItemId:repeatedItem.Id}:{})});
   };
   el.addEventListener("compositionstart",()=>{composing=true});
   el.addEventListener("compositionend",event=>{composing=false;emit("OnInput",event)});
@@ -214,7 +210,7 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
     for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem));
     return el;
   }
-  if(node.type==="EditableInput")return renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers,resources);
+  if(node.type==="EditableInput")return renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers,resources,repeatedItem);
   return renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources,repeatedItem);
 }
 function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources,repeatedItem=null){
@@ -225,15 +221,23 @@ function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,
   el.style.setProperty("--plane-structural-opacity",structuralPercent(combinedPanelTransparency(renderSet,0)));el.style.setProperty("--plane-panel-surface-opacity","1");applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const body=document.createElement("div");body.dataset.planeContainerContent="";applyContainerContentLayout(body,rule);
-  for(const source of sourcesFromData(node,dataSet,repeatedItem))body.append(renderSource(source,renderSet,rule,ownerShadow,resources));
+  const sources=sourcesFromData(node,dataSet,repeatedItem);
+  if(/^[$@]\./.test(rule.Source??''))el.__planeSourceSignature=JSON.stringify(sources);
+  for(const source of sources)body.append(renderSource(source,renderSet,rule,ownerShadow,resources));
   applyTextLayout(el,body,rule);
   el.append(body);return el;
 }
 function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.dataset.planeActive="";
+  el.setAttribute('role','button');el.tabIndex=0;
   let pointer=null,startX=0,startY=0,cancelled=false;
   const release=()=>{el.removeAttribute("data-plane-pressed");pointer=null;cancelled=true};
-  const isEnabled=()=>!el.hidden&&el.isConnected!==false&&(!interaction||interaction.isEnabled());
+  const isEnabled=()=>!el.hidden&&el.isConnected!==false&&el.getAttribute?.('aria-disabled')!=='true'&&(!interaction||interaction.isEnabled());
+  el.addEventListener('keydown',event=>{
+    if(event.target&&event.target!==el||!['Enter',' '].includes(event.key)||event.repeat||!isEnabled())return;
+    event.preventDefault?.();
+    if(interaction&&node.OffPress!=null)interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
+  });
   el.addEventListener("pointerdown",event=>{
     if(event.button!==undefined&&event.button!==0||!isEnabled())return;
     pointer=event.pointerId;startX=event.clientX??0;startY=event.clientY??0;cancelled=false;
@@ -253,7 +257,7 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   cancellers.push(release);
 }
 function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists=[],repeatedItem=null){
-  const el=document.createElement("div");el.dataset.planeType=node.type;el.dataset.planeLogin=node.Login;const rule=node.Visual??{};el.__planeVisual=rule;
+  const el=document.createElement(node.Visual?.NativeButton?'button':'div');if(node.Visual?.NativeButton)el.type='button';el.dataset.planeType=node.type;el.dataset.planeLogin=node.Login;const rule=node.Visual??{};el.__planeVisual=rule;
   if(rule.Class)el.className=rule.Class;
   applySemanticState(el,rule,dataSet,repeatedItem);
   if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;
@@ -355,18 +359,26 @@ export function requestTiltParallax(root){
 }
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
+  disposeModalScenes(root);
   cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
   cancelPlaneCodeInteraction(root);
+  disposeModalScenes(root);
   if(!renderSet.TiltParallax)stopTilt(root);
   tiltScenes.set(root,renderSet.TiltParallax??null);
   prepareSkinStyle(root,skinStyleSheet);
   root.style.setProperty("--panel-spacing",px(renderSet.PanelSpacing));root.style.setProperty("--background-color",renderSet.BackgroundColor);root.style.setProperty("--panel-color",renderSet.PanelColor);root.style.setProperty("--border-color",renderSet.BorderColor);root.style.setProperty("--text-color",renderSet.TextColor);
   const resources=prepareResources(root,resourceSet);const parallaxNodes=[],cancellers=[],repeatLists=[];const roots=Array.isArray(objectPlan)?objectPlan:[objectPlan];
-  const panels=roots.map(node=>renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists));
+  const modals=[];
+  const panels=roots.map(node=>{
+    const panel=renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists);
+    if(!node.Visual?.Modal)return panel;
+    const scene=createModalScene(panel,node,interaction);modals.push(scene);return scene.wrapper;
+  });
   releaseDeferredPictures(root);
   root.replaceChildren(...panels);
+  installModalScenes(root,modals);updateModalScenes(root,dataSet);
   activeInteraction.set(root,{cancel(){for(const cancel of cancellers)cancel()}});
   activeRepeatLists.set(root,repeatLists);
   bindParallax(root,parallaxNodes);
@@ -377,13 +389,17 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
   for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source]':'[data-plane-data-slot]')){
     if(el.closest?.('[data-plane-repeat]'))continue;
     if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??''))continue;
-    if(el.dataset.planeType==="EditableInput"){applyEditableState(el,nextData[el.dataset.planeDataSlot]);continue}
+    if(el.dataset.planeType==="EditableInput"){patchInputElement(el,el.__planeInput,nextData);continue}
     const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
     const visual=el.__planeVisual??{};const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive",Visual:visual};
     let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;
     const shadow=owner?.__planeVisual?.Shadow??0;
-    const sources=sourcesFromData(node,nextData).map(source=>renderSource(source,renderSet,visual,shadow,resources));
+    const sourceData=sourcesFromData(node,nextData);
+    if(semanticOnly){const signature=JSON.stringify(sourceData);if(el.__planeSourceSignature===signature)continue;el.__planeSourceSignature=signature;}
+    else if(/^[$@]\./.test(visual.Source??''))el.__planeSourceSignature=JSON.stringify(sourceData);
+    const sources=sourceData.map(source=>renderSource(source,renderSet,visual,shadow,resources));
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
   for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
+  updateModalScenes(root,nextData);
 }

@@ -81,5 +81,21 @@ Repeated records retain unchanged DOM by ID. Removed records cancel pending
 presses. Root binding changes update dependent records, including expansion.
 Semantic updates only patch model-bound sources; they do not recompile the skin
 or rebuild unrelated input fields. Font/image resource indexes are retained until
-their resource set changes or the runtime is disposed.
+their resource set changes or the runtime is disposed. Unchanged model-bound
+content retains its DOM across semantic updates.
 
+## Native semantic controls (2.18)
+
+`pcode.semantic-controls.v1` adds Choice, Multiline, Range and Checkbox inputs
+and native ActivePanel buttons (`NativeButton = true`). Sources, available
+choices, enabled/read-only state and validation bind to the same semantic model.
+Choice records have unique IDs; labels, unavailable suffixes, placeholders and
+format templates are authored by SPL. Values and commands return through normal
+runtime events, without exposing native controls to the application.
+
+A BasePanel with `Modal = true`, `VisibleSource`, optional `ModalClass` and an
+opaque `Dismiss` command is a runtime-managed dialog. Picot owns the wrapper,
+background inert state, focus trapping/restoration and Escape/backdrop handling.
+The application decides whether the dismissal command changes semantic state;
+it never removes the dialog DOM. `Format.Template` interpolates scalar fields
+and fallback paths without HTML or executable expressions.

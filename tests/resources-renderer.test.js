@@ -186,6 +186,9 @@ test('SPL owns model binding, decimal formatting, picture selection and repeated
   assert.equal(find(first,n=>n.dataset.planeNumberWhole!==undefined).textContent,'−1 234 567 890 123 456');
   assert.equal(find(first,n=>n.dataset.planeNumberFraction!==undefined).textContent,'.78');
   assert.equal(find(first,n=>n.dataset.planeSource==='Picture').src,'./assets/one.png');
+  const countSource=find(root,n=>n.dataset.planeLogin==='Count').children[0].children[0];
+  patchSetData(root,data,render,null,{semanticOnly:true});
+  assert.equal(find(root,n=>n.dataset.planeLogin==='Count').children[0].children[0],countSource,'unchanged semantic text keeps its DOM');
   patchSetData(root,withModel({},{count:2,items:[item,{...item,id:'entry:2',name:'Two',available:false,icon:null}]}),render);
   assert.equal(list.children[0],first,'unchanged records retain their DOM and handlers');
   assert.equal(list.children[1].hidden,true);

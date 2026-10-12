@@ -10,7 +10,7 @@ const DIRECTIONS=new Set(["Horizontal","Vertical"]);
 const ORDERS=new Set(["Positive","Negative"]);
 const H_ALIGN=new Set(["Left","Center","Right"]);
 const V_ALIGN=new Set(["Top","Center","Bottom"]);
-const INPUT_TYPES=new Set(["Text","Secret","Number","Date"]);
+const INPUT_TYPES=new Set(["Text","Secret","Number","Date","Choice","Multiline","Range","Checkbox"]);
 const INPUT_MODES=new Set(["text","decimal","numeric","email","tel","url","search"]);
 const VALIDATION_STATES=new Set(["None","Valid","Invalid"]);
 const EDITABLE_INPUT_CAPABILITY="pcode.editable-input.v1";
@@ -26,7 +26,9 @@ const VISUAL_RULES=new Set([
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
   "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
-  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource"
+  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource",
+  "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
+  "Modal","ModalClass","Dismiss","NativeButton"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -88,19 +90,25 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.Repeat!==undefined&&(!label.startsWith("ActivePanel ")||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires an ActivePanel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
-  if(rule.Source!==undefined&&(!label.startsWith("Container ")||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container and a field name");
-  for(const key of ['StateSource','VisibleSource','ExpandedSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
+  if(rule.Modal!==undefined){
+    if(!label.startsWith('BasePanel ')||rule.Modal!==true||!rule.VisibleSource)fail('Modal requires a BasePanel and VisibleSource');
+    if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
+    validateEventToken(rule.Dismiss,label+'.Dismiss');
+  }else if(rule.ModalClass!==undefined||rule.Dismiss!==undefined)fail('ModalClass and Dismiss require Modal');
+  if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
+  if(rule.Source!==undefined&&(!/^(?:Container|EditableInput) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
+  for(const key of ['StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
   if(rule.Format!==undefined){
     const f=rule.Format;
     if(!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime'].includes(f.Kind))fail('Invalid Format for '+label);
-    if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator'].includes(key)))fail('Unknown Format property for '+label);
+    if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template'].includes(key)))fail('Unknown Format property for '+label);
     if(f.Kind==='Picture'){
       if(!f.Map||typeof f.Map!=='object'||Array.isArray(f.Map))fail('Picture Format requires a map');
       for(const url of Object.values(f.Map))if(!isCanonicalImageFile(url))fail('Picture Format must use local images');
       if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
     }
     for(const key of ['Absolute','ShowUnit'])if(f[key]!==undefined&&typeof f[key]!=='boolean')fail(key+' must be boolean');
-    for(const key of ['GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
+    for(const key of ['GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator','Template'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
     if(f.Options!==undefined&&(!f.Options||typeof f.Options!=='object'||Array.isArray(f.Options)))fail('DateTime Options must be an object');
   }
   if(rule.PanelTransparency!==undefined){
@@ -222,7 +230,9 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
       fail("Parallax requires negotiated pcode.parallax.v1");
     if(node.Properties?.Repeat&&!capabilitySet.has("pcode.semantic-repeat.v1"))
       fail("Repeat requires negotiated pcode.semantic-repeat.v1");
-    if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
+    if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
+    if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
+    if(node.Properties?.NativeButton&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('NativeButton requires pcode.semantic-controls.v1');
     for(const [key,value] of Object.entries(node))if(key!=="Properties")checkVisualCapabilities(value);
     checkVisualCapabilities(node.Properties?.AggregateActivePanels);
   };
@@ -239,8 +249,14 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     validateVisualRule(p,"EditableInput "+input.Login,false);checkFill(p,"EditableInput "+input.Login);
     const source=input.Properties??{};
     if(source.InputType!==undefined&&!INPUT_TYPES.has(source.InputType))fail("invalid InputType for EditableInput "+input.Login);
-    for(const key of ["Placeholder","AriaLabel"])if(source[key]!==undefined&&typeof source[key]!=="string")fail(key+" for EditableInput "+input.Login+" must be a string");
-    for(const key of ["Disabled","Required"])if(source[key]!==undefined&&typeof source[key]!=="boolean")fail(key+" for EditableInput "+input.Login+" must be boolean");
+    if(['Choice','Multiline','Range','Checkbox'].includes(source.InputType)&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Input type requires pcode.semantic-controls.v1');
+    for(const key of ["Placeholder","AriaLabel","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Autocomplete"])if(source[key]!==undefined&&typeof source[key]!=="string")fail(key+" for EditableInput "+input.Login+" must be a string");
+    if(source.MaxLength!==undefined&&(!Number.isInteger(source.MaxLength)||source.MaxLength<0))fail('MaxLength must be a non-negative integer');
+    for(const key of ["Disabled","Required","ReadOnly"])if(source[key]!==undefined&&typeof source[key]!=="boolean")fail(key+" for EditableInput "+input.Login+" must be boolean");
+    for(const key of ['Min','Max','Step'])if(source[key]!==undefined&&!isFiniteNumber(source[key]))fail(key+' must be finite');
+    if(source.Step!==undefined&&source.Step<=0)fail('Step must be positive');
+    if(source.Min!==undefined&&source.Max!==undefined&&source.Min>source.Max)fail('Min must not exceed Max');
+    if(source.InputType==='Choice'&&!source.ChoicesSource)fail('Choice requires ChoicesSource');
     if(source.InputMode!==undefined&&!INPUT_MODES.has(source.InputMode))fail("invalid InputMode for EditableInput "+input.Login);
     for(const key of ["OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])validateEventToken(source[key],"EditableInput "+input.Login+"."+key);
   };

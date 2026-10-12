@@ -35,3 +35,10 @@ export function decimalParts(value,format={}){
   const fraction=(value.scale?raw.slice(-value.scale):'').padEnd(precision,'0').slice(0,precision);
   return {whole:(number<0n&&format.Absolute!==true?'−':'')+whole,fraction:precision?(format.DecimalSeparator??'.')+fraction:'',unit:format.ShowUnit&&value.unit?' '+value.unit:''};
 }
+export function textTemplate(value,template){
+  if(typeof template!=='string')return typeof value==='object'?'':String(value??'');
+  return template.replace(/\{([A-Za-z0-9_.|\-]+)\}/g,(_,path)=>{
+    const field=path.split('|').map(candidate=>semanticValue('@.'+candidate,null,value)).find(item=>item!==null&&item!==undefined&&item!=='');
+    return ['string','number','boolean'].includes(typeof field)?String(field):'';
+  });
+}
