@@ -15,10 +15,11 @@ try{
  await page.evaluate(async()=>{
   const {PlaneCodeEngine}=await import('/runtime/public-runtime.js');
   const flow=(Login,Properties,Layout=[])=>({Type:'Flow',Login,Properties,Layout});
-  const caps=['pcode.native-confirm.v1','pcode.scene-effects.v1','pcode.semantic-controls.v1','pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.editable-input.v1'];
+  const caps=['pcode.stepped-fields.v1','pcode.native-confirm.v1','pcode.scene-effects.v1','pcode.semantic-controls.v1','pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.editable-input.v1'];
   const connection=PlaneCodeEngine.connect({GenerationId:'pcode.layout-group.v1',SerializationVersion:1,RequiredCapabilities:caps,OptionalCapabilities:[]}).Connection;
-  const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Properties:{Modal:true,VisibleSource:'$.open',SceneEffects:{Confirm:{Source:'$.decision',Messages:{discard:'Discard changes?'},Accept:'decision.accept',Reject:'decision.reject'},AutoSize:{Target:'Input',RowHeight:44,MultilineHeight:88,MultilineClass:'multiline'},Scroll:{Target:'Records',Threshold:8,LatestSource:'$.latest'},Resize:{Handle:'Handle',Target:'Records',MinHeight:96,ViewportMargin:180},Focus:{Target:'Input',CompactTarget:'Section',CompactWidth:600},Viewport:{TopVariable:'--top',HeightVariable:'--height'}}},Layout:[flow('Section',{Tag:'section',Class:'fixture'},[
+  const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Properties:{Modal:true,VisibleSource:'$.open',SceneEffects:{SteppedFields:{Selector:'textarea.stepped',UnitVariable:'--step-height',DefaultUnit:42,Class:'measured'},Confirm:{Source:'$.decision',Messages:{discard:'Discard changes?'},Accept:'decision.accept',Reject:'decision.reject'},AutoSize:{Target:'Input',RowHeight:44,MultilineHeight:88,MultilineClass:'multiline'},Scroll:{Target:'Records',Threshold:8,LatestSource:'$.latest'},Resize:{Handle:'Handle',Target:'Records',MinHeight:96,ViewportMargin:180},Focus:{Target:'Input',CompactTarget:'Section',CompactWidth:600},Viewport:{TopVariable:'--top',HeightVariable:'--height'}}},Layout:[flow('Section',{Tag:'section',Class:'fixture'},[
    {Type:'EditableInput',Login:'Input',Properties:{InputType:'Multiline',Rows:1,Source:'$.draft',OnInput:'edit'}},
+   {Type:'EditableInput',Login:'Stepped',Properties:{InputType:'Multiline',Class:'stepped',Rows:1,Source:'$.note',OnInput:'note.edit'}},
    flow('Records',{Tag:'div',Class:'records'},[flow('Record',{Tag:'p',Repeat:'$.records',Source:'@.name'})]),flow('Handle',{Tag:'div',Class:'handle'})
   ])],SimplePanels:[]}]},SetData:{Name:'Flow data',Version:1,Data:{}},SetRender:{Name:'Flow render',Version:1,Data:{Transparency:0,TextTransparency:0,PictureTransparency:0}}});
   if(result.Outcome!=='Completed')throw Error(JSON.stringify(result));
@@ -30,8 +31,8 @@ try{
  const update=value=>page.evaluate(async value=>{flowModel={...flowModel,...value};await flowRuntime.applyModel(flowModel);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))},value);
  await page.evaluate(()=>{
   window.closedMeasurements=[];
-  for(const name of ['scrollHeight','clientHeight','scrollTop']){const d=Object.getOwnPropertyDescriptor(Element.prototype,name);if(!d?.get)continue;Object.defineProperty(Element.prototype,name,{...d,get(){if(new Error().stack.includes('scene-effects.js'))closedMeasurements.push(name);return d.get.call(this)}})}
-  const rect=Element.prototype.getClientRects;Element.prototype.getClientRects=function(){if(new Error().stack.includes('scene-effects.js'))closedMeasurements.push('rect');return rect.call(this)};
+  for(const name of ['scrollHeight','clientHeight','scrollTop']){const d=Object.getOwnPropertyDescriptor(Element.prototype,name);if(!d?.get)continue;Object.defineProperty(Element.prototype,name,{...d,get(){if(new Error().stack.match(/scene-effects\.js|stepped-fields\.js/))closedMeasurements.push(name);return d.get.call(this)}})}
+  const rect=Element.prototype.getClientRects;Element.prototype.getClientRects=function(){if(new Error().stack.match(/scene-effects\.js|stepped-fields\.js/))closedMeasurements.push('rect');return rect.call(this)};
  });
  for(let i=0;i<3;i++)await update({draft:'closed '+i});
  assert.deepEqual(await page.evaluate(()=>closedMeasurements),[],'Closed scenes must not synchronously measure their descendants');
@@ -41,6 +42,10 @@ try{
  assert.ok(await node('Records').evaluate(n=>n.scrollHeight-n.clientHeight-n.scrollTop<=1));
  await node('Records').evaluate(n=>n.scrollTop=100);await update({records:Array.from({length:31},(_,i)=>({id:String(i),name:'Record '+i}))});assert.equal(await node('Records').evaluate(n=>n.scrollTop),100);
  await update({latest:'new-record'});assert.ok(await node('Records').evaluate(n=>n.scrollHeight-n.clientHeight-n.scrollTop<=1),'A changed latest record pins the end');
+ await update({note:'One'});assert.equal(await node('Stepped').evaluate(n=>n.getBoundingClientRect().height),42);
+ await update({note:'One\nTwo\nThree'});assert.equal(await node('Stepped').evaluate(n=>n.getBoundingClientRect().height),126);
+ await node('Stepped').fill('Short');await page.waitForTimeout(60);assert.equal(await node('Stepped').evaluate(n=>n.getBoundingClientRect().height),42);
+ await page.evaluate(()=>document.documentElement.style.setProperty('--step-height','50px'));await update({note:'One\nTwo'});assert.equal(await node('Stepped').evaluate(n=>n.getBoundingClientRect().height),100);
  const before=await node('Records').evaluate(n=>n.clientHeight),box=await node('Handle').boundingBox();await page.mouse.move(box.x+10,box.y+10);await page.mouse.down();await page.mouse.move(box.x+10,box.y+50);await page.mouse.up();assert.ok(await node('Records').evaluate(n=>n.clientHeight)>before);
  page.once('dialog',async dialog=>{assert.equal(dialog.message(),'Discard changes?');await dialog.dismiss()});
  await update({decision:'discard'});assert.equal(await page.evaluate(()=>flowEvents.at(-1).OpaqueValue),'decision.reject');assert.equal(await page.evaluate(()=>flowEvents.at(-1).Value),'discard');

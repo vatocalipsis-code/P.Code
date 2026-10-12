@@ -166,3 +166,18 @@ Verification: 85 unit tests; `tests/check-scene-effects-browser.mjs` passes nati
 ## Panels in authored layout (2.32.0)
 
 `pcode.layout-panels.v1` allows `SimplePanel` and `ActivePanel` entities in `Layout`, including inside `Flow` and `Group`. Their explicit types survive SPL parsing/serialization. Existing panel collections retain their unchanged syntax and rendering. The compiler preserves ordering and panel interaction semantics; the renderer owns nested panel creation, model updates and event dispatch. Layout and panel nesting share the 32-level validation budget. This capability introduces no application-specific wrappers, identifiers or business behavior.
+
+### `pcode.stepped-fields.v1` (2.33.0)
+
+`BasePanel.Properties.SceneEffects.SteppedFields` declares native textarea measurement:
+
+```
+SteppedFields {
+  Selector = "textarea.note"
+  UnitVariable = "--row-height"
+  DefaultUnit = 42
+  Class = "measured"
+}
+```
+
+The selector is scoped to the declaring panel. The positive CSS unit is read from the document root, with a positive numeric fallback. The runtime batches field writes, measurements and final writes in one animation frame; height is the number of text lines times the selected unit. Value, width, font and unit form the measurement cache key. Input, scene updates, resize and font loading invalidate measurements as needed. Hidden scenes are not measured. Runtime disposal cancels pending frames and observers. No application data or command names are interpreted.

@@ -18,3 +18,12 @@ test('native decisions require explicit SPL messages and capability',()=>{
  assert.throws(()=>validatePLang(Data,{},['pcode.scene-effects.v1']),/native-confirm/);
  assert.equal(validatePLang(Data,{},['pcode.scene-effects.v1','pcode.native-confirm.v1']),true);
 });
+
+test('stepped native fields require an explicit capability and a positive bounded unit',()=>{
+ const SteppedFields={Selector:'textarea.note',UnitVariable:'--row-height',DefaultUnit:42,Class:'measured'};
+ validateSceneEffects({SteppedFields});
+ for(const bad of [{...SteppedFields,DefaultUnit:0},{...SteppedFields,DefaultUnit:Infinity},{...SteppedFields,Class:'a b'},{...SteppedFields,UnitVariable:'height'}])assert.throws(()=>validateSceneEffects({SteppedFields:bad}));
+ const Data=[{Login:'Scene',Properties:{SceneEffects:{SteppedFields}},Layout:[],SimplePanels:[]}];
+ assert.throws(()=>validatePLang(Data,{},['pcode.scene-effects.v1']),/stepped-fields/);
+ assert.equal(validatePLang(Data,{},['pcode.scene-effects.v1','pcode.stepped-fields.v1']),true);
+});
