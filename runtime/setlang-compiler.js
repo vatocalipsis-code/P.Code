@@ -26,6 +26,8 @@ function compileFlow(node){
   return freeze({type:"Flow",Login:node.Login,Visual:freeze(p),dataSlot:node.Login,layout:freeze((node.Layout??[]).map(compileLayoutNode)),...(OffPress?{OffPress}:{}),...(Repeat?{Repeat}:{})});
 }
 function compileLayoutNode(node){
+  if(node?.Type==="SimplePanel")return compileSimple(node);
+  if(node?.Type==="ActivePanel")return compileActive(node);
   if(node?.Type==="Flow")return compileFlow(node);
   if(node?.Type==="Group")return compileGroup(node);
   if(node?.Type==="EditableInput")return compileEditableInput(node);

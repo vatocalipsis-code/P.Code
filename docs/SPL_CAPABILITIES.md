@@ -162,3 +162,7 @@ Modal focus, inert background and stacking follow opening order, independently o
 `pcode.choice-format.v1`: a native Choice can use a Text or Composite format for option text. Formatting is owned by SPL, while available option records and stable IDs remain semantic data. Picture/markup option results are rejected; native options contain plain text only. Existing template-only choices remain compatible.
 
 Verification: 85 unit tests; `tests/check-scene-effects-browser.mjs` passes native acceptance/rejection and duplicate-prompt prevention in Chromium and WebKit. `tests/check-modal-stack-browser.mjs` covers reverse declaration order, nested stacking, Escape, Tab and focus restoration in both engines.
+
+## Panels in authored layout (2.32.0)
+
+`pcode.layout-panels.v1` allows `SimplePanel` and `ActivePanel` entities in `Layout`, including inside `Flow` and `Group`. Their explicit types survive SPL parsing/serialization. Existing panel collections retain their unchanged syntax and rendering. The compiler preserves ordering and panel interaction semantics; the renderer owns nested panel creation, model updates and event dispatch. Layout and panel nesting share the 32-level validation budget. This capability introduces no application-specific wrappers, identifiers or business behavior.

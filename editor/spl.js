@@ -142,13 +142,13 @@ class Parser {
     return obj;
   }
 
-  entityArrayBody(){
+  entityArrayBody(collection){
     const arr=[];
-    while(!this.is("]")) arr.push(this.entity());
+    while(!this.is("]")) arr.push(this.entity(collection));
     return arr;
   }
 
-  entity(){
+  entity(collection){
     const type=this.expect("id").value;
     let login;
     if(this.is("string")) login=this.take().value;
@@ -156,7 +156,7 @@ class Parser {
 
     this.expect("{");
     const node={};
-    if(type==="Group"||type==="EditableInput"||type==="Flow") node.Type=type;
+    if(type==="Group"||type==="EditableInput"||type==="Flow"||collection==="Layout"&&["SimplePanel","ActivePanel"].includes(type)) node.Type=type;
     if(login!==undefined) node.Login=login;
 
     while(!this.is("}")){
@@ -164,7 +164,7 @@ class Parser {
       if(field==="Properties"){
         this.expect("{"); node.Properties=this.propertiesBody(); this.expect("}");
       } else if(["Layout","Containers","SimplePanels","ActivePanels","AggregateActivePanels"].includes(field)){
-        this.expect("["); node[field]=this.entityArrayBody(); this.expect("]");
+        this.expect("["); node[field]=this.entityArrayBody(field); this.expect("]");
       } else if(this.match("=")){
         node[field]=this.literal();
       } else {
@@ -187,7 +187,7 @@ class Parser {
     while(!this.is("}")){
       const t=this.peek();
       if(t.type!=="id"||t.value!=="BasePanel") syntax("SetLang.Data accepts BasePanel entities",t);
-      arr.push(this.entity());
+      arr.push(this.entity("Data"));
     }
     return arr;
   }
@@ -295,7 +295,7 @@ function serializeMap(obj,indent){
 }
 
 function inferredType(node,collection){
-  if(node?.Type==="Group"||node?.Type==="EditableInput"||node?.Type==="Flow") return node.Type;
+  if(node?.Type==="Group"||node?.Type==="EditableInput"||node?.Type==="Flow"||node?.Type==="SimplePanel"||node?.Type==="ActivePanel") return node.Type;
   if(collection==="Data") return "BasePanel";
   if(collection==="SimplePanels") return "SimplePanel";
   if(collection==="ActivePanels") return "ActivePanel";

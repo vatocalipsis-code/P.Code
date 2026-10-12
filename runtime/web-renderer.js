@@ -214,6 +214,7 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
   return el;
 }
 function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem=null,repeatLists=[]){
+  if(["SimplePanel","ActivePanel"].includes(node.type))return node.Repeat?renderRepeat(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists):renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem);
   if(node.type==="Flow"){if(node.Repeat)return renderRepeat(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists);return renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem)}
   if(node.type==="Group"){
     const rule=node.Layout??{};const el=document.createElement("div");el.dataset.planeType="Group";el.dataset.planeGroup="";el.style.display="flex";el.style.flexDirection=rule.Orientation==="Horizontal"?"row":"column";

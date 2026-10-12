@@ -15,9 +15,10 @@ try{
  await page.evaluate(async()=>{
   const {PlaneCodeEngine}=await import('/runtime/public-runtime.js');
   const flow=(Login,Properties,Layout=[])=>({Type:'Flow',Login,Properties,Layout});
-  const caps=['pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.panel-composition.v1','pcode.editable-input.v1','pcode.panel-action.v1'];
+  const caps=['pcode.layout-panels.v1','pcode.flow-layout.v1','pcode.semantic-model.v1','pcode.semantic-repeat.v1','pcode.panel-composition.v1','pcode.editable-input.v1','pcode.panel-action.v1'];
   const connection=PlaneCodeEngine.connect({GenerationId:'pcode.layout-group.v1',SerializationVersion:1,RequiredCapabilities:caps,OptionalCapabilities:[]}).Connection;
   const result=await connection.prepare({SetLang:{Name:'Flow test',Version:1,Requires:caps,Data:[{Login:'Scene',Layout:[flow('Section',{Tag:'section',Class:'section',Role:'button',OffPress:'parent'},[
+   flow('Panel Frame',{Tag:'section'},[{Type:'ActivePanel',Login:'Nested Action',Properties:{OffPress:'nested',VisibleSource:'$.allowed'},Layout:[{Login:'Nested Caption',Properties:{Source:'$.buttonText'}}]}]),
    flow('Notice',{Tag:'p',Source:'$.notice',Linkify:true}),flow('Action',{Tag:'button',Source:'$.buttonText',OffPress:'activate',EnabledSource:'$.allowed'}),
    {Type:'EditableInput',Login:'Input',Properties:{Source:'$.draft',OnInput:'edit',AriaLabel:'Draft',EnabledSource:'$.allowed'}},
    flow('Record',{Tag:'article',Repeat:'$.records'},[flow('Name',{Tag:'strong',Source:'@.name'}),flow('Choose',{Tag:'button',Text:'Choose',OffPress:'choose',EnabledSource:'@.allowed'})])
@@ -29,6 +30,7 @@ try{
  });
  const node=login=>page.locator('[data-plane-login="'+login+'"]');
  assert.equal(await node('Section').evaluate(n=>n.tagName),'SECTION');assert.equal(await node('Notice').innerText(),'<b>literal</b>');assert.equal(await node('Notice').locator('b').count(),0);
+ assert.equal(await node('Nested Action').getAttribute('data-plane-type'),'ActivePanel');await node('Nested Action').click();assert.equal(await page.evaluate(()=>flowEvents.filter(e=>e.OpaqueValue==='nested').length),1);
  await node('Action').click();await node('Action').focus();await page.keyboard.press('Enter');
  await node('Choose').first().click();assert.equal(await node('Choose').last().isDisabled(),true);
  await node('Input').fill('edited');
@@ -36,6 +38,7 @@ try{
  assert.equal(await page.evaluate(()=>flowEvents.find(e=>e.OpaqueValue==='choose').ItemId),'x');
  assert.equal(await page.evaluate(()=>flowEvents.findLast(e=>e.OpaqueValue==='edit').Value),'edited');
  await page.evaluate(async()=>{window.savedRow=document.querySelector('[data-plane-login="Record"]');await flowRuntime.applyModel({...flowModel,notice:'updated',buttonText:'Changed',allowed:false,records:[...flowModel.records].reverse()})});
+ assert.equal(await node('Nested Action').isVisible(),false);
  assert.equal(await page.getByRole('textbox',{name:'Draft',exact:true}).isDisabled(),true);assert.equal(await node('Input').getAttribute('inert'),null);
  assert.equal(await node('Notice').innerText(),'updated');assert.equal(await node('Action').innerText(),'Changed');assert.equal(await node('Action').isDisabled(),true);assert.deepEqual(await node('Name').allTextContents(),['Beta','Alpha']);
  assert.equal(await page.evaluate(()=>savedRow===document.querySelectorAll('[data-plane-login="Record"]')[1]),true);
