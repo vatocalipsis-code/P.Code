@@ -30,7 +30,7 @@ const VISUAL_RULES=new Set([
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
   "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
-  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
+  "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
   "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
@@ -123,6 +123,9 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Parallax!==undefined&&!isFiniteNumber(rule.Parallax))fail("invalid Parallax for "+label);
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.Repeat!==undefined&&(! /^(ActivePanel|SimplePanel|Flow) /.test(label)||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires a panel and a collection Login");
+  if(rule.RepeatIds!==undefined){
+    if(!rule.Repeat||!Array.isArray(rule.RepeatIds)||rule.RepeatIds.length>5000||rule.RepeatIds.some(id=>!isNonEmptyString(id))||new Set(rule.RepeatIds).size!==rule.RepeatIds.length)fail('RepeatIds requires a Repeat and unique string IDs');
+  }
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
   if(rule.ActionMenu!==undefined){
     if(!label.startsWith('ActivePanel ')||rule.NativeButton===true)fail('ActionMenu requires a non-native ActivePanel anchor');
@@ -329,6 +332,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.numeric-editor.v1'))fail('NumericEditor requires pcode.numeric-editor.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
+    if(node.Properties?.RepeatIds&&!capabilitySet.has('pcode.repeat-subset.v1'))fail('RepeatIds requires pcode.repeat-subset.v1');
     if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.action-menu.v1'))fail('ActionMenu requires pcode.action-menu.v1');
     if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.semantic-model.v1')&&(node.Properties.ActionMenu.EnabledSource||Object.values(node.Properties.ActionMenu.Items??{}).some(item=>item.Source||item.EnabledSource||item.VisibleSource)))fail('ActionMenu sources require pcode.semantic-model.v1');
     if(node.Properties?.TitleSource&&!capabilitySet.has('pcode.semantic-title.v1'))fail('Semantic titles require pcode.semantic-title.v1');
@@ -376,7 +380,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(depth>32)fail('Flow nesting exceeds 32');
     add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
     if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
-    const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
+    const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','RepeatIds','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
     for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
     if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');
     if(p.Repeat!==undefined&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(p.Repeat))fail('Flow Repeat must be semantic');

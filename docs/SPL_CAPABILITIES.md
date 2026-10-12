@@ -254,3 +254,20 @@ controls.
 
 Checks: `node --test tests/action-menu.test.js` and
 `PLAYWRIGHT_MODULE=... UI_BROWSER=chromium|webkit node tests/check-action-menu-browser.mjs`.
+
+## `pcode.repeat-subset.v1`
+
+An authored repeated panel or Flow may declare `RepeatIds [ "id-a" "id-b" ]`.
+The renderer includes only these record IDs, retaining the incoming semantic
+order and keyed node identity. The list must contain unique nonempty strings,
+with at most 5000 entries. It requires `Repeat`; absent records produce no DOM.
+This allows a skin to compose catalog bands without requiring the application
+to know column counts or send decorative groups. It is a presentation filter,
+not authorization; application commands still validate allowed entity IDs.
+
+All source records are validated before the subset is applied, including duplicate
+IDs outside the subset. Empty subsets render no entries. Filtering, disposal,
+focus/caret continuity and semantic ItemId dispatch use the standard repeat path.
+
+Checks: `node --test tests/repeat-subset.test.js` and
+`PLAYWRIGHT_MODULE=... UI_BROWSER=chromium|webkit node tests/check-repeat-continuity-browser.mjs`.

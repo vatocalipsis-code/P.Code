@@ -374,9 +374,13 @@ function reconcileRepeatedNodes(list,nodes){
 }
 function renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists){
   const semantic=record.node.Repeat.startsWith('$.');
-  const items=(semantic?semanticValue(record.node.Repeat,dataSet[MODEL]):dataSet[record.node.Repeat]?.Items)??[];
+  let items=(semantic?semanticValue(record.node.Repeat,dataSet[MODEL]):dataSet[record.node.Repeat]?.Items)??[];
   if(!Array.isArray(items)||items.length>5000)throw Error('Repeat requires an array of at most 5000 records');
   const ids=new Set();for(const item of items){const id=semantic?item.id:item.Id;if(typeof id!=='string'||!id||ids.has(id))throw Error('Repeat requires unique string IDs');ids.add(id)}
+  if(record.node.Visual.RepeatIds){
+    record.includedIds??=new Set(record.node.Visual.RepeatIds);
+    items=items.filter(item=>record.includedIds.has(semantic?item.id:item.Id));
+  }
   const context=record.paths.map(path=>semanticValue(path,dataSet[MODEL])),signature=JSON.stringify([items,context]);
   if(record.signature===signature&&record.lastResources===record.resources&&record.lastRender===record.renderSet)return;
   const template={...record.node,Repeat:undefined};

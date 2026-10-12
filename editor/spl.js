@@ -133,8 +133,8 @@ class Parser {
       const k=this.expect("id").value;
       if(this.match("=")) obj[k]=this.literal();
       else if(this.match("[")) {
-        if(k!=="AggregateActivePanels") syntax(`unsupported Properties collection ${k}`,this.peek(-1));
-        obj[k]=this.entityArrayBody();
+        if(k!=="AggregateActivePanels"&&k!=="RepeatIds") syntax(`unsupported Properties collection ${k}`,this.peek(-1));
+        obj[k]=k==="RepeatIds"?this.literalArrayBody():this.entityArrayBody();
         this.expect("]");
       } else if(['Sequence','Vector','Format','Route','Feedback','NumericEditor','DecimalInput','SceneEffects','ModalExit','ActionMenu'].includes(k)&&this.match('{')){obj[k]=this.mapBody();this.expect('}');}
       else syntax(`expected =, structured property, or [ after Properties.${k}`,this.peek());
@@ -306,7 +306,8 @@ function inferredType(node,collection){
 function serializeProperties(props,indent){
   const rows=[line(indent,"Properties {")];
   for(const [k,v] of Object.entries(props??{})){
-    if(k==="AggregateActivePanels" && Array.isArray(v)){
+    if(k==="RepeatIds"&&Array.isArray(v)){rows.push(line(indent+1,k+" [ "+v.map(lit).join(" ")+" ]"));
+    } else if(k==="AggregateActivePanels" && Array.isArray(v)){
       rows.push(line(indent+1,"AggregateActivePanels ["));
       for(const node of v) rows.push(...serializeEntity(node,"AggregateActivePanels",indent+2));
       rows.push(line(indent+1,"]"));
