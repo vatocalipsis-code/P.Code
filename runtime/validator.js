@@ -29,7 +29,7 @@ const VISUAL_RULES=new Set([
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
   "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
-  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","LabelTemplate",
+  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
   "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalExit","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
@@ -174,7 +174,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Text!==undefined&&((!rule.NativeButton&&!label.startsWith('Flow '))||typeof rule.Text!=='string'))fail('Text requires a NativeButton');
   if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput|Flow) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
-  for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
+  for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','TitleSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
   if(rule.LabelTemplate!==undefined&&(!rule.LabelSource||typeof rule.LabelTemplate!=='string'))fail('LabelTemplate requires LabelSource and text');
   if(rule.Role!==undefined&&!['status','alert','log','heading','group','region','list','listitem','img','presentation','button'].includes(rule.Role))fail('Invalid semantic Role');
   if(rule.AriaLevel!==undefined&&(rule.Role!=='heading'||!Number.isInteger(rule.AriaLevel)||rule.AriaLevel<1||rule.AriaLevel>6))fail('AriaLevel requires a heading level 1..6');
@@ -319,10 +319,11 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
       fail("Parallax requires negotiated pcode.parallax.v1");
     if(node.Properties?.Repeat&&!capabilitySet.has("pcode.semantic-repeat.v1"))
       fail("Repeat requires negotiated pcode.semantic-repeat.v1");
-    if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
+    if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','TitleSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.numeric-editor.v1'))fail('NumericEditor requires pcode.numeric-editor.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
+    if(node.Properties?.TitleSource&&!capabilitySet.has('pcode.semantic-title.v1'))fail('Semantic titles require pcode.semantic-title.v1');
     if((node.Properties?.PressedSource||node.Properties?.LabelSource)&&!capabilitySet.has('pcode.semantic-accessibility.v1'))fail('Semantic accessibility requires pcode.semantic-accessibility.v1');
     if(usesNegativeSign(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-sign.v1'))fail('NegativeSign requires pcode.decimal-sign.v1');
     if(usesUnitPlacement(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-unit-layout.v1'))fail('UnitPlacement requires pcode.decimal-unit-layout.v1');
@@ -367,7 +368,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(depth>32)fail('Flow nesting exceeds 32');
     add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
     if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
-    const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
+    const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
     for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
     if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');
     if(p.Repeat!==undefined&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(p.Repeat))fail('Flow Repeat must be semantic');

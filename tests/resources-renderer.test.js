@@ -8,7 +8,8 @@ class StyleBag {
 }
 class FakeElement {
   constructor(tag,doc){this.tagName=tag.toUpperCase();this.ownerDocument=doc;this.children=[];this.dataset={};this.style=new StyleBag();this.attributes={};this.textContent="";}
-  append(...nodes){for(const node of nodes)node.parentElement=this;this.children.push(...nodes)}
+  append(...nodes){for(const node of nodes)this.insertBefore(node,null)}
+  insertBefore(node,before){if(node.parentElement)node.parentElement.children=node.parentElement.children.filter(child=>child!==node);const at=before?this.children.indexOf(before):this.children.length;this.children.splice(at,0,node);node.parentElement=this;}
   replaceChildren(...nodes){for(const old of this.children)old.parentElement=null;this.children=[];this.append(...nodes)}
   setAttribute(name,value){this.attributes[name]=String(value)}
   removeAttribute(name){delete this.attributes[name]}
@@ -21,7 +22,7 @@ class FakeElement {
     walk(this);return nodes;
   }
   querySelector(selector){return selector===':scope > [data-plane-container-content]'?this.children.find(child=>child.dataset.planeContainerContent!==undefined)??null:null}
-  remove(){this.removed=true}
+  remove(){this.removed=true;if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(child=>child!==this);this.parentElement=null}
   closest(selector){for(let p=this;p;p=p.parentElement)if(selector==='[data-plane-repeat]'&&p.dataset.planeRepeat!==undefined)return p;return null}
 }
 class FakeDocument {
@@ -68,7 +69,7 @@ test("web renderer applies packaged WOFF2 and PNG resources",()=>{
   assert.equal(image.src,"data:image/png;base64,iVBORw0KGgo=");
 
   disposePlaneCode(root);
-  assert.equal(doc.head.children[0].removed,true);
+  assert.equal(doc.head.children.length,0);
   delete globalThis.document;
 });
 
@@ -81,7 +82,7 @@ test("skin CSS is installed with its render and removed on dispose",()=>{
   assert.equal(first.dataset.pcodeSkinStyle,"");
   renderPlaneCode(root,plan,data,render,null,resources,"#plane-code-root{color:blue}");
   assert.equal(first.removed,true);
-  const second=doc.head.children[2];
+  const second=doc.head.children.find(node=>node.dataset.pcodeSkinStyle!==undefined);
   assert.equal(second.textContent,"#plane-code-root{color:blue}");
   disposePlaneCode(root);
   assert.equal(second.removed,true);
@@ -207,19 +208,19 @@ test('semantic accessibility follows model updates without replacing controls',a
  const {validatePLang}=await import('../runtime/validator.js');
  const doc=new FakeDocument();globalThis.document=doc;
  try{
-  const root=new FakeElement('div',doc),lang=[{Login:'Base',Properties:{},Layout:[],SimplePanels:[{Login:'Group',Properties:{},Layout:[],ActivePanels:[{Login:'Choice',Properties:{NativeButton:true,PressedSource:'$.selected',EnabledSource:'$.allowed',LabelSource:'$.entity',LabelTemplate:'Open {name}',OffPress:'entity.open'},Layout:[]}]}]}];
-  assert.throws(()=>validatePLang(lang,{},['pcode.semantic-model.v1']),/semantic-accessibility/);
-  validatePLang(lang,{},['pcode.semantic-model.v1','pcode.semantic-accessibility.v1','pcode.semantic-controls.v1']);
+  const root=new FakeElement('div',doc),lang=[{Login:'Base',Properties:{},Layout:[],SimplePanels:[{Login:'Group',Properties:{},Layout:[],ActivePanels:[{Login:'Choice',Properties:{NativeButton:true,PressedSource:'$.selected',EnabledSource:'$.allowed',LabelSource:'$.entity',TitleSource:'$.entity.name',LabelTemplate:'Open {name}',OffPress:'entity.open'},Layout:[]}]}]}];
+  assert.throws(()=>validatePLang(lang,{},['pcode.semantic-model.v1','pcode.semantic-title.v1']),/semantic-accessibility/);
+  validatePLang(lang,{},['pcode.semantic-model.v1','pcode.semantic-accessibility.v1','pcode.semantic-controls.v1','pcode.semantic-title.v1']);
   const invalid=structuredClone(lang);invalid[0].SimplePanels[0].ActivePanels[0].Properties.LabelSource='name';
-  assert.throws(()=>validatePLang(invalid,{},['pcode.semantic-model.v1','pcode.semantic-accessibility.v1','pcode.semantic-controls.v1']),/semantic path/);
+  assert.throws(()=>validatePLang(invalid,{},['pcode.semantic-model.v1','pcode.semantic-accessibility.v1','pcode.semantic-controls.v1','pcode.semantic-title.v1']),/semantic path/);
   renderPlaneCode(root,compileSetLang(lang),withModel({},{selected:true,allowed:true,entity:{name:'One'}}),render);
   const button=find(root,n=>n.dataset.planeLogin==='Choice');
-  assert.equal(button.attributes['aria-pressed'],'true');assert.equal(button.attributes['aria-label'],'Open One');assert.equal(button.disabled,false);
+  assert.equal(button.attributes['aria-pressed'],'true');assert.equal(button.attributes['aria-label'],'Open One');assert.equal(button.disabled,false);assert.equal(button.attributes.title,'One');
   patchSetData(root,withModel({},{selected:false,allowed:false,entity:{name:'Two'}}),render,null,{semanticOnly:true});
   assert.equal(find(root,n=>n.dataset.planeLogin==='Choice'),button);
-  assert.equal(button.attributes['aria-pressed'],'false');assert.equal(button.attributes['aria-label'],'Open Two');assert.equal(button.disabled,true);
+  assert.equal(button.attributes['aria-pressed'],'false');assert.equal(button.attributes['aria-label'],'Open Two');assert.equal(button.disabled,true);assert.equal(button.attributes.title,'Two');
   patchSetData(root,withModel({},{}),render,null,{semanticOnly:true});
-  assert.equal(button.attributes['aria-pressed'],'false');assert.equal(button.attributes['aria-label'],'Open ');
+  assert.equal(button.attributes['aria-pressed'],'false');assert.equal(button.attributes['aria-label'],'Open ');assert.equal(button.attributes.title,undefined);
   disposePlaneCode(root);
  }finally{delete globalThis.document}
 });

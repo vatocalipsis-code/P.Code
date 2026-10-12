@@ -211,3 +211,18 @@ including subsequent model updates; descendants cannot receive browser focus or
 pointer input while the group is disabled. Child field rules remain independent.
 Group visibility continues to require `pcode.group-state.v1`. No application
 identifiers or domain permission calculations occur in the renderer.
+
+## Semantic native tooltips (2.36.0)
+
+`pcode.semantic-title.v1` adds `TitleSource` on semantic components. SPL chooses
+the field; Picot updates the native `title` tooltip as the root/repeated record
+changes. Null/empty values remove the tooltip. This is presentation metadata,
+not an application DOM callback. Paths and capability negotiation are validated.
+
+Keyed repeat updates now patch the existing authored subtree for flat record
+templates. Focus and selection survive data changes and reordering; unchanged
+rows are neither detached nor rebuilt. Removed rows cancel pending presses.
+Native `moveBefore` is used when available, with retained-control focus/selection
+restoration for older browsers. Nested-repeat templates retain their existing
+rebuild path. Reproduce with `tests/check-repeat-continuity-browser.mjs` in
+Chromium and WebKit; this fixture defines no application skin.

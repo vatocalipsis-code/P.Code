@@ -165,7 +165,7 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
+  if(rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource||rule.TitleSource)el.dataset.planeSemanticState='';
   if(rule.Role)el.setAttribute('role',rule.Role);
   if(rule.AriaLevel)el.setAttribute('aria-level',String(rule.AriaLevel));
   if(rule.Sequence)applySequence(el,rule.Sequence,dataSet[MODEL]);
@@ -173,6 +173,7 @@ function applySemanticState(el,rule,dataSet,item=null){
   if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.setProperty('display',el.hidden?'none':el.dataset.planeType==='Group'?'flex':'',el.hidden?'important':'')}
   if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));
   if(rule.LabelSource){const value=semanticValue(rule.LabelSource,dataSet[MODEL],item);el.setAttribute('aria-label',textTemplate(value,rule.LabelTemplate))}
+  if(rule.TitleSource){const value=semanticValue(rule.TitleSource,dataSet[MODEL],item);if(value==null||value==='')el.removeAttribute('title');else el.setAttribute('title',String(value))}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));
   if(rule.EnabledSource){const disabled=semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-disabled',String(disabled));if(el.tagName==='BUTTON')el.disabled=disabled;else if(!['INPUT','TEXTAREA','SELECT'].includes(el.tagName))el.inert=disabled}
 }
@@ -273,6 +274,7 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
     if(success&&interaction&&node.OffPress!==undefined&&node.OffPress!==null)interaction.emit("OffPress",node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null);
   });
   el.addEventListener("pointercancel",release);el.addEventListener("lostpointercapture",release);
+  el.__planeCancelPress=release;
   cancellers.push(release);
 }
 function bindSemanticAction(el,node,interaction,repeatedItem=null){
@@ -334,26 +336,64 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
   if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers,repeatedItem);
   return el;
 }
+// Update the authored subtree without replacing a keyed control or its focus.
+function patchElementSource(el,dataSet,renderSet,resources,item=null){
+  if(el.__planeFlow){patchFlowContent(el,el.__planeFlow,dataSet,renderSet,resources,item);return}
+  if(el.__planeInput){patchInputElement(el,el.__planeInput,dataSet,item);return}
+  const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)return;
+  const visual=el.__planeVisual??{},node={type:'Container',dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??'Positive',Visual:visual};
+  let owner=el.parentElement;while(owner&&owner.dataset.planeType==='Group')owner=owner.parentElement;
+  const shadow=owner?.__planeVisual?.Shadow??0,sources=sourcesFromData(node,dataSet,item),signature=JSON.stringify(sources);
+  if(el.__planeSourceSignature===signature&&el.__planeSourceResources===resources&&el.__planeSourceRender===renderSet)return;
+  el.__planeSourceSignature=signature;el.__planeSourceResources=resources;el.__planeSourceRender=renderSet;
+  releaseDeferredPictures(body);body.replaceChildren(...sources.map(source=>renderSource(source,renderSet,visual,shadow,resources)));applyTextLayout(el,body,visual);
+}
+function patchRepeatedSubtree(el,dataSet,renderSet,resources,item){
+  el.__planeCancelPress?.();
+  if(el.__planeVisual)applySemanticState(el,el.__planeVisual,dataSet,item);
+  if(el.__planeInput||el.__planeFlow||el.dataset.planeDataSlot!==undefined)patchElementSource(el,dataSet,renderSet,resources,item);
+  for(const child of el.children)patchRepeatedSubtree(child,dataSet,renderSet,resources,item);
+}
+function reconcileRepeatedNodes(list,nodes){
+  const expected=new Set(nodes),doc=list.ownerDocument,focused=doc?.activeElement;
+  const selection=focused&&typeof focused.selectionStart==='number'?{start:focused.selectionStart,end:focused.selectionEnd,direction:focused.selectionDirection}:null;
+  for(const child of [...list.children])if(!expected.has(child))child.remove();
+  for(let index=0;index<nodes.length;index++){
+    const node=nodes[index],current=list.children[index]??null;if(current===node)continue;
+    if(list.moveBefore&&node.parentElement===list&&list.isConnected)list.moveBefore(node,current);
+    else list.insertBefore(node,current);
+  }
+  // Older browsers lack state-preserving moveBefore. Restore only retained,
+  // still-available controls; removed/disabled controls must not regain focus.
+  if(focused?.isConnected&&doc.activeElement!==focused&&list.contains(focused)&&!focused.disabled&&!focused.closest('[inert]')){
+    focused.focus({preventScroll:true});if(selection)focused.setSelectionRange?.(selection.start,selection.end,selection.direction);
+  }
+}
 function renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists){
   const semantic=record.node.Repeat.startsWith('$.');
   const items=(semantic?semanticValue(record.node.Repeat,dataSet[MODEL]):dataSet[record.node.Repeat]?.Items)??[];
   if(!Array.isArray(items)||items.length>5000)throw Error('Repeat requires an array of at most 5000 records');
   const ids=new Set();for(const item of items){const id=semantic?item.id:item.Id;if(typeof id!=='string'||!id||ids.has(id))throw Error('Repeat requires unique string IDs');ids.add(id)}
-  const context=record.paths.map(path=>semanticValue(path,dataSet[MODEL]));
-  const signature=JSON.stringify([items,context]);
-  if(record.signature===signature)return;
+  const context=record.paths.map(path=>semanticValue(path,dataSet[MODEL])),signature=JSON.stringify([items,context]);
+  if(record.signature===signature&&record.lastResources===record.resources&&record.lastRender===record.renderSet)return;
   const template={...record.node,Repeat:undefined};
+  if(record.patchable===undefined){const nested=value=>value&&typeof value==='object'&&(Boolean(value.Repeat)||Object.values(value).some(nested));record.patchable=!nested(template)}
   const next=new Map();
   for(const value of items){
     const item=semantic?{...value,Id:value.id}:value,id=item.Id,signature=JSON.stringify([item,context]),old=record.rows.get(id);
-    if(old?.signature===signature){next.set(id,old);continue}
-    const row={signature,cancellers:[],parallax:[]};
+    if(old?.signature===signature&&old.resources===record.resources&&old.renderSet===record.renderSet){next.set(id,old);continue}
+    if(old&&record.patchable){
+      patchRepeatedSubtree(old.element,dataSet,record.renderSet,record.resources,item);
+      old.signature=signature;old.resources=record.resources;old.renderSet=record.renderSet;next.set(id,old);continue;
+    }
+    const row={signature,cancellers:[],parallax:[],resources:record.resources,renderSet:record.renderSet};
     row.element=renderPanel(template,dataSet,record.renderSet,row.parallax,record.interaction,row.cancellers,record.resources,[],item);next.set(id,row);
   }
   for(const [id,row]of record.rows)if(next.get(id)!==row){for(const cancel of row.cancellers)cancel();releaseDeferredPictures(row.element);for(const entry of row.parallax){const index=record.parallaxNodes.indexOf(entry);if(index>=0)record.parallaxNodes.splice(index,1)}}
   for(const [id,row]of next)if(record.rows.get(id)!==row)record.parallaxNodes.push(...row.parallax);
-  record.list.replaceChildren(...[...next.values()].map(row=>row.element));record.rows=next;record.signature=signature;
+  reconcileRepeatedNodes(record.list,[...next.values()].map(row=>row.element));record.rows=next;record.signature=signature;record.lastResources=record.resources;record.lastRender=record.renderSet;
 }
+
 function bindParallax(root,nodes){
   activeParallax.get(root)?.cancel();
   if(nodes.length===0){activeParallax.delete(root);return}
@@ -459,18 +499,7 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
   for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source],[data-plane-decimal]':'[data-plane-data-slot]')){
     if(frozen(el)||el.closest?.('[data-plane-repeat]'))continue;
     if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??'')){if(el.__planeVisual?.DecimalInput)patchDecimalInput(el,el.__planeInput,nextData);continue;}
-    if(el.__planeFlow){patchFlowContent(el,el.__planeFlow,nextData,renderSet,resources);continue}
-    if(el.dataset.planeType==="EditableInput"){patchInputElement(el,el.__planeInput,nextData);continue}
-    const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
-    const visual=el.__planeVisual??{};const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive",Visual:visual};
-    let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;
-    const shadow=owner?.__planeVisual?.Shadow??0;
-    const sourceData=sourcesFromData(node,nextData);
-    const signature=JSON.stringify(sourceData);
-    if(el.__planeSourceSignature===signature&&el.__planeSourceResources===resources&&el.__planeSourceRender===renderSet)continue;
-    el.__planeSourceSignature=signature;el.__planeSourceResources=resources;el.__planeSourceRender=renderSet;
-    const sources=sourceData.map(source=>renderSource(source,renderSet,visual,shadow,resources));
-    releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
+    patchElementSource(el,nextData,renderSet,resources);
   }
   for(const record of activeRepeatLists.get(root)??[]){if(frozen(record.list))continue;record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
   updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root,nextData);
