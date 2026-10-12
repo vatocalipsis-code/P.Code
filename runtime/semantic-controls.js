@@ -1,4 +1,5 @@
 /** Native controls implement SPL-authored behavior and emit semantic values. */
+import {patchDecimalInput} from './numeric-editor.js';
 import {MODEL,semanticValue,textTemplate} from './semantic-model.js';
 
 export function createInputElement(config){
@@ -39,7 +40,8 @@ export function patchInputElement(el,node,dataSet,item=null){
   el.readOnly=config.ReadOnly===true||(rule.ReadOnlySource?semanticValue(rule.ReadOnlySource,dataSet[MODEL],item)===true:false);
   el.disabled=config.Disabled===true||(rule.EnabledSource?semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true:false)||
     el.readOnly&&['Choice','Range','Checkbox'].includes(config.InputType);
-  if(el.readOnly)el.setAttribute('aria-readonly','true');else el.removeAttribute('aria-readonly');
+  patchDecimalInput(el,node,dataSet,item);
+  if(el.__planeDecimal?.readOnly??el.readOnly)el.setAttribute('aria-readonly','true');else el.removeAttribute('aria-readonly');
   const error=rule.ErrorSource?semanticValue(rule.ErrorSource,dataSet[MODEL],item):null;
   const validation=error?{Status:'Invalid',Message:String(error)}:data.ValidationState??{Status:'None'};
   el.dataset.planeValidation=validation.Status??'None';

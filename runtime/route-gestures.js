@@ -1,4 +1,5 @@
 /** Declarative navigation gestures. This module emits commands and never loads data. */
+import {numericEditorOpen} from './numeric-editor.js';
 import {semanticValue} from './semantic-model.js';
 export function gestureRegion(x,y,width,height,rule){
  const within=(value,range)=>Array.isArray(range)&&value>=range[0]&&value<=range[1];
@@ -8,7 +9,7 @@ export function createRouteGestures(root,{emit,slide,onBack}){
  const doc=root.ownerDocument,view=doc.defaultView,abort=new AbortController(),signal=abort.signal;
  let frame=null,model=null,start=null,busy=false,animation=null,suppressUntil=0,badge=null,fade=null,disposed=false;
  const rule=()=>frame?.selected?.route.Gestures;
- const enabled=()=>frame?.enabled&&rule();
+ const enabled=()=>!numericEditorOpen(root)&&frame?.enabled&&rule();
  const loading=()=>semanticValue(rule()?.LoadingSource,model)===true;
  function notice(show){
   const r=rule();if(!r?.IndicatorClass)return;

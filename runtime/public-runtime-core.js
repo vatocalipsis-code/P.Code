@@ -11,7 +11,7 @@ let nextConnectionId=1;
 
 function hasEventToken(plan){
   const visit=node=>{
-    if(node?.Visual?.Dismiss||node?.Visual?.Route?.Dismiss||['Back','Menu','Refresh'].some(key=>node?.Visual?.Route?.Gestures?.[key]))return true;
+    if(node?.Visual?.NumericEditor?.Help||node?.Visual?.Dismiss||node?.Visual?.Route?.Dismiss||['Back','Menu','Refresh'].some(key=>node?.Visual?.Route?.Gestures?.[key]))return true;
     if(node&&(node.OnPress!==undefined&&node.OnPress!==null||node.OffPress!==undefined&&node.OffPress!==null))return true;
     if(node?.Events&&Object.values(node.Events).some(value=>value!==undefined&&value!==null))return true;
     return [...(node?.layout??[]),...(node?.children??[])].some(visit);
@@ -72,6 +72,8 @@ export function createPlaneCodeEngine(dependencies){
       if(Details&&typeof Details.ItemId==="string")event.ItemId=Details.ItemId;
       try{this.sink(event)}catch{}
     }
+    // Presentation may consume Back before the application changes its semantic route.
+    consumeBack(){return this.state==='ACTIVE'&&Boolean(dependencies.renderer.consumeBack?.(this.target))}
     mount(RenderTarget){
       return this._enqueue(()=>{
         if(this.state!=="PREPARED")return this._rejectState("mount",["PREPARED"]);

@@ -1,3 +1,4 @@
+import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput} from './numeric-editor.js';
 import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} from './control-feedback.js';
 /** Browser renderer for compiled P.Code Object Plans. */
 import {formatValue} from './value-format.js';
@@ -179,6 +180,7 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
   const el=createInputElement(config);el.dataset.planeType="EditableInput";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.__planeVisual=rule;el.__planeInput=node;
   if(rule.Class)el.className=rule.Class;
   if(/^[$@]\./.test(rule.Source??''))el.dataset.planeSemanticSource='';
+  if(rule.DecimalInput)el.dataset.planeDecimal='';
   el.required=config.Required===true;el.setAttribute('aria-label',config.AriaLabel??node.Login);
   applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);patchInputElement(el,node,dataSet,repeatedItem);applySemanticState(el,rule,dataSet,repeatedItem);
   let composing=false;
@@ -357,13 +359,16 @@ export function requestTiltParallax(root){
   });
 }
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
+export function consumePlaneCodeBack(root){return consumeNumericBack(root)}
 export function disposePlaneCode(root){
+  disposeNumericEditor(root);
   disposeControlFeedback(root);
   disposeRouteScenes(root);
   disposeModalScenes(root);
   cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
+  disposeNumericEditor(root);
   disposeControlFeedback(root);
   disposeRouteScenes(root);
   cancelPlaneCodeInteraction(root);
@@ -382,6 +387,7 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   });
   releaseDeferredPictures(root);
   root.replaceChildren(...panels);
+  installNumericEditor(root,roots,interaction,dataSet);
   installControlFeedback(root,roots,interaction);
   installRouteScenes(root,routes,interaction);updateRouteScenes(root,dataSet);
   installModalScenes(root,modals);updateModalScenes(root,dataSet);
@@ -392,9 +398,9 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
 export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticOnly=false}={}){
   const resources=prepareResources(root,resourceSet);
   for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!el.closest?.('[data-plane-repeat]'))applySemanticState(el,el.__planeVisual??{},nextData);
-  for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source]':'[data-plane-data-slot]')){
+  for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source],[data-plane-decimal]':'[data-plane-data-slot]')){
     if(el.closest?.('[data-plane-repeat]'))continue;
-    if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??''))continue;
+    if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??'')){if(el.__planeVisual?.DecimalInput)patchDecimalInput(el,el.__planeInput,nextData);continue;}
     if(el.dataset.planeType==="EditableInput"){patchInputElement(el,el.__planeInput,nextData);continue}
     const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
     const visual=el.__planeVisual??{};const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive",Visual:visual};
@@ -407,5 +413,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
   for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
-  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);
+  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);
 }

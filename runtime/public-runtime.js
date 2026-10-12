@@ -1,14 +1,14 @@
 /** Frozen P.Code Public Runtime API v1 boundary. */
 import {compileSetLang} from "./setlang-compiler.js";
 import {validatePLang,validateSetData,validateSetEnvelope,validateSetRender,validateResources} from "./validator.js";
-import {renderPlaneCode,patchSetData,cancelPlaneCodeInteraction,disposePlaneCode,requestTiltParallax,disableTiltParallax} from "./web-renderer.js";
+import {renderPlaneCode,patchSetData,cancelPlaneCodeInteraction,disposePlaneCode,requestTiltParallax,disableTiltParallax,consumePlaneCodeBack} from "./web-renderer.js";
 import {createPlaneCodeEngine} from "./public-runtime-core.js";
 
 const descriptor={
-  ComponentVersion:"2.20.0",
+  ComponentVersion:"2.21.0",
   GenerationId:"pcode.layout-group.v1",
   SupportedSerializationVersions:[1],
-  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1","pcode.semantic-repeat.v1","pcode.semantic-model.v1","pcode.semantic-controls.v1","pcode.semantic-routes.v1","pcode.composite-format.v1","pcode.control-feedback.v1"]
+  Capabilities:["pcode.editable-input.v1","pcode.corner-radius.v1","pcode.parallax.v1","pcode.skin-stylesheet.v1","pcode.tilt-parallax.v1","pcode.semantic-repeat.v1","pcode.semantic-model.v1","pcode.semantic-controls.v1","pcode.semantic-routes.v1","pcode.composite-format.v1","pcode.control-feedback.v1","pcode.numeric-editor.v1"]
 };
 
 const renderer={
@@ -16,6 +16,7 @@ const renderer={
   patchData(target,data,render,resources){patchSetData(target,data,render,resources)},
   patchModel(target,data,render,resources){patchSetData(target,data,render,resources,{semanticOnly:true})},
   rerender(target,plan,data,render,interaction,resources,styleSheet){renderPlaneCode(target,plan,data,render,interaction,resources,styleSheet)},
+  consumeBack(target){return consumePlaneCodeBack(target)},
   cancelInteraction(target){cancelPlaneCodeInteraction(target)},
   requestTilt(target){return requestTiltParallax(target)},
   disableTilt(target){disableTiltParallax(target)},

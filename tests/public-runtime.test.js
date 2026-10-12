@@ -32,6 +32,7 @@ function harness(options={}){
     rerender(target,plan,data,render,interaction,resources){calls.render++;sessions.push({target,plan,data,render,interaction,resources})},
     cancelInteraction(){calls.cancel++},
     requestTilt(){calls.tilt++;return Promise.resolve()},
+    consumeBack(){return options.consumeBack?.()??false},
     disableTilt(){calls.stopTilt++},
     dispose(){calls.dispose++}
   };
@@ -270,4 +271,15 @@ test("applySetData keeps Resources available to resource picture patches",async(
   const next=structuredClone(resData);next.Version=2;
   assert.equal((await prepared.Runtime.applySetData(next)).Outcome,"Completed");
   assert.equal(h.sessions[0].resources.Pictures[0].Name,"icon.add");
+});
+
+test('Back is offered to presentation only while its runtime is active',async()=>{
+ let pending=true;
+ const h=harness({consumeBack:()=>{const consumed=pending;pending=false;return consumed}});
+ const prepared=await connect(h.engine).Connection.prepare({SetLang:setLang,SetData:setData,SetRender:setRender});
+ const runtime=prepared.Runtime;
+ assert.equal(runtime.consumeBack(),false);
+ await runtime.setEventSink(()=>{});await runtime.mount({});assert.equal(runtime.consumeBack(),false);
+ await runtime.enableInteraction();assert.equal(runtime.consumeBack(),true);assert.equal(runtime.consumeBack(),false);
+ await runtime.dispose();pending=true;assert.equal(runtime.consumeBack(),false);
 });

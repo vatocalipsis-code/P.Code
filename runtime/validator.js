@@ -1,4 +1,5 @@
 /** P.Code contract validators. */
+import {validateNumericEditor,validateDecimalInput} from './numeric-editor.js';
 function isTransparency(v){return typeof v==="number"&&Number.isFinite(v)&&v>=0&&v<=1}
 function isFiniteNumber(v){return typeof v==="number"&&Number.isFinite(v)}
 function isNonNegativeNumber(v){return isFiniteNumber(v)&&v>=0}
@@ -28,7 +29,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Modal","ModalClass","Dismiss","NativeButton","Route","Feedback"
+  "Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -116,6 +117,8 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.Repeat!==undefined&&(!label.startsWith("ActivePanel ")||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires an ActivePanel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
+  if(rule.NumericEditor!==undefined)validateNumericEditor(rule.NumericEditor,label);
+  if(rule.DecimalInput!==undefined)validateDecimalInput(rule.DecimalInput,label);
   if(rule.Feedback!==undefined){
     const f=rule.Feedback;
     if(!label.startsWith('BasePanel ')||!f||typeof f!=='object'||Array.isArray(f))fail('Feedback requires a BasePanel');
@@ -270,6 +273,7 @@ export function validateSetData(data,pLang,capabilities=[],resources=null){
 }
 
 export function validatePLang(pLang,setData={},capabilities=[],resources=null){
+  if((pLang??[]).filter(panel=>panel.Properties?.NumericEditor).length>1)fail('Only one NumericEditor per runtime is allowed');
   if((pLang??[]).filter(panel=>panel.Properties?.Feedback).length>1)fail('Only one Feedback scene per runtime is allowed');
   const routeIds=new Set();
   for(const panel of pLang??[]){const route=panel.Properties?.Route;if(route){const key=route.Source+'\0'+route.Id;if(routeIds.has(key))fail('Duplicate Route identity');routeIds.add(key)}}
@@ -285,6 +289,9 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(node.Properties?.Repeat&&!capabilitySet.has("pcode.semantic-repeat.v1"))
       fail("Repeat requires negotiated pcode.semantic-repeat.v1");
     if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
+    if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.numeric-editor.v1'))fail('NumericEditor requires pcode.numeric-editor.v1');
+    if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
+    if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
     if((node.Properties?.Format?.Kind==='Composite'||node.Properties?.Format?.Kind==='Text'&&node.Properties.Format.Map||node.Properties?.Format?.TrimFraction)&&!capabilitySet.has('pcode.composite-format.v1'))fail('Extended Format requires pcode.composite-format.v1');
@@ -306,6 +313,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     for(const key of ["InputType","Placeholder","Disabled","Required","AriaLabel","InputMode","OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])delete p[key];
     validateVisualRule(p,"EditableInput "+input.Login,false);checkFill(p,"EditableInput "+input.Login);
     const source=input.Properties??{};
+    if(source.DecimalInput&&!['Number','Text'].includes(source.InputType??'Text'))fail('DecimalInput requires text or number input');
     if(source.InputType!==undefined&&!INPUT_TYPES.has(source.InputType))fail("invalid InputType for EditableInput "+input.Login);
     if(['Choice','Multiline','Range','Checkbox'].includes(source.InputType)&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Input type requires pcode.semantic-controls.v1');
     for(const key of ["Placeholder","AriaLabel","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Autocomplete"])if(source[key]!==undefined&&typeof source[key]!=="string")fail(key+" for EditableInput "+input.Login+" must be a string");
