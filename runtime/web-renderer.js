@@ -5,7 +5,7 @@ import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} fro
 /** Browser renderer for compiled P.Code Object Plans. */
 import {formatValue} from './value-format.js';
 import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
-import {createInputElement,patchInputElement,inputValue} from './semantic-controls.js';
+import {createInputElement,patchInputElement,patchInputState,inputValue} from './semantic-controls.js';
 import {createModalScene,installModalScenes,updateModalScenes,disposeModalScenes} from './modal-scene.js';
 import {installRouteScenes,updateRouteScenes,disposeRouteScenes} from './route-scene.js';
 const activeParallax=new WeakMap();
@@ -164,12 +164,12 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
+  if(rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
   if(rule.Role)el.setAttribute('role',rule.Role);
   if(rule.AriaLevel)el.setAttribute('aria-level',String(rule.AriaLevel));
   if(rule.Sequence)applySequence(el,rule.Sequence,dataSet[MODEL]);
   if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
-  if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.setProperty('display',el.hidden?'none':'',el.hidden?'important':'')}
+  if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.setProperty('display',el.hidden?'none':el.dataset.planeType==='Group'?'flex':'',el.hidden?'important':'')}
   if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));
   if(rule.LabelSource){const value=semanticValue(rule.LabelSource,dataSet[MODEL],item);el.setAttribute('aria-label',textTemplate(value,rule.LabelTemplate))}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));
@@ -221,6 +221,7 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
     if(rule.Height!==undefined)applyLayoutValue(el,"height","height",rule.Height==="Auto"?"auto":px(rule.Height));
     if(rule.MinHeight!==undefined)applyLayoutValue(el,"minHeight","min-height",px(rule.MinHeight));
     applyFill(el,rule,parentOrientation);
+    if(rule.VisibleSource){el.__planeVisual=rule;applySemanticState(el,rule,dataSet,repeatedItem)}
     for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem));
     return el;
   }
@@ -280,6 +281,7 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
   el.style.setProperty("--plane-structural-opacity",structuralPercent(combinedPanelTransparency(renderSet,pt)));el.style.setProperty("--plane-panel-surface-opacity",String(1-pt));applyBoxRule(el,rule,renderSet,panelEffects);applyPanelLayout(el,rule);
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const orientation=rule.Direction??"Vertical";const shadow=panelEffects?(rule.Shadow??0):0;
+  if(rule.Text!==undefined)el.append(document.createTextNode(rule.Text));
   for(const item of node.layout??[])el.append(renderLayoutItem(item,orientation,dataSet,renderSet,parallaxNodes,shadow,interaction,cancellers,resources,repeatedItem));
   for(const child of node.children??[]){
     if(child.Repeat){
@@ -411,7 +413,7 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
 }
 export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticOnly=false}={}){
   const resources=prepareResources(root,resourceSet);
-  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!el.closest?.('[data-plane-repeat]'))applySemanticState(el,el.__planeVisual??{},nextData);
+  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!el.closest?.('[data-plane-repeat]')){applySemanticState(el,el.__planeVisual??{},nextData);if(semanticOnly&&el.__planeInput&&(el.__planeVisual.EnabledSource||el.__planeVisual.ReadOnlySource||el.__planeVisual.ErrorSource))patchInputState(el,el.__planeInput,nextData)}
   for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source],[data-plane-decimal]':'[data-plane-data-slot]')){
     if(el.closest?.('[data-plane-repeat]'))continue;
     if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??'')){if(el.__planeVisual?.DecimalInput)patchDecimalInput(el,el.__planeInput,nextData);continue;}

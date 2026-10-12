@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createInputElement,patchInputElement,inputValue} from '../runtime/semantic-controls.js';
+import {createInputElement,patchInputElement,patchInputState,inputValue} from '../runtime/semantic-controls.js';
 import {withModel} from '../runtime/semantic-model.js';
 import {validatePLang} from '../runtime/validator.js';
 
@@ -42,4 +42,15 @@ test('native controls and modal declarations require their negotiated capability
  assert.equal(validatePLang(lang,{},[...caps,'pcode.semantic-controls.v1']),true);
  const invalid=structuredClone(lang);invalid[0].Layout[0].Properties.MaxLength=-1;
  assert.throws(()=>validatePLang(invalid,{},[...caps,'pcode.semantic-controls.v1']),/MaxLength/);
+});
+
+test('model-only updates refresh native availability without overwriting draft input values',()=>{
+ globalThis.document={createElement:tag=>new Element(tag)};
+ try{
+  const el=createInputElement({InputType:'Text'}),node={dataSlot:'Field',Input:{InputType:'Text'},Visual:{EnabledSource:'$.editable',ReadOnlySource:'$.locked',ErrorSource:'$.error'}};
+  patchInputElement(el,node,withModel({Field:{InputValue:'saved'}},{editable:false}));assert.equal(el.disabled,true);
+  el.value='unsaved';patchInputState(el,node,withModel({Field:{InputValue:'saved'}},{editable:true,locked:false,error:'Invalid'}));
+  assert.equal(el.disabled,false);assert.equal(el.value,'unsaved');assert.equal(el.attrs['aria-invalid'],'true');
+  patchInputState(el,node,withModel({},{editable:true,locked:true}));assert.equal(el.readOnly,true);assert.equal(el.value,'unsaved');assert.equal(el.attrs['aria-invalid'],undefined);
+ }finally{delete globalThis.document}
 });

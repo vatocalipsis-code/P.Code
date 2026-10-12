@@ -95,3 +95,9 @@ repeated SimplePanels with semantic item identity inherited by their actions,
 and SPL `Sequence { Source, Key, Part }`. Sequence reads an ordered list of
 semantic identifiers; its grouping into visual pieces remains authored in SPL.
 Missing keys clear the visual order; duplicate identities fail validation.
+
+NativeButton may declare static `Text` instead of a child Layout. This preserves
+native text layout and avoids decorative DOM for plain action labels. Field
+Groups may bind `VisibleSource`, so captions and inputs share one visibility
+owner. Model-only updates apply native enabled/read-only/error state even when
+the input value still uses a SetData slot; they do not overwrite unsaved text.

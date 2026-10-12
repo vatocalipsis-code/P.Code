@@ -37,6 +37,10 @@ export function patchInputElement(el,node,dataSet,item=null){
   }
   const next=value==null?'':String(value);
   if(config.InputType==='Checkbox')el.checked=value===true||value==='true';else if(el.value!==next)el.value=next;
+  patchInputState(el,node,dataSet,item);
+}
+export function patchInputState(el,node,dataSet,item=null){
+  const rule=node.Visual??{},config=node.Input??{},data=dataSet[node.dataSlot]??{};
   el.readOnly=config.ReadOnly===true||(rule.ReadOnlySource?semanticValue(rule.ReadOnlySource,dataSet[MODEL],item)===true:false);
   el.disabled=config.Disabled===true||(rule.EnabledSource?semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true:false)||
     el.readOnly&&['Choice','Range','Checkbox'].includes(config.InputType);
