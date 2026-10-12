@@ -58,3 +58,28 @@ as records with stable string `Id` and `Fields` containing `SourceText` or
 opaque action token plus `ItemId`, so the host handles the selected entity without
 knowing which visual node was pressed. Repeated collections are limited to 5000
 items and cannot contain HTML or layout values.
+# Semantic model boundary (2.17.0)
+
+`pcode.semantic-model.v1` negotiates `runtime.applyModel(model)`. The model is a
+cloned JSON object containing domain values and identifiers, without DOM, HTML,
+CSS, theme names or component descriptions. Invalid updates are rejected before
+changing the mounted model. Render failures dispose the incomplete view.
+
+SPL owns `Source` paths (`$.path` for the root model, `@.field` for a repeated
+record), `Repeat`, `Class`, `Format`, `StateSource`, `VisibleSource` and
+`ExpandedSource`. Semantic repeats also require `pcode.semantic-repeat.v1` and
+use records with unique string `id` values. Events carry that identity as
+`ItemId`; application commands need not interpret the visual `ObjectLogin`.
+
+`Format.Kind` supports Text, Picture (skin-owned map of local assets), Decimal
+(exact integer units, scale, precision, optional unit) and DateTime (locale and
+Intl options). Decimal formatting performs no currency conversion or business
+calculation. Structured formatter properties round-trip through the SPL parser
+and serializer; unsupported structured properties are rejected, never dropped.
+
+Repeated records retain unchanged DOM by ID. Removed records cancel pending
+presses. Root binding changes update dependent records, including expansion.
+Semantic updates only patch model-bound sources; they do not recompile the skin
+or rebuild unrelated input fields. Font/image resource indexes are retained until
+their resource set changes or the runtime is disposed.
+

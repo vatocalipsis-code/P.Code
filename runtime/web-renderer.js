@@ -1,9 +1,11 @@
 /** Browser renderer for compiled P.Code Object Plans. */
+import {MODEL,semanticValue,decimalParts} from './semantic-model.js';
 const activeParallax=new WeakMap();
 const activeTilt=new WeakMap();
 const tiltScenes=new WeakMap();
 const activeInteraction=new WeakMap();
 const activeResourceStyles=new WeakMap();
+const activeResources=new WeakMap();
 const activeSkinStyles=new WeakMap();
 const activeRepeatLists=new WeakMap();
 let resourceScopeCounter=0;
@@ -28,9 +30,10 @@ const combinedPanelTransparency=(r,p=0)=>1-((1-r.Transparency)*(1-p));
 const structuralColor=(c,r,p=0)=>"color-mix(in srgb, "+c+" "+structuralPercent(combinedPanelTransparency(r,p))+", transparent)";
 function resourceFamily(scope,name){return "PCodeRes_"+scope+"_"+String(name).replace(/[^A-Za-z0-9_-]/g,"_")}
 function prepareResources(root,resources){
+  const previous=activeResources.get(root);if(previous?.source===resources)return previous.index;
   activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);
   const fonts=new Map(),pictures=new Map();
-  if(!resources)return {fonts,pictures};
+  if(!resources){const index={fonts,pictures};activeResources.set(root,{source:resources,index});return index}
   const scope=++resourceScopeCounter;
   const doc=root?.ownerDocument??globalThis.document;
   const rules=[];
@@ -43,7 +46,7 @@ function prepareResources(root,resources){
   if(rules.length&&doc?.createElement&&doc?.head){
     const style=doc.createElement("style");style.dataset.pcodeResources="";style.textContent=rules.join("\n");doc.head.append(style);activeResourceStyles.set(root,style);
   }
-  return {fonts,pictures};
+  const index={fonts,pictures};activeResources.set(root,{source:resources,index});return index;
 }
 function prepareSkinStyle(root,css){
   const old=activeSkinStyles.get(root);
@@ -108,6 +111,12 @@ function applyContainerContentLayout(content,rule={}){
   if(rule.Gap!==undefined)applyLayoutValue(content,"gap","content-gap",px(rule.Gap));
 }
 function renderSource(source,renderSet,rule,shadow=0,resources=null){
+  if(source.kind==='Decimal'){
+    const parts=decimalParts(source.value,rule.Format),el=document.createElement('span');el.dataset.planeSource='Decimal';
+    const whole=document.createElement('span'),fraction=document.createElement('span'),unit=document.createElement('span');
+    whole.dataset.planeNumberWhole='';fraction.dataset.planeNumberFraction='';unit.dataset.planeNumberUnit='';
+    whole.textContent=parts.whole;fraction.textContent=parts.fraction;unit.textContent=parts.unit;el.append(whole,fraction,unit);return el;
+  }
   if(source.kind==="Text"){
     const e=document.createElement("span");e.dataset.planeSource="Text";e.textContent=source.value;e.style.opacity=opacityFromTransparency(renderSet.TextTransparency);
     if(rule?.TextColor!==undefined)e.style.color=rule.TextColor;if(rule?.FontSize!==undefined)e.style.fontSize=px(rule.FontSize);if(rule?.FontWeight!==undefined)e.style.fontWeight=String(rule.FontWeight);if(rule?.Font!==undefined){const family=resources?.fonts?.get(rule.Font);if(!family)throw new Error("WebRenderer: missing font resource "+rule.Font);e.style.fontFamily='"'+family+'"'}if(shadow>0)e.style.filter=contentShadowFilter(shadow);return e;
@@ -123,11 +132,31 @@ function renderSource(source,renderSet,rule,shadow=0,resources=null){
   throw new Error("WebRenderer: unsupported source kind "+source.kind);
 }
 function sourcesFromData(node,dataSet,repeatedItem=null){
+  const rule=node.Visual??{};
+  if(/^[$@]\./.test(rule.Source??'')){
+    const value=semanticValue(rule.Source,dataSet[MODEL],repeatedItem),format=rule.Format??{Kind:'Text'};
+    if(value===null||value===undefined||value==='')return [];
+    if(format.Kind==='Decimal')return [{kind:'Decimal',value}];
+    if(format.Kind==='Picture'){const url=format.Map?.[value]??format.Fallback;return url?[{kind:'Picture',value:url}]:[]}
+    if(format.Kind==='DateTime'){
+      let text=new Intl.DateTimeFormat(format.Locale,format.Options).format(new Date(value));
+      if(format.DateTimeSeparator!==undefined)text=text.replace(',',format.DateTimeSeparator);
+      return [{kind:'Text',value:text}];
+    }
+    if(!['string','number','boolean'].includes(typeof value))throw Error('Text Source must resolve to a scalar');
+    return [{kind:'Text',value:String(value)}];
+  }
   const item=repeatedItem&&node.Visual?.Source?repeatedItem.Fields?.[node.Visual.Source]??{}:dataSet[node.dataSlot]??{};
   const text=typeof item.SourceText==="string"&&item.SourceText.length?{kind:"Text",value:item.SourceText}:null;
   const picture=typeof item.SourcePicture==="string"&&item.SourcePicture.length?{kind:"Picture",value:item.SourcePicture}:null;
   if(text&&picture)return node.Order==="Negative"?[text,picture]:[picture,text];
   return text?[text]:picture?[picture]:[];
+}
+function applySemanticState(el,rule,dataSet,item=null){
+  if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource)el.dataset.planeSemanticState='';
+  if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
+  if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.display=el.hidden?'none':''}
+  if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));
 }
 function applyTextLayout(el,body,rule){
   const constrained=rule.FillHorizontal===true||rule.Width!==undefined;
@@ -190,6 +219,9 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
 }
 function renderContainer(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,resources,repeatedItem=null){
   const rule=node.Visual??{};const el=document.createElement("div");el.dataset.planeType="Container";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.dataset.planeOrder=node.Order;el.__planeVisual=rule;
+  if(rule.Class)el.className=rule.Class;
+  if(/^[$@]\./.test(rule.Source??''))el.dataset.planeSemanticSource='';
+  applySemanticState(el,rule,dataSet,repeatedItem);
   el.style.setProperty("--plane-structural-opacity",structuralPercent(combinedPanelTransparency(renderSet,0)));el.style.setProperty("--plane-panel-surface-opacity","1");applyBoxRule(el,rule,renderSet,false);applyFill(el,rule,parentOrientation);
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const body=document.createElement("div");body.dataset.planeContainerContent="";applyContainerContentLayout(body,rule);
@@ -201,7 +233,7 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.dataset.planeActive="";
   let pointer=null,startX=0,startY=0,cancelled=false;
   const release=()=>{el.removeAttribute("data-plane-pressed");pointer=null;cancelled=true};
-  const isEnabled=()=>!interaction||interaction.isEnabled();
+  const isEnabled=()=>!el.hidden&&el.isConnected!==false&&(!interaction||interaction.isEnabled());
   el.addEventListener("pointerdown",event=>{
     if(event.button!==undefined&&event.button!==0||!isEnabled())return;
     pointer=event.pointerId;startX=event.clientX??0;startY=event.clientY??0;cancelled=false;
@@ -222,6 +254,8 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
 }
 function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists=[],repeatedItem=null){
   const el=document.createElement("div");el.dataset.planeType=node.type;el.dataset.planeLogin=node.Login;const rule=node.Visual??{};el.__planeVisual=rule;
+  if(rule.Class)el.className=rule.Class;
+  applySemanticState(el,rule,dataSet,repeatedItem);
   if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;
   const panelEffects=["SimplePanel","ActivePanel","AggregateActivePanel"].includes(node.type);const pt=panelEffects?(rule.PanelTransparency??0):0;
   el.style.setProperty("--plane-structural-opacity",structuralPercent(combinedPanelTransparency(renderSet,pt)));el.style.setProperty("--plane-panel-surface-opacity",String(1-pt));applyBoxRule(el,rule,renderSet,panelEffects);applyPanelLayout(el,rule);
@@ -231,7 +265,10 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
   for(const child of node.children??[]){
     if(child.Repeat){
       const list=document.createElement("div");list.dataset.planeRepeat=child.Repeat;list.style.display="contents";
-      const record={list,node:child,signature:null,renderSet,interaction,resources};repeatLists.push(record);
+      const paths=new Set();
+      const collect=value=>{if(!value||typeof value!=='object')return;for(const [key,v]of Object.entries(value))if(key!=='Repeat'&&typeof v==='string'&&v.startsWith('$.'))paths.add(v);else if(typeof v==='object')collect(v)};collect(child);
+      const record={list,node:child,signature:null,renderSet,interaction,resources,rows:new Map(),parallaxNodes,paths:[...paths]};repeatLists.push(record);
+      cancellers.push(()=>{for(const row of record.rows.values())for(const cancel of row.cancellers)cancel()});
       renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists);
       el.append(list);
     }else el.append(renderPanel(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem));
@@ -240,12 +277,24 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
   return el;
 }
 function renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists){
-  const items=dataSet[record.node.Repeat]?.Items??[];
-  const signature=JSON.stringify(items);
+  const semantic=record.node.Repeat.startsWith('$.');
+  const items=(semantic?semanticValue(record.node.Repeat,dataSet[MODEL]):dataSet[record.node.Repeat]?.Items)??[];
+  if(!Array.isArray(items)||items.length>5000)throw Error('Repeat requires an array of at most 5000 records');
+  const ids=new Set();for(const item of items){const id=semantic?item.id:item.Id;if(typeof id!=='string'||!id||ids.has(id))throw Error('Repeat requires unique string IDs');ids.add(id)}
+  const context=record.paths.map(path=>semanticValue(path,dataSet[MODEL]));
+  const signature=JSON.stringify([items,context]);
   if(record.signature===signature)return;
-  record.signature=signature;
   const template={...record.node,Repeat:undefined};
-  record.list.replaceChildren(...items.map(item=>renderPanel(template,dataSet,record.renderSet,parallaxNodes,record.interaction,cancellers,record.resources,repeatLists,item)));
+  const next=new Map();
+  for(const value of items){
+    const item=semantic?{...value,Id:value.id}:value,id=item.Id,signature=JSON.stringify([item,context]),old=record.rows.get(id);
+    if(old?.signature===signature){next.set(id,old);continue}
+    const row={signature,cancellers:[],parallax:[]};
+    row.element=renderPanel(template,dataSet,record.renderSet,row.parallax,record.interaction,row.cancellers,record.resources,[],item);next.set(id,row);
+  }
+  for(const [id,row]of record.rows)if(next.get(id)!==row){for(const cancel of row.cancellers)cancel();releaseDeferredPictures(row.element);for(const entry of row.parallax){const index=record.parallaxNodes.indexOf(entry);if(index>=0)record.parallaxNodes.splice(index,1)}}
+  for(const [id,row]of next)if(record.rows.get(id)!==row)record.parallaxNodes.push(...row.parallax);
+  record.list.replaceChildren(...[...next.values()].map(row=>row.element));record.rows=next;record.signature=signature;
 }
 function bindParallax(root,nodes){
   activeParallax.get(root)?.cancel();
@@ -306,7 +355,7 @@ export function requestTiltParallax(root){
 }
 export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
-  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
+  cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
   cancelPlaneCodeInteraction(root);
@@ -322,13 +371,15 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   activeRepeatLists.set(root,repeatLists);
   bindParallax(root,parallaxNodes);
 }
-export function patchSetData(root,nextData,renderSet,resourceSet=null){
+export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticOnly=false}={}){
   const resources=prepareResources(root,resourceSet);
-  for(const el of root.querySelectorAll("[data-plane-data-slot]")){
+  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!el.closest?.('[data-plane-repeat]'))applySemanticState(el,el.__planeVisual??{},nextData);
+  for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source]':'[data-plane-data-slot]')){
     if(el.closest?.('[data-plane-repeat]'))continue;
+    if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??''))continue;
     if(el.dataset.planeType==="EditableInput"){applyEditableState(el,nextData[el.dataset.planeDataSlot]);continue}
     const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
-    const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive"};const visual=el.__planeVisual??{};
+    const visual=el.__planeVisual??{};const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive",Visual:visual};
     let owner=el.parentElement;while(owner&&owner.dataset.planeType==="Group")owner=owner.parentElement;
     const shadow=owner?.__planeVisual?.Shadow??0;
     const sources=sourcesFromData(node,nextData).map(source=>renderSource(source,renderSet,visual,shadow,resources));

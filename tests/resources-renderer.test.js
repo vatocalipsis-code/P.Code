@@ -16,12 +16,13 @@ class FakeElement {
   dispatch(type,event={}){this.listeners?.get(type)?.({pointerId:1,clientX:0,clientY:0,button:0,...event})}
   querySelectorAll(selector){
     const nodes=[];
-    const matches=child=>selector==='[data-plane-source="Text"]'&&child.dataset.planeSource==='Text'||selector==='[data-plane-data-slot]'&&child.dataset.planeDataSlot!==undefined||selector==='[data-plane-deferred-src]'&&child.dataset.planeDeferredSrc!==undefined;
+    const matches=child=>selector==='[data-plane-source="Text"]'&&child.dataset.planeSource==='Text'||selector==='[data-plane-data-slot]'&&child.dataset.planeDataSlot!==undefined||selector==='[data-plane-login]'&&child.dataset.planeLogin!==undefined||selector==='[data-plane-semantic-state]'&&child.dataset.planeSemanticState!==undefined||selector==='[data-plane-semantic-source]'&&child.dataset.planeSemanticSource!==undefined||selector==='[data-plane-deferred-src]'&&child.dataset.planeDeferredSrc!==undefined;
     const walk=node=>{for(const child of node.children){if(matches(child))nodes.push(child);walk(child)}};
     walk(this);return nodes;
   }
   querySelector(selector){return selector===':scope > [data-plane-container-content]'?this.children.find(child=>child.dataset.planeContainerContent!==undefined)??null:null}
   remove(){this.removed=true}
+  closest(selector){for(let p=this;p;p=p.parentElement)if(selector==='[data-plane-repeat]'&&p.dataset.planeRepeat!==undefined)return p;return null}
 }
 class FakeDocument {
   constructor(){this.head=new FakeElement("head",this)}
@@ -161,4 +162,36 @@ test("P.Code renders and patches semantic repeated rows without host DOM constru
   assert.deepEqual(list.children.map(n=>n.dataset.planeItemId),["op:2","op:3"]);
   assert.equal(find(list.children[1],n=>n.dataset.planeSource==="Text").textContent,"Third");
   disposePlaneCode(root);
+});
+
+test('SPL owns model binding, decimal formatting, picture selection and repeated state',async()=>{
+  const {withModel}=await import('../runtime/semantic-model.js');
+  const {patchSetData}=await import('../runtime/web-renderer.js');
+  const {validatePLang}=await import('../runtime/validator.js');
+  const doc=new FakeDocument();globalThis.document=doc;const root=new FakeElement('div',doc),events=[];
+  const lang=[{Login:'Base',Properties:{},Layout:[{Login:'Count',Properties:{Source:'$.count'}}],SimplePanels:[{Login:'Section',Properties:{},Layout:[],ActivePanels:[{
+    Login:'Entry',Properties:{Repeat:'$.items',Class:'entry',OffPress:'record.open',StateSource:'@.state',VisibleSource:'@.available'},Layout:[
+      {Login:'Name',Properties:{Source:'@.name'}},
+      {Login:'Icon',Properties:{Source:'@.icon',Format:{Kind:'Picture',Map:{one:'./assets/one.png'},Fallback:'./assets/default.png'}}},
+      {Login:'Quantity',Properties:{Source:'@.quantity',Format:{Kind:'Decimal',ShowUnit:true}}}
+    ]
+  }]}]}];
+  validatePLang(lang,{},['pcode.semantic-repeat.v1','pcode.semantic-model.v1']);
+  assert.throws(()=>validatePLang(lang,{},['pcode.semantic-repeat.v1']),/semantic-model/);
+  const item={id:'entry:1',name:'One',icon:'one',state:'pending',available:true,quantity:{units:'-1234567890123456789',scale:3,precision:2,unit:'ABC'}};
+  const data=withModel({},{count:1,items:[item]});
+  renderPlaneCode(root,compileSetLang(lang),data,render,{isEnabled:()=>true,emit:(...args)=>events.push(args)});
+  const list=find(root,n=>n.dataset.planeRepeat==='$.items'),first=list.children[0];
+  assert.equal(first.className,'entry');assert.equal(first.dataset.planeState,'pending');assert.equal(first.hidden,false);
+  assert.equal(find(first,n=>n.dataset.planeNumberWhole!==undefined).textContent,'−1 234 567 890 123 456');
+  assert.equal(find(first,n=>n.dataset.planeNumberFraction!==undefined).textContent,'.78');
+  assert.equal(find(first,n=>n.dataset.planeSource==='Picture').src,'./assets/one.png');
+  patchSetData(root,withModel({},{count:2,items:[item,{...item,id:'entry:2',name:'Two',available:false}]}),render);
+  assert.equal(list.children[0],first,'unchanged records retain their DOM and handlers');
+  assert.equal(list.children[1].hidden,true);
+  assert.equal(find(root,n=>n.dataset.planeLogin==='Count').children[0].children[0].textContent,'2');
+  first.dispatch('pointerdown');
+  patchSetData(root,withModel({},{count:0,items:[]}),render);
+  first.dispatch('pointerup');assert.deepEqual(events,[],'removed pressed records must cancel their action');
+  disposePlaneCode(root);delete globalThis.document;
 });

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createPlaneCodeEngine} from "../runtime/public-runtime-core.js";
 import {compileSetLang} from "../runtime/setlang-compiler.js";
+import {MODEL} from '../runtime/semantic-model.js';
 import {validatePLang,validateSetData,validateSetEnvelope,validateSetRender,validateResources,isCanonicalPngFile,isCanonicalImageFile} from "../runtime/validator.js";
 
 const setLang={Name:"test-lang",Version:1,Data:[{
@@ -44,6 +45,21 @@ function harness(options={}){
 function connect(engine,required=[],optional=[]){
   return engine.connect({GenerationId:"pcode.layout-group.v1",SerializationVersion:1,RequiredCapabilities:required,OptionalCapabilities:optional});
 }
+
+test('semantic state is negotiated, isolated, validated and survives render changes',async()=>{
+  const h=harness({capabilities:['pcode.semantic-model.v1']});
+  const prepared=await connect(h.engine,['pcode.semantic-model.v1']).Connection.prepare({SetLang:setLang,SetData:setData,SetRender:setRender});
+  const runtime=prepared.Runtime,model={records:[{id:'record:1',amount:'2400'}]};
+  assert.equal((await runtime.applyModel(model)).Outcome,'Completed');
+  model.records[0].amount='9999';await runtime.mount({});
+  assert.equal(h.sessions[0].data[MODEL].records[0].amount,'2400');
+  assert.equal((await runtime.applyModel({bad:()=>{}})).Outcome,'Rejected');
+  await runtime.applySetRender(setRender);
+  assert.equal(h.sessions.at(-1).data[MODEL].records[0].amount,'2400');
+  const other=await connect(h.engine).Connection.prepare({SetLang:setLang,SetData:setData,SetRender:setRender});
+  assert.equal((await other.Runtime.applyModel({})).Failure.Code,'semantic-model-not-negotiated');
+  await runtime.dispose();assert.equal((await runtime.applyModel({})).Outcome,'Rejected');
+});
 
 test("descriptor and negotiation are exact",()=>{
   const {engine}=harness();

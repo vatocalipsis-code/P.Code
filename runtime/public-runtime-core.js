@@ -1,4 +1,5 @@
 /** Internal implementation behind the single public PlaneCodeEngine boundary. */
+import {withModel,validateSemanticModel} from './semantic-model.js';
 const completed=value=>Object.assign({Outcome:"Completed"},value);
 const failure=(Outcome,Class,Code,Diagnostics)=>({Outcome,Failure:{Class,Code,...(Diagnostics?{Diagnostics}: {})}});
 const rejected=(Class,Code,Diagnostics)=>failure("Rejected",Class,Code,Diagnostics);
@@ -38,7 +39,7 @@ export function createPlaneCodeEngine(dependencies){
   class RuntimeHandle{
     constructor(connection,objectPlan,setLang,setData,setRender,resources){
       this.connection=connection;this.objectPlan=objectPlan;this.setLang=setLang;
-      this.setData=setData;this.setRender=setRender;this.resources=resources??null;this.state="PREPARED";
+      this.setData=setData;this.setRender=setRender;this.resources=resources??null;this.state="PREPARED";this.semanticModel={};
       this.target=null;this.sink=null;this.tail=Promise.resolve();this.eventCounter=0;
       this.requiresSink=hasEventToken(objectPlan);
       this.inputValues=editableValues(objectPlan,setData.Data);
@@ -76,7 +77,7 @@ export function createPlaneCodeEngine(dependencies){
         if(!RenderTarget||(typeof RenderTarget!=="object"&&typeof RenderTarget!=="function"))return rejected("runtime-preparation","invalid-render-target");
         if(owners.has(RenderTarget))return rejected("runtime-preparation","render-target-in-use");
         try{
-          dependencies.renderer.mount(RenderTarget,this.objectPlan,this.setData.Data,this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
+          dependencies.renderer.mount(RenderTarget,this.objectPlan,withModel(this.setData.Data,this.semanticModel),this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
           owners.set(RenderTarget,this);this.target=RenderTarget;this.state="MOUNTED_INACTIVE";
           return completed();
         }catch(error){return this._failStop("mount-failed",error)}
@@ -97,9 +98,21 @@ export function createPlaneCodeEngine(dependencies){
         catch(error){return rejected("data-update","invalid-setdata",diagnostic(error))}
         try{
           this.setData=SetData;this.inputValues=editableValues(this.objectPlan,data);
-          if(this.target)dependencies.renderer.patchData(this.target,data,this.setRender.Data,this.resources);
+          if(this.target)dependencies.renderer.patchData(this.target,withModel(data,this.semanticModel),this.setRender.Data,this.resources);
           return completed();
         }catch(error){return this._failStop("data-update-failed",error)}
+      });
+    }
+    applyModel(model){
+      return this._enqueue(()=>{
+        if(this.state==='DISPOSED')return this._rejectState('applyModel',['PREPARED','MOUNTED_INACTIVE','ACTIVE']);
+        if(!this.connection.capabilities.includes('pcode.semantic-model.v1'))return rejected('capability','semantic-model-not-negotiated');
+        try{validateSemanticModel(model)}catch(error){return rejected('data-update','invalid-semantic-model',diagnostic(error))}
+        try{
+          this.semanticModel=structuredClone(model);
+          if(this.target)(dependencies.renderer.patchModel??dependencies.renderer.patchData)(this.target,withModel(this.setData.Data,this.semanticModel),this.setRender.Data,this.resources);
+          return completed();
+        }catch(error){return this._failStop('model-update-failed',error)}
       });
     }
     applySetRender(SetRender){
@@ -110,7 +123,7 @@ export function createPlaneCodeEngine(dependencies){
         catch(error){return rejected("setrender","invalid-setrender",diagnostic(error))}
         try{
           this.setRender=SetRender;
-          if(this.target)dependencies.renderer.rerender(this.target,this.objectPlan,this.setData.Data,render,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
+          if(this.target)dependencies.renderer.rerender(this.target,this.objectPlan,withModel(this.setData.Data,this.semanticModel),render,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
           return completed();
         }catch(error){return this._failStop("render-update-failed",error)}
       });

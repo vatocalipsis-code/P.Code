@@ -16,6 +16,14 @@ test('SPL preserves the skin stylesheet as SetLang metadata',()=>{
   assert.equal(parsed.SetLang.StyleSheet,project.SetLang.StyleSheet);
 });
 
+test('semantic formatter maps survive the complete SPL serialization boundary',()=>{
+  const project=parseSPL(legacy),properties=project.SetLang.Data[0].Properties;
+  properties.Format={Kind:'Picture',Map:{'icon.one':'./assets/one.png'},Fallback:'./assets/default.png'};
+  assert.deepEqual(parseSPL(serializeSPL(project)).SetLang.Data[0].Properties.Format,properties.Format);
+  properties.UnsupportedObject={a:1};
+  assert.throws(()=>serializeSPL(project),/unsupported structured property/);
+});
+
 const legacy = `
 SetLang {
   Name = "legacy"

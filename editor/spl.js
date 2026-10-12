@@ -136,7 +136,8 @@ class Parser {
         if(k!=="AggregateActivePanels") syntax(`unsupported Properties collection ${k}`,this.peek(-1));
         obj[k]=this.entityArrayBody();
         this.expect("]");
-      } else syntax(`expected = or [ after Properties.${k}`,this.peek());
+      } else if(k==='Format'&&this.match('{')){obj[k]=this.mapBody();this.expect('}');}
+      else syntax(`expected =, Format map, or [ after Properties.${k}`,this.peek());
     }
     return obj;
   }
@@ -307,9 +308,11 @@ function serializeProperties(props,indent){
       rows.push(line(indent+1,"AggregateActivePanels ["));
       for(const node of v) rows.push(...serializeEntity(node,"AggregateActivePanels",indent+2));
       rows.push(line(indent+1,"]"));
+    } else if(k==='Format'&&v&&typeof v==='object'&&!Array.isArray(v)){
+      rows.push(line(indent+1,'Format {'),...serializeMap(v,indent+2),line(indent+1,'}'));
     } else if(!(v && typeof v==="object")) {
       rows.push(line(indent+1,`${k} = ${lit(v)}`));
-    }
+    } else throw Error('SPL: unsupported structured property '+k);
   }
   rows.push(line(indent,"}"));
   return rows;
