@@ -27,6 +27,7 @@ class FakeElement {
 class FakeDocument {
   constructor(){this.head=new FakeElement("head",this)}
   createElement(tag){return new FakeElement(tag,this)}
+  createTextNode(text){const node=new FakeElement("#text",this);node.textContent=text;return node}
 }
 function find(root,predicate){
   if(predicate(root))return root;
@@ -199,4 +200,28 @@ test('SPL owns model binding, decimal formatting, picture selection and repeated
   patchSetData(root,withModel({},{count:0,items:[]}),render);
   first.dispatch('pointerup');assert.deepEqual(events,[],'removed pressed records must cancel their action');
   disposePlaneCode(root);delete globalThis.document;
+
+test('semantic accessibility follows model updates without replacing controls',async()=>{
+ const {withModel}=await import('../runtime/semantic-model.js');
+ const {patchSetData}=await import('../runtime/web-renderer.js');
+ const {validatePLang}=await import('../runtime/validator.js');
+ const doc=new FakeDocument();globalThis.document=doc;
+ try{
+  const root=new FakeElement('div',doc),lang=[{Login:'Base',Properties:{},Layout:[],SimplePanels:[{Login:'Group',Properties:{},Layout:[],ActivePanels:[{Login:'Choice',Properties:{NativeButton:true,PressedSource:'$.selected',EnabledSource:'$.allowed',LabelSource:'$.entity',LabelTemplate:'Open {name}',OffPress:'entity.open'},Layout:[]}]}]}];
+  assert.throws(()=>validatePLang(lang,{},['pcode.semantic-model.v1']),/semantic-accessibility/);
+  validatePLang(lang,{},['pcode.semantic-model.v1','pcode.semantic-accessibility.v1','pcode.semantic-controls.v1']);
+  const invalid=structuredClone(lang);invalid[0].SimplePanels[0].ActivePanels[0].Properties.LabelSource='name';
+  assert.throws(()=>validatePLang(invalid,{},['pcode.semantic-model.v1','pcode.semantic-accessibility.v1','pcode.semantic-controls.v1']),/semantic path/);
+  renderPlaneCode(root,compileSetLang(lang),withModel({},{selected:true,allowed:true,entity:{name:'One'}}),render);
+  const button=find(root,n=>n.dataset.planeLogin==='Choice');
+  assert.equal(button.attributes['aria-pressed'],'true');assert.equal(button.attributes['aria-label'],'Open One');assert.equal(button.disabled,false);
+  patchSetData(root,withModel({},{selected:false,allowed:false,entity:{name:'Two'}}),render,null,{semanticOnly:true});
+  assert.equal(find(root,n=>n.dataset.planeLogin==='Choice'),button);
+  assert.equal(button.attributes['aria-pressed'],'false');assert.equal(button.attributes['aria-label'],'Open Two');assert.equal(button.disabled,true);
+  patchSetData(root,withModel({},{}),render,null,{semanticOnly:true});
+  assert.equal(button.attributes['aria-pressed'],'false');assert.equal(button.attributes['aria-label'],'Open ');
+  disposePlaneCode(root);
+ }finally{delete globalThis.document}
+});
+
 });

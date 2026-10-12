@@ -127,7 +127,12 @@ function renderSource(source,renderSet,rule,shadow=0,resources=null){
     const whole=document.createElement('span'),fraction=document.createElement('span'),unit=document.createElement('span');
     whole.dataset.planeNumberWhole='';fraction.dataset.planeNumberFraction='';unit.dataset.planeNumberUnit='';
     whole.textContent=parts.whole;fraction.textContent=parts.fraction;unit.textContent=parts.unit;
-    const body=document.createElement('span');body.dataset.planeNumber='';body.append(whole,fraction,unit);el.append(body);return el;
+    const body=document.createElement('span');body.dataset.planeNumber='';body.append(whole,fraction);
+    if(source.unitPlacement==='Outside'){
+      unit.textContent=parts.unit.trimStart();el.append(body);
+      if(parts.unit)el.append(document.createTextNode(' '),unit);
+    }else{body.append(unit);el.append(body)}
+    return el;
   }
   if(source.kind==="Text"){
     const e=document.createElement("span");e.dataset.planeSource="Text";e.textContent=source.value;e.style.opacity=opacityFromTransparency(renderSet.TextTransparency);
@@ -155,11 +160,13 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource)el.dataset.planeSemanticState='';
+  if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
   if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
   if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.display=el.hidden?'none':''}
+  if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));
+  if(rule.LabelSource){const value=semanticValue(rule.LabelSource,dataSet[MODEL],item);el.setAttribute('aria-label',textTemplate(value,rule.LabelTemplate))}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));
-  if(rule.EnabledSource){const disabled=semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-disabled',String(disabled));if(el.tagName==='BUTTON')el.disabled=disabled}
+  if(rule.EnabledSource){const disabled=semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-disabled',String(disabled));if(el.tagName==='BUTTON')el.disabled=disabled;else el.inert=disabled}
 }
 function applyTextLayout(el,body,rule){
   const constrained=rule.FillHorizontal===true||rule.Width!==undefined;

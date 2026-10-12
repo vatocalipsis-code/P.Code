@@ -34,7 +34,7 @@ export function formatValue(value,format={Kind:'Text'},model={}){
   }
   let parts=decimalParts(value,format);
   if(format.TrimFraction)parts={...parts,fraction:parts.fraction.replace(/0+$/,'').replace(/[.,]$/,'')};
-  return [{kind:'Decimal',value,parts}];
+  return [{kind:'Decimal',value,parts,...(format.UnitPlacement?{unitPlacement:format.UnitPlacement}:{})}];
  }
  let text;
  if(format.Kind==='DateTime'){

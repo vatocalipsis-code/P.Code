@@ -27,7 +27,7 @@ const VISUAL_RULES=new Set([
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
   "Font","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
-  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource",
+  "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","LabelTemplate",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
   "Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
 ]);
@@ -75,9 +75,10 @@ function validateEventToken(value,label){
   if(!isNonEmptyString(value))fail(label+" must be null or a non-empty opaque string");
   if(value==="NOT_YET_SPECIFIED")fail(label+" must not use NOT_YET_SPECIFIED");
 }
+function usesUnitPlacement(format,depth=0){if(depth>8)fail('Format exceeds nesting limit');return Boolean(format?.UnitPlacement)||Object.values(format?.Parts??{}).some(part=>usesUnitPlacement(part?.Format,depth+1))}
 export function validateFormat(f,label='Format',depth=0){
  if(depth>8||!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime','Composite'].includes(f.Kind))fail('Invalid Format for '+label);
- if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction'].includes(key)))fail('Unknown Format property for '+label);
+ if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction','UnitPlacement'].includes(key)))fail('Unknown Format property for '+label);
  if(f.Kind==='Composite'){
   if(!f.Parts||typeof f.Parts!=='object'||Array.isArray(f.Parts)||Object.keys(f.Parts).length>64)fail('Composite Format requires up to 64 named parts');
   for(const part of Object.values(f.Parts)){
@@ -97,6 +98,7 @@ export function validateFormat(f,label='Format',depth=0){
   for(const url of Object.values(f.Map))if(!isCanonicalImageFile(url))fail('Picture Format must use local images');
   if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
  }
+ if(f.UnitPlacement!==undefined&&(f.Kind!=='Decimal'||!['Inside','Outside'].includes(f.UnitPlacement)))fail('UnitPlacement requires Decimal and Inside or Outside');
  for(const key of ['Absolute','ShowUnit','TrimFraction'])if(f[key]!==undefined&&typeof f[key]!=='boolean')fail(key+' must be boolean');
  for(const key of ['Fallback','GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
  if(f.Options!==undefined&&(!f.Options||typeof f.Options!=='object'||Array.isArray(f.Options)))fail('DateTime Options must be an object');
@@ -163,7 +165,8 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   }else if(rule.ModalClass!==undefined||rule.Dismiss!==undefined)fail('ModalClass and Dismiss require Modal');
   if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
-  for(const key of ['StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
+  for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
+  if(rule.LabelTemplate!==undefined&&(!rule.LabelSource||typeof rule.LabelTemplate!=='string'))fail('LabelTemplate requires LabelSource and text');
   if(rule.Format!==undefined)validateFormat(rule.Format,label);
   if(rule.PanelTransparency!==undefined){
     if(!allowPanelEffects)fail("PanelTransparency is not allowed for "+label);
@@ -288,10 +291,12 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
       fail("Parallax requires negotiated pcode.parallax.v1");
     if(node.Properties?.Repeat&&!capabilitySet.has("pcode.semantic-repeat.v1"))
       fail("Repeat requires negotiated pcode.semantic-repeat.v1");
-    if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
+    if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.numeric-editor.v1'))fail('NumericEditor requires pcode.numeric-editor.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
+    if((node.Properties?.PressedSource||node.Properties?.LabelSource)&&!capabilitySet.has('pcode.semantic-accessibility.v1'))fail('Semantic accessibility requires pcode.semantic-accessibility.v1');
+    if(usesUnitPlacement(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-unit-layout.v1'))fail('UnitPlacement requires pcode.decimal-unit-layout.v1');
     if(node.Properties?.DecimalInput?.Preview&&!capabilitySet.has('pcode.decimal-preview.v1'))fail('DecimalInput Preview requires pcode.decimal-preview.v1');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');

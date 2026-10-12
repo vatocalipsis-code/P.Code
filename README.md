@@ -56,3 +56,18 @@ The Theme/Skin Editor is an authoring workflow over the same contracts. It does 
 ## Editable input example
 
 See [examples/editable-input.js](examples/editable-input.js) for capability negotiation, editable SetLang/SetData, value-bearing events, and submission without a DOM overlay outside P.Code.
+
+### Semantic accessibility (2.23)
+
+`pcode.semantic-accessibility.v1` adds SPL `PressedSource` (boolean model path)
+for `aria-pressed` and `LabelSource` with optional `LabelTemplate` for an
+accessible name. Both use the existing semantic model; templates interpolate
+scalar fields as text. Model patches update existing controls, including
+repeated controls, without application DOM writes. `EnabledSource` continues
+to control whether a semantic action may be emitted. These attributes do not
+introduce product permissions or actions into the renderer.
+
+`pcode.decimal-unit-layout.v1` allows Decimal `Format.UnitPlacement = "Outside"`
+to render the unit after the number body, with a separate intervening text
+space. Default placement remains inside. This applies to composite formats too;
+SPL owns the typography of number, fraction and unit. Values are not changed.

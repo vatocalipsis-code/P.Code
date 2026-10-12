@@ -29,3 +29,23 @@ test('composite declarations round-trip and cannot bypass capability or validati
  assert.throws(()=>validateFormat({Kind:'Text',Map:{a:{html:'bad'}}}),/map/);
  assert.throws(()=>validateFormat({Kind:'Picture',Map:{x:'https://external.invalid/image.png'}}),/local images/);
 });
+
+
+test('decimal unit placement is explicit and preserves the original quantity',()=>{
+ const quantity={units:'-100005',scale:3,precision:2,unit:'XYZ'};
+ const result=formatValue(quantity,{Kind:'Decimal',ShowUnit:true,UnitPlacement:'Outside'});
+ assert.equal(result[0].unitPlacement,'Outside');
+ assert.deepEqual(result[0].parts,{whole:'−100',fraction:'.00',unit:' XYZ'});
+ assert.equal(quantity.units,'-100005');
+});
+
+
+test('unit placement negotiates its capability also inside composite formats',()=>{
+ const format={Kind:'Composite',Parts:{quantity:{Source:'@.quantity',Format:{Kind:'Decimal',ShowUnit:true,UnitPlacement:'Outside'}}}};
+ const lang=[{Login:'Root',Layout:[{Login:'Value',Properties:{Source:'$.record',Format:format}}],SimplePanels:[]}];
+ assert.throws(()=>validatePLang(lang,{},['pcode.semantic-model.v1','pcode.composite-format.v1']),/decimal-unit-layout/);
+ assert.equal(validatePLang(lang,{},['pcode.semantic-model.v1','pcode.composite-format.v1','pcode.decimal-unit-layout.v1']),true);
+ assert.throws(()=>validateFormat({Kind:'Decimal',UnitPlacement:'Beside'}),/UnitPlacement/);
+ const result=formatValue({quantity:{units:'1200',scale:2,unit:'kg'}},format);
+ assert.equal(result[0].value[0].unitPlacement,'Outside');
+});
