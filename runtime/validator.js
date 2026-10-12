@@ -33,7 +33,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","ControlAction","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
+  "Text","Role","AriaLevel","Sequence","Vector","ControlAction","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows","LiveVariable"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -199,6 +199,10 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.SecretResetSource!==undefined&&(!rule.SecretGroup||typeof rule.SecretResetSource!=='string'||!/^\$\.[a-zA-Z0-9_.-]+$/.test(rule.SecretResetSource)))fail('Invalid SecretResetSource');
   if(rule.SecretGroup!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.SecretGroup!=='string'||!/^[-a-zA-Z0-9_]{1,64}$/.test(rule.SecretGroup)))fail('Invalid SecretGroup');
   if(rule.OpenPickerOnClick!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.OpenPickerOnClick!=='boolean'))fail('OpenPickerOnClick requires a Date input and boolean');
+  if(rule.LiveVariable!==undefined){
+    const value=rule.LiveVariable;
+    if(!label.startsWith('EditableInput ')||!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['Name','Unit','Scale','OutputUnit'].includes(key))||typeof value.Name!=='string'||!/^--[a-z][a-z0-9-]{0,63}$/.test(value.Name)||!['','px','%'].includes(value.Unit??'')||value.Scale!==undefined&&(!isFiniteNumber(value.Scale)||value.Scale<=0||value.Scale>1)||value.OutputUnit!==undefined&&(typeof value.OutputUnit!=='string'||!/^[ a-zA-Z%]{0,8}$/.test(value.OutputUnit)))fail('LiveVariable requires a bounded Range CSS variable');
+  }
   if(rule.ControlAction!==undefined){if(!/^(?:ActivePanel|SimplePanel|Flow) /.test(label))fail('ControlAction requires an interactive panel');validateControlAction(rule.ControlAction)}
   if(rule.Text!==undefined&&((!rule.NativeButton&&!label.startsWith('Flow '))||typeof rule.Text!=='string'))fail('Text requires a NativeButton');
   if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
@@ -396,6 +400,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(source.DecimalInput&&!['Number','Text'].includes(source.InputType??'Text'))fail('DecimalInput requires text or number input');
     if(source.InputType!==undefined&&!INPUT_TYPES.has(source.InputType))fail("invalid InputType for EditableInput "+input.Login);
     if(['Choice','Multiline','Range','Checkbox'].includes(source.InputType)&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Input type requires pcode.semantic-controls.v1');
+    if(source.LiveVariable&&source.InputType!=='Range')fail('LiveVariable requires a Range input');
+    if(source.LiveVariable&&!capabilitySet.has('pcode.range-live-variable.v1'))fail('LiveVariable requires pcode.range-live-variable.v1');
     if(source.EmptyChoice!==undefined){if(typeof source.EmptyChoice!=='boolean'||source.InputType!=='Choice')fail('EmptyChoice requires a Choice boolean');if(!capabilitySet.has('pcode.choice-empty.v1'))fail('EmptyChoice requires pcode.choice-empty.v1')}
     for(const key of ["Placeholder","AriaLabel","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Autocomplete"])if(source[key]!==undefined&&typeof source[key]!=="string")fail(key+" for EditableInput "+input.Login+" must be a string");
     if(source.MaxLength!==undefined&&(!Number.isInteger(source.MaxLength)||source.MaxLength<0))fail('MaxLength must be a non-negative integer');
@@ -410,7 +416,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkFlow=(node,depth)=>{
     if(depth>32)fail('Flow nesting exceeds 32');
     add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
-    if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
+    if(!['div','section','article','p','span','strong','small','time','label','output','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
     const allowed=new Set(['ControlAction','Tag','Class','Text','Source','Format','Repeat','RepeatIds','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
     for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
     if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');

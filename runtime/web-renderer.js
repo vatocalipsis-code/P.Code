@@ -8,7 +8,7 @@ import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} fro
 /** Browser renderer for compiled P.Code Object Plans. */
 import {formatValue} from './value-format.js';
 import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
-import {createInputElement,patchInputElement,patchInputState,inputValue} from './semantic-controls.js';
+import {createInputElement,patchInputElement,patchInputState,inputValue,syncLiveVariable} from './semantic-controls.js';
 import {createModalScene,installModalScenes,prepareModalUpdate,updateModalScenes,disposeModalScenes} from './modal-scene.js';
 import {installRouteScenes,updateRouteScenes,disposeRouteScenes} from './route-scene.js';
 const activeParallax=new WeakMap();
@@ -211,7 +211,7 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
   el.addEventListener("compositionend",event=>{composing=false;emit("OnInput",event)});
   el.addEventListener("focus",event=>emit("OnFocus",event));
   el.addEventListener("blur",event=>emit("OnBlur",event));
-  el.addEventListener("input",event=>{if(!event.isComposing)emit("OnInput",event)});
+  el.addEventListener("input",event=>{syncLiveVariable(el,rule);if(!event.isComposing)emit("OnInput",event)});
   el.addEventListener("change",event=>emit("OnChange",event));
   el.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.isComposing&&!composing){emit("OnSubmit",event);if(events.OnSubmit)event.preventDefault?.()}});
   cancellers.push(()=>{composing=false;el.blur?.()});

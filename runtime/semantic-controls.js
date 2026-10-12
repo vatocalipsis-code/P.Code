@@ -17,6 +17,16 @@ export function createInputElement(config){
   if(config.OpenPickerOnClick)el.addEventListener('click',()=>openNativePicker(el));
   el.placeholder=config.Placeholder??'';return el;
 }
+export function syncLiveVariable(el,rule){
+  const variable=rule.LiveVariable;if(!variable)return;
+  const value=Number(el.value);
+  if(!Number.isFinite(value))return;
+  document.documentElement.style.setProperty(variable.Name,String(value*(variable.Scale??1))+(variable.Unit??''));
+  if(variable.OutputUnit!==undefined){
+    const output=el.parentElement?.querySelector('output');
+    if(output)output.textContent=el.value+variable.OutputUnit;
+  }
+}
 export function patchInputElement(el,node,dataSet,item=null){
   const rule=node.Visual??{},config=node.Input??{};
   const semantic=/^[$@]\./.test(rule.Source??'');
@@ -42,6 +52,7 @@ export function patchInputElement(el,node,dataSet,item=null){
   }
   const next=value==null?'':String(value);
   if(config.InputType==='Checkbox')el.checked=value===true||value==='true';else if(el.value!==next)el.value=next;
+  syncLiveVariable(el,rule);
   patchInputState(el,node,dataSet,item);
 }
 export function patchInputState(el,node,dataSet,item=null){
