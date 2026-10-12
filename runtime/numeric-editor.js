@@ -6,8 +6,15 @@ const path=value=>typeof value==='string'&&/^[$@]\.[\w.]+$/.test(value);
 const precision=value=>Number.isInteger(value)&&value>=0&&value<=24;
 export function validateDecimalInput(value,label){
  if(!label.startsWith('EditableInput ')||!value||typeof value!=='object'||Array.isArray(value))throw Error('DecimalInput requires an EditableInput');
- if(Object.keys(value).some(key=>!['Precision','PrecisionSource','ReadOnlySource'].includes(key)))throw Error('Unknown DecimalInput property');
+ if(Object.keys(value).some(key=>!['Precision','PrecisionSource','ReadOnlySource','Preview'].includes(key)))throw Error('Unknown DecimalInput property');
  if(!precision(value.Precision))throw Error('DecimalInput Precision must be 0..24');
+ if(value.Preview!==undefined){
+  const preview=value.Preview,classes=['Class','HostClass','ProjectedClass','NumberClass','FractionClass'];
+  if(!preview||typeof preview!=='object'||Array.isArray(preview)||Object.keys(preview).some(key=>![...classes,'GroupSeparator','DecimalSeparator','Rounding'].includes(key)))throw Error('Invalid DecimalInput Preview');
+  for(const key of classes)if(!className(preview[key]))throw Error('Invalid DecimalInput Preview '+key);
+  for(const key of ['GroupSeparator','DecimalSeparator'])if(typeof preview[key]!=='string'||preview[key].length>1)throw Error('Invalid DecimalInput Preview separator');
+  if(preview.Rounding!=='HalfTowardZero')throw Error('Invalid DecimalInput Preview rounding');
+ }
  for(const key of ['PrecisionSource','ReadOnlySource'])if(value[key]!==undefined&&!path(value[key]))throw Error('Invalid DecimalInput '+key);
 }
 export function validateNumericEditor(value,label){
@@ -33,7 +40,7 @@ export function patchDecimalInput(el,node,data,item=null){
  const config=node.Visual?.DecimalInput;if(!config)return;
  const scale=config.PrecisionSource?semanticValue(config.PrecisionSource,data[MODEL],item):config.Precision;
  const readOnly=node.Input?.ReadOnly===true||semanticValue(node.Visual?.ReadOnlySource,data[MODEL],item)===true||semanticValue(config.ReadOnlySource,data[MODEL],item)===true;
- el.__planeDecimal={precision:scale??config.Precision,readOnly};
+ el.__planeDecimal={precision:scale??config.Precision,readOnly,preview:config.Preview};
  el.readOnly=true;el.inputMode='none';el.setAttribute('aria-haspopup','dialog');
  if(readOnly)el.setAttribute('aria-readonly','true');else el.removeAttribute('aria-readonly');
 }
@@ -95,3 +102,59 @@ export function installNumericEditor(root,nodes,interaction,data){
   if(next!==navigation||semanticValue(rule.EnabledSource,model)!==true||field&&(!field.isConnected||!usable(field)||field.__planeDecimal.precision!==scale))close();navigation=next;
  },dispose(){close();abort.abort()}});
 }
+
+// Exact display projection only: input text is never rewritten or rounded.
+export function decimalPreviewParts(value,scale,rule){
+ const match=String(value).trim().match(/^([+-]?)(\d+)(?:[.,](\d*))?$/);
+ if(!match||!precision(scale))return null;
+ const denominator=10n**BigInt(match[3]?.length??0),numerator=BigInt(match[2]+(match[3]??''))*10n**BigInt(scale);
+ let units=numerator/denominator;if(numerator%denominator*2n>denominator)units++;
+ const digits=String(units).padStart(scale+1,'0');
+ const whole=(match[1]==='-'&&units?'-':'')+(scale?digits.slice(0,-scale):digits).replace(/\B(?=(\d{3})+(?!\d))/g,()=>rule.GroupSeparator);
+ return {whole,fraction:scale?rule.DecimalSeparator+digits.slice(-scale):''};
+}
+const previews=new WeakMap();
+export function installDecimalPreviews(root,nodes){
+ disposeDecimalPreviews(root);
+ const declaresPreview=node=>node.Visual?.DecimalInput?.Preview||[...(node.layout??[]),...(node.children??[])].some(declaresPreview);
+ if(!nodes.some(declaresPreview))return;
+ const doc=root.ownerDocument,win=doc.defaultView,abort=new win.AbortController(),records=new Map();let frame=null;
+ const schedule=()=>{if(frame===null)frame=win.requestAnimationFrame(paint)};
+ const observer=new win.ResizeObserver(schedule);
+ function hide(input,record){record.ghost.hidden=true;input.classList.remove(record.rule.ProjectedClass)}
+ function paint(){
+  frame=null;
+  for(const [input,record]of records)if(!root.contains(input)){observer.unobserve(input);record.ghost.remove();records.delete(input)}
+  for(const input of root.querySelectorAll('input[data-plane-decimal]')){
+   const rule=input.__planeDecimal?.preview;if(!rule||records.has(input))continue;
+   const ghost=doc.createElement('div');ghost.className=rule.Class;ghost.hidden=true;ghost.setAttribute('aria-hidden','true');
+   input.parentElement.classList.add(rule.HostClass);input.after(ghost);records.set(input,{ghost,rule,signature:null});observer.observe(input);
+  }
+  // Remove projection classes before reading color; their canonical CSS makes
+  // the native text transparent. Batch geometry reads before positioning writes.
+  for(const [input,record]of records)input.classList.remove(record.rule.ProjectedClass);
+  const measurements=[];
+  for(const [input,record]of records){
+   const parts=decimalPreviewParts(input.value,input.__planeDecimal.precision,record.rule);
+   if(!parts||doc.activeElement===input||input.closest('[hidden],[aria-hidden="true"]')||!input.getClientRects().length){hide(input,record);continue}
+   const style=win.getComputedStyle(input);
+   measurements.push({input,record,parts,values:{left:input.offsetLeft+'px',top:input.offsetTop+'px',width:input.offsetWidth+'px',height:input.offsetHeight+'px',padding:style.padding,font:style.font,textAlign:style.textAlign,color:style.color,justifyContent:style.textAlign==='right'?'flex-end':style.textAlign==='center'?'center':'flex-start'}});
+  }
+  for(const {input,record,parts,values}of measurements){
+   const {ghost,rule}=record,signature=JSON.stringify(parts);
+   if(signature!==record.signature){
+    const number=doc.createElement('span');number.className=rule.NumberClass;number.append(doc.createTextNode(parts.whole));
+    if(parts.fraction){const fraction=doc.createElement('span');fraction.className=rule.FractionClass;fraction.textContent=parts.fraction;number.append(fraction)}
+    ghost.replaceChildren(number);record.signature=signature;
+   }
+   for(const [key,value]of Object.entries(values))if(ghost.style[key]!==value)ghost.style[key]=value;
+   ghost.hidden=false;input.classList.add(rule.ProjectedClass);
+  }
+ }
+ root.addEventListener('focusin',event=>{const record=records.get(event.target);if(record)hide(event.target,record)},{signal:abort.signal});
+ for(const type of ['focusout','input'])root.addEventListener(type,schedule,{signal:abort.signal});
+ previews.set(root,{schedule,dispose(){abort.abort();observer.disconnect();if(frame!==null)win.cancelAnimationFrame(frame);for(const [input,record]of records){hide(input,record);record.ghost.remove()}records.clear()}});
+ schedule();
+}
+export function updateDecimalPreviews(root){previews.get(root)?.schedule()}
+export function disposeDecimalPreviews(root){previews.get(root)?.dispose();previews.delete(root)}

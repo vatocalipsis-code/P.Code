@@ -41,7 +41,33 @@ export function createPCodeHost({engine,parse,fetchText=async path=>{
       return {connection,runtime:result.Runtime};
     }catch(error){await connection.close().catch(()=>{});throw error}
   }
-  return Object.freeze({load,prepare,updatePresentation,getCached:key=>sources.get(key)?.pending});
+  return Object.freeze({load,prepare,updatePresentation,deliverFile,getCached:key=>sources.get(key)?.pending});
+}
+
+// A semantic export result contains bytes/text and metadata, never a DOM handle.
+// Keep this synchronous so the browser download retains the user's activation.
+export function deliverFile({text,filename,mediaType}={},env=globalThis){
+ if(typeof text!=='string'||typeof filename!=='string'||!filename||/[<>:"/\\|?*\x00-\x1f\x7f]/.test(filename)||filename==='.'||filename==='..')throw new TypeError('File text and a safe filename required');
+ if(typeof mediaType!=='string'||!/^[-\w.+]+\/[-\w.+]+(?:;charset=[-\w]+)?$/.test(mediaType))throw new TypeError('File media type required');
+ const doc=env.document;
+ if(!doc?.body||typeof env.Blob!=='function'||typeof env.URL?.createObjectURL!=='function'||typeof env.URL?.revokeObjectURL!=='function'||typeof env.setTimeout!=='function')throw new Error('Browser file delivery unavailable');
+ const url=env.URL.createObjectURL(new env.Blob([text],{type:mediaType}));
+ let link,requested=false;
+ try{
+  link=doc.createElement('a');link.hidden=true;link.href=url;link.download=filename;
+  doc.body.append(link);link.click();requested=true;
+ }finally{
+  try{link?.remove()}
+  finally{
+   // Browsers consume the object URL asynchronously after the activation.
+   if(requested){
+    try{env.setTimeout(()=>env.URL.revokeObjectURL(url),60000)}
+    catch(error){env.URL.revokeObjectURL(url);throw error}
+   }else env.URL.revokeObjectURL(url);
+  }
+ }
+ // The browser owns save/cancel: do not claim that a file was saved to disk.
+ return Object.freeze({status:'requested'});
 }
 
 // View continuity belongs to Picot. Snapshots never cross into application data.

@@ -1,4 +1,4 @@
-import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput} from './numeric-editor.js';
+import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput,installDecimalPreviews,updateDecimalPreviews,disposeDecimalPreviews} from './numeric-editor.js';
 import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} from './control-feedback.js';
 /** Browser renderer for compiled P.Code Object Plans. */
 import {formatValue} from './value-format.js';
@@ -361,14 +361,14 @@ export function requestTiltParallax(root){
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
 export function consumePlaneCodeBack(root){return consumeNumericBack(root)}
 export function disposePlaneCode(root){
-  disposeNumericEditor(root);
+  disposeNumericEditor(root);disposeDecimalPreviews(root);
   disposeControlFeedback(root);
   disposeRouteScenes(root);
   disposeModalScenes(root);
   cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
-  disposeNumericEditor(root);
+  disposeNumericEditor(root);disposeDecimalPreviews(root);
   disposeControlFeedback(root);
   disposeRouteScenes(root);
   cancelPlaneCodeInteraction(root);
@@ -387,7 +387,7 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   });
   releaseDeferredPictures(root);
   root.replaceChildren(...panels);
-  installNumericEditor(root,roots,interaction,dataSet);
+  installNumericEditor(root,roots,interaction,dataSet);installDecimalPreviews(root,roots);
   installControlFeedback(root,roots,interaction);
   installRouteScenes(root,routes,interaction);updateRouteScenes(root,dataSet);
   installModalScenes(root,modals);updateModalScenes(root,dataSet);
@@ -413,5 +413,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
   for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
-  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);
+  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);
 }

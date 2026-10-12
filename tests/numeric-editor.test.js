@@ -27,3 +27,27 @@ test('custom input read-only state is independent of native keyboard suppression
  patchDecimalInput(el,node,withModel({},{precision:3,calculated:true}));
  assert.equal(el.__planeDecimal.readOnly,true);assert.equal(attrs['aria-readonly'],'true');
 });
+
+test('decimal preview rounds only its representation with exact half toward zero',async()=>{
+ const {decimalPreviewParts}=await import('../runtime/numeric-editor.js');
+ const rule={GroupSeparator:'\u00a0',DecimalSeparator:'.'};
+ const text=(value,precision)=>{const parts=decimalPreviewParts(value,precision,rule);return parts&&parts.whole+parts.fraction};
+ assert.equal(text('12',2),'12.00');assert.equal(text('12.3455',3),'12.345');assert.equal(text('12.34551',3),'12.346');
+ assert.equal(text('0.5',0),'0');assert.equal(text('0.51',0),'1');assert.equal(text('-1.005',2),'-1.00');assert.equal(text('-0.00001',2),'0.00');
+ assert.equal(text('999999999999999999999.99',2),'999\u00a0999\u00a0999\u00a0999\u00a0999\u00a0999\u00a0999.99');
+ assert.equal(text('12,5',4),'12.5000');assert.equal(text('12.',0),'12');assert.equal(text('',2),null);assert.equal(text('NaN',2),null);assert.equal(text('1',25),null);
+});
+test('decimal preview styles and rounding are explicit SPL parameters',()=>{
+ const preview={Class:'preview',HostClass:'host',ProjectedClass:'projected',NumberClass:'number',FractionClass:'fraction',GroupSeparator:' ',DecimalSeparator:'.',Rounding:'HalfTowardZero'};
+ validateDecimalInput({Precision:2,Preview:preview},'EditableInput Value');
+ for(const patch of [{Class:'two classes'},{Rounding:'financial-rule'},{GroupSeparator:{}},{Unknown:1}])assert.throws(()=>validateDecimalInput({Precision:2,Preview:{...preview,...patch}},'EditableInput Value'),/Preview/);
+});
+test('preview declaration round-trips and cannot be used without its capability',async()=>{
+ const {parseSPL,serializeSPL}=await import('../editor/spl.js');
+ const preview={Class:'preview',HostClass:'host',ProjectedClass:'projected',NumberClass:'number',FractionClass:'fraction',GroupSeparator:'\u00a0',DecimalSeparator:'.',Rounding:'HalfTowardZero'};
+ const rule={Precision:2,Preview:preview};
+ const plan=[{Login:'Form',Properties:{NumericEditor:{}},Layout:[{Type:'EditableInput',Login:'Quantity',Properties:{InputType:'Number',DecimalInput:rule}}],SimplePanels:[]}];
+ assert.throws(()=>validatePLang(plan,{},['pcode.editable-input.v1','pcode.numeric-editor.v1','pcode.semantic-model.v1']),/Preview requires pcode.decimal-preview/);
+ const project={SetLang:{Name:'component',Version:1,Data:plan},SetData:{Name:'data',Version:1,Data:{}},SetRender:{Name:'render',Version:1,Data:{}}};
+ assert.deepEqual(parseSPL(serializeSPL(project)).SetLang.Data[0].Layout[0].Properties.DecimalInput,rule);
+});

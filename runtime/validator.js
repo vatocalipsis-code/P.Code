@@ -292,6 +292,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.numeric-editor.v1'))fail('NumericEditor requires pcode.numeric-editor.v1');
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
+    if(node.Properties?.DecimalInput?.Preview&&!capabilitySet.has('pcode.decimal-preview.v1'))fail('DecimalInput Preview requires pcode.decimal-preview.v1');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
     if((node.Properties?.Format?.Kind==='Composite'||node.Properties?.Format?.Kind==='Text'&&node.Properties.Format.Map||node.Properties?.Format?.TrimFraction)&&!capabilitySet.has('pcode.composite-format.v1'))fail('Extended Format requires pcode.composite-format.v1');
