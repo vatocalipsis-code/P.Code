@@ -41,5 +41,60 @@ export function createPCodeHost({engine,parse,fetchText=async path=>{
       return {connection,runtime:result.Runtime};
     }catch(error){await connection.close().catch(()=>{});throw error}
   }
-  return Object.freeze({load,prepare,getCached:key=>sources.get(key)?.pending});
+  return Object.freeze({load,prepare,updatePresentation,getCached:key=>sources.get(key)?.pending});
+}
+
+// View continuity belongs to Picot. Snapshots never cross into application data.
+const presentationUpdates=new WeakMap();
+function identity(element){
+ if(!element?.dataset?.planeLogin)return null;
+ const repeated=[];
+ for(let owner=element;owner;owner=owner.parentElement)if(owner.hasAttribute('data-plane-item-id'))repeated.push([owner.dataset.planeLogin,owner.dataset.planeItemId]);
+ return JSON.stringify([element.dataset.planeLogin,repeated]);
+}
+function snapshot(root){
+ const doc=root.ownerDocument,win=doc.defaultView,active=doc.activeElement;
+ const focused=root.contains(active)?active:null;
+ const scroll=[];
+ for(const node of root.querySelectorAll('[data-plane-login]'))if(node.scrollTop||node.scrollLeft)scroll.push({key:identity(node),x:node.scrollLeft,y:node.scrollTop});
+ return {doc,win,active,focused,key:identity(focused),start:focused?.selectionStart,end:focused?.selectionEnd,direction:focused?.selectionDirection,
+  scroll,rootX:root.scrollLeft,rootY:root.scrollTop,windowX:win.scrollX,windowY:win.scrollY};
+}
+function restore(root,state){
+ if(!root.isConnected)return;
+ const nodes=new Map(),wanted=new Set([state.key,...state.scroll.map(position=>position.key)].filter(Boolean).map(key=>JSON.parse(key)[0]));
+ for(const node of wanted.size?root.querySelectorAll('[data-plane-login]'):[]){
+  if(!wanted.has(node.dataset.planeLogin))continue;
+  const key=identity(node);if(!nodes.has(key))nodes.set(key,[]);nodes.get(key).push(node);
+ }
+ const current=state.doc.activeElement;
+ // Never steal focus from a new overlay or a control outside this render target.
+ if(state.key&&(current===state.active||current===state.doc.body||current===root||root.contains(current))){
+  const candidates=(nodes.get(state.key)??[]).filter(field=>!field.closest('[hidden],[inert],[aria-hidden="true"],:disabled')&&field.getClientRects().length&&state.win.getComputedStyle(field).visibility!=='hidden');
+  const field=candidates.length===1?candidates[0]:null;
+  if(field){
+   field.focus({preventScroll:true});
+   if(typeof state.start==='number'&&typeof field.setSelectionRange==='function')try{field.setSelectionRange(state.start,state.end,state.direction??'none')}catch{}
+  }
+ }
+ for(const position of state.scroll){const candidates=nodes.get(position.key)??[],node=candidates.length===1?candidates[0]:null;if(node){node.scrollLeft=position.x;node.scrollTop=position.y}}
+ root.scrollLeft=state.rootX;root.scrollTop=state.rootY;
+ if(state.win.scrollX!==state.windowX||state.win.scrollY!==state.windowY)state.win.scrollTo({left:state.windowX,top:state.windowY,behavior:'instant'});
+}
+export function updatePresentation(root,update){
+ if(!root?.ownerDocument||typeof update!=='function')return Promise.reject(new TypeError('Render target and update required'));
+ const run=async()=>{
+  const state=snapshot(root),visibility=root.style.getPropertyValue('visibility'),priority=root.style.getPropertyPriority('visibility');
+  root.style.setProperty('visibility','hidden','important');
+  try{return await update()}
+  finally{
+   if(visibility)root.style.setProperty('visibility',visibility,priority);else root.style.removeProperty('visibility');
+   restore(root,state);
+  }
+ };
+ // Serialize updates of one target without locking independent applications.
+ const result=(presentationUpdates.get(root)??Promise.resolve()).then(run,run);
+ const tail=result.then(()=>undefined,()=>undefined);presentationUpdates.set(root,tail);
+ void tail.then(()=>{if(presentationUpdates.get(root)===tail)presentationUpdates.delete(root)});
+ return result;
 }

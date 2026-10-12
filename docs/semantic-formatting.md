@@ -36,3 +36,21 @@ Feedback {
 `Scope` is `Root` or `Document`. Document scope supports applications containing detached overlays while their migration is in progress; it does not grant those overlays architectural acceptance. Only the active runtime reacts. CSS, class names, dimensions, selectors, and durations come from SPL. The scene never emits domain commands.
 
 The renderer owns listeners, pressed-state lifetime, halo creation, measured bounds, reduced-motion handling, and disposal. Disabling interaction cancels outstanding feedback. Replacing/disposal of a runtime aborts listeners, clears timers, and removes transient nodes. Declaration multiplicity and capability negotiation are validated before mounting.
+
+## Presentation continuity in the browser host
+
+`host.updatePresentation(renderTarget, async () => { ... })`
+serializes replacements of one render target. Picot retains focus, selection and
+scroll internally, hides intermediate composition, and restores visibility even
+when the callback rejects. Application code neither reads the snapshot nor
+receives DOM positions. Independent targets do not share a lock.
+
+Identity is `Login` plus the enclosing repeated-item IDs. Restoration therefore
+survives list reordering; a missing or ambiguous identity is skipped. Hidden,
+inert and disabled controls are never focused. Focus newly placed outside the
+render target is preserved. Selection is restored after visibility, including its
+direction. Scroll offsets include nested named elements and the document.
+
+The callback still owns application work and rollback. This API does not perform
+network mutations or decide which semantic data to load. Applications must close
+the previous runtime through its connection before mounting the replacement.
