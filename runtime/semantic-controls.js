@@ -32,7 +32,7 @@ export function patchInputElement(el,node,dataSet,item=null){
         const unavailable=config.ChoiceAvailableField&&semanticValue('@.'+config.ChoiceAvailableField,null,choice)===false;
         return option(id,text+(unavailable?config.UnavailableSuffix??'':''));
       });
-      el.replaceChildren(option('',choices.length?config.Placeholder??'':config.EmptyPlaceholder??config.Placeholder??''),...options);
+      el.replaceChildren(...(config.EmptyChoice===false?[]:[option('',choices.length?config.Placeholder??'':config.EmptyPlaceholder??config.Placeholder??'')]),...options);
       el.__planeChoices=signature;
     }
   }

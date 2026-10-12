@@ -142,3 +142,11 @@ emit their semantic ItemId. No application handler is attached to DOM nodes.
 SceneEffects.Scroll optionally accepts LatestSource, a semantic path. A changed
 record key pins the scroll target to its end; otherwise position is preserved.
 Closed scenes do not read scroll geometry.
+
+## Native choice placeholder policy (2.30.0)
+
+`pcode.choice-empty.v1` permits `EditableInput` of InputType Choice to declare
+`EmptyChoice = false`. The native select then contains only authored semantic
+choices. The default still supplies the existing empty/placeholder option.
+The option policy belongs to SPL; selected values and allowed records remain
+application data. Non-boolean policies and use on other input types are rejected.

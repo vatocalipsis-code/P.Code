@@ -54,3 +54,10 @@ test('model-only updates refresh native availability without overwriting draft i
   patchInputState(el,node,withModel({},{editable:true,locked:true}));assert.equal(el.readOnly,true);assert.equal(el.value,'unsaved');assert.equal(el.attrs['aria-invalid'],undefined);
  }finally{delete globalThis.document}
 });
+
+test('SPL can exclude the empty choice without changing existing choice defaults',()=>{
+ globalThis.document={createElement:tag=>new Element(tag)};
+ try{const node={Input:{InputType:'Choice',EmptyChoice:false},Visual:{Source:'$.selection',ChoicesSource:'$.items'}},el=createInputElement(node.Input);patchInputElement(el,node,withModel({},{selection:'a',items:[{id:'a',name:'A'},{id:'b',name:'B'}]}));assert.deepEqual(el.children.map(n=>n.value),['a','b']);assert.equal(el.value,'a')}finally{delete globalThis.document}
+ const Data=[{Login:'Page',Layout:[{Type:'EditableInput',Login:'Choice',Properties:{InputType:'Choice',EmptyChoice:false,ChoicesSource:'$.items'}}],SimplePanels:[]}],caps=['pcode.editable-input.v1','pcode.semantic-controls.v1','pcode.semantic-model.v1'];
+ assert.throws(()=>validatePLang(Data,{},caps),/choice-empty/);assert.equal(validatePLang(Data,{},[...caps,'pcode.choice-empty.v1']),true);
+});
