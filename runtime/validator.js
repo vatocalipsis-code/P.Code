@@ -33,7 +33,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","ControlAction","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows","LiveVariable"
+  "Text","Role","AriaLevel","Sequence","Vector","ControlAction","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows","LiveVariable","NativeSwitch"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -199,6 +199,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.SecretResetSource!==undefined&&(!rule.SecretGroup||typeof rule.SecretResetSource!=='string'||!/^\$\.[a-zA-Z0-9_.-]+$/.test(rule.SecretResetSource)))fail('Invalid SecretResetSource');
   if(rule.SecretGroup!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.SecretGroup!=='string'||!/^[-a-zA-Z0-9_]{1,64}$/.test(rule.SecretGroup)))fail('Invalid SecretGroup');
   if(rule.OpenPickerOnClick!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.OpenPickerOnClick!=='boolean'))fail('OpenPickerOnClick requires a Date input and boolean');
+  if(rule.NativeSwitch!==undefined&&(!label.startsWith('EditableInput ')||rule.NativeSwitch!==true))fail('NativeSwitch requires a checkbox input');
   if(rule.LiveVariable!==undefined){
     const value=rule.LiveVariable;
     if(!label.startsWith('EditableInput ')||!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['Name','Unit','Scale','OutputUnit'].includes(key))||typeof value.Name!=='string'||!/^--[a-z][a-z0-9-]{0,63}$/.test(value.Name)||!['','px','%'].includes(value.Unit??'')||value.Scale!==undefined&&(!isFiniteNumber(value.Scale)||value.Scale<=0||value.Scale>1)||value.OutputUnit!==undefined&&(typeof value.OutputUnit!=='string'||!/^[ a-zA-Z%]{0,8}$/.test(value.OutputUnit)))fail('LiveVariable requires a bounded Range CSS variable');
@@ -392,7 +393,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkInput=input=>{
     if(!capabilitySet.has(EDITABLE_INPUT_CAPABILITY))fail("EditableInput requires negotiated "+EDITABLE_INPUT_CAPABILITY);
     add(input.Login,"EditableInput");const p={...(input.Properties??{})};
-    for(const key of ["InputType","Placeholder","Disabled","Required","AriaLabel","InputMode","OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])delete p[key];
+    for(const key of ["InputType","Placeholder","Disabled","Required","AriaLabel","InputMode","OnFocus","OnBlur","OnInput","OnChange","OnSubmit","NativeSwitch"])delete p[key];
     validateVisualRule(p,"EditableInput "+input.Login,false);checkFill(p,"EditableInput "+input.Login);
     const source=input.Properties??{};
     if(source.SecretGroup!==undefined&&source.InputType!=='Secret')fail('SecretGroup requires Secret input');
@@ -402,6 +403,8 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(['Choice','Multiline','Range','Checkbox'].includes(source.InputType)&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Input type requires pcode.semantic-controls.v1');
     if(source.LiveVariable&&source.InputType!=='Range')fail('LiveVariable requires a Range input');
     if(source.LiveVariable&&!capabilitySet.has('pcode.range-live-variable.v1'))fail('LiveVariable requires pcode.range-live-variable.v1');
+    if(source.NativeSwitch&&source.InputType!=='Checkbox')fail('NativeSwitch requires a Checkbox input');
+    if(source.NativeSwitch&&!capabilitySet.has('pcode.native-switch.v1'))fail('NativeSwitch requires pcode.native-switch.v1');
     if(source.EmptyChoice!==undefined){if(typeof source.EmptyChoice!=='boolean'||source.InputType!=='Choice')fail('EmptyChoice requires a Choice boolean');if(!capabilitySet.has('pcode.choice-empty.v1'))fail('EmptyChoice requires pcode.choice-empty.v1')}
     for(const key of ["Placeholder","AriaLabel","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Autocomplete"])if(source[key]!==undefined&&typeof source[key]!=="string")fail(key+" for EditableInput "+input.Login+" must be a string");
     if(source.MaxLength!==undefined&&(!Number.isInteger(source.MaxLength)||source.MaxLength<0))fail('MaxLength must be a non-negative integer');

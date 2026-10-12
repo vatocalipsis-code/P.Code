@@ -12,7 +12,7 @@ function compileContainer(node){
 function compileEditableInput(node){
   const p={...(node.Properties??{})};
   const Input={InputType:p.InputType??"Text",Placeholder:p.Placeholder??"",Disabled:p.Disabled===true,Required:p.Required===true,ReadOnly:p.ReadOnly===true,AriaLabel:p.AriaLabel??node.Login,InputMode:p.InputMode??null};
-  for(const key of ['SecretGroup','OpenPickerOnClick','EmptyChoice','ChoiceValue','ChoiceLabel','ChoiceAvailableField','UnavailableSuffix','EmptyPlaceholder','Min','Max','Step','MaxLength','Autocomplete','Rows'])if(p[key]!==undefined)Input[key]=p[key];
+  for(const key of ['SecretGroup','OpenPickerOnClick','EmptyChoice','ChoiceValue','ChoiceLabel','ChoiceAvailableField','UnavailableSuffix','EmptyPlaceholder','Min','Max','Step','MaxLength','Autocomplete','Rows','NativeSwitch'])if(p[key]!==undefined)Input[key]=p[key];
   const Events={OnFocus:p.OnFocus,OnBlur:p.OnBlur,OnInput:p.OnInput,OnChange:p.OnChange,OnSubmit:p.OnSubmit};
   for(const key of [...Object.keys(Input),...Object.keys(Events)])delete p[key];
   return freeze({type:"EditableInput",Login:node.Login,Visual:freeze(p),Input:freeze(Input),Events:freeze(Events),dataSlot:node.Login});

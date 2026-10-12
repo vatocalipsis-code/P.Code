@@ -198,6 +198,7 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
   const rule=node.Visual??{},config=node.Input??{},events=node.Events??{};
   const el=createInputElement(config);el.dataset.planeType="EditableInput";el.dataset.planeLogin=node.Login;el.dataset.planeDataSlot=node.dataSlot;el.__planeVisual=rule;el.__planeInput=node;
   if(rule.Class)el.className=rule.Class;
+  if(config.NativeSwitch){el.setAttribute('switch','');el.classList.toggle('plane-switch-fallback',!('switch' in el))}
   if(/^[$@]\./.test(rule.Source??''))el.dataset.planeSemanticSource='';
   if(rule.DecimalInput)el.dataset.planeDecimal='';
   el.required=config.Required===true;el.setAttribute('aria-label',config.AriaLabel??node.Login);
