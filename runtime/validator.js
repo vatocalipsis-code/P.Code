@@ -29,7 +29,7 @@ const VISUAL_RULES=new Set([
   "Height","TextOverflow","FontWeight","Alignment","Distribution","Direction",
   "Parallax","PanelTransparency","Shadow","OnPress","OffPress",
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
-  "Font","OpenPickerOnClick","InputType","InputMode","Placeholder","AriaLabel","Source",
+  "Font","SecretGroup","SecretResetSource","PlaceholderSource","PlaceholderFormat","OpenPickerOnClick","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
@@ -192,6 +192,10 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
     if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
     validateEventToken(rule.Dismiss,label+'.Dismiss');
   }else if(rule.ModalClass!==undefined||rule.Dismiss!==undefined)fail('ModalClass and Dismiss require Modal');
+  if(rule.PlaceholderSource!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.PlaceholderSource!=='string'||!/^\$\.[a-zA-Z0-9_.-]+$/.test(rule.PlaceholderSource)||rule.PlaceholderFormat?.Kind!=='Text'))fail('Invalid placeholder source');
+  if(rule.PlaceholderFormat!==undefined){if(!rule.PlaceholderSource)fail('PlaceholderFormat requires source');validateFormat(rule.PlaceholderFormat)}
+  if(rule.SecretResetSource!==undefined&&(!rule.SecretGroup||typeof rule.SecretResetSource!=='string'||!/^\$\.[a-zA-Z0-9_.-]+$/.test(rule.SecretResetSource)))fail('Invalid SecretResetSource');
+  if(rule.SecretGroup!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.SecretGroup!=='string'||!/^[-a-zA-Z0-9_]{1,64}$/.test(rule.SecretGroup)))fail('Invalid SecretGroup');
   if(rule.OpenPickerOnClick!==undefined&&(!label.startsWith('EditableInput ')||typeof rule.OpenPickerOnClick!=='boolean'))fail('OpenPickerOnClick requires a Date input and boolean');
   if(rule.ControlAction!==undefined){if(!/^(?:ActivePanel|SimplePanel|Flow) /.test(label))fail('ControlAction requires an interactive panel');validateControlAction(rule.ControlAction)}
   if(rule.Text!==undefined&&((!rule.NativeButton&&!label.startsWith('Flow '))||typeof rule.Text!=='string'))fail('Text requires a NativeButton');
@@ -328,6 +332,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(node.Type!=='Flow'&&node.Properties?.Text!==undefined&&!capabilitySet.has('pcode.native-button-text.v1'))fail('Native button text requires pcode.native-button-text.v1');
     if(node.Properties?.SceneEffects?.AudioCapture&&!capabilitySet.has('pcode.structured-events.v1'))fail('AudioCapture requires pcode.structured-events.v1');
     if((node.Properties?.SceneEffects?.AudioCapture||node.Type==='Flow'&&node.Properties?.Tag==='canvas')&&!capabilitySet.has('pcode.audio-capture.v1'))fail('AudioCapture requires pcode.audio-capture.v1');
+    if(node.Properties?.SceneEffects?.SteppedButtons&&!capabilitySet.has('pcode.stepped-buttons.v1'))fail('SteppedButtons requires pcode.stepped-buttons.v1');
     if(node.Properties?.SceneEffects?.SteppedFields&&!capabilitySet.has('pcode.stepped-fields.v1'))fail('SteppedFields requires pcode.stepped-fields.v1');
     if(node.Type==='Group'&&['Class','StateSource','EnabledSource'].some(key=>node.Properties?.[key]!==undefined)&&!capabilitySet.has('pcode.group-presentation.v1'))fail('Group presentation requires pcode.group-presentation.v1');
     if(node.Type==='Group'&&node.Properties?.VisibleSource&&!capabilitySet.has('pcode.group-state.v1'))fail('Group visibility requires pcode.group-state.v1');
@@ -347,7 +352,10 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if((node.Properties?.NumericEditor||node.Properties?.DecimalInput)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('NumericEditor requires pcode.semantic-model.v1');
     if(node.Properties?.DecimalInput&&!(pLang??[]).some(panel=>panel.Properties?.NumericEditor))fail('DecimalInput requires a NumericEditor declaration');
     if(node.Properties?.RepeatIds&&!capabilitySet.has('pcode.repeat-subset.v1'))fail('RepeatIds requires pcode.repeat-subset.v1');
+    if(node.Properties?.PlaceholderSource&&!capabilitySet.has('pcode.secret-controls.v1'))fail('PlaceholderSource requires pcode.secret-controls.v1');
+    if((node.Properties?.SecretResetSource||node.Properties?.PlaceholderSource)&&!capabilitySet.has('pcode.semantic-model.v1'))fail('SecretResetSource requires pcode.semantic-model.v1');
     if(node.Properties?.ControlAction?.WhenSource&&!capabilitySet.has('pcode.semantic-model.v1'))fail('ControlAction condition requires pcode.semantic-model.v1');
+    if((node.Properties?.SecretGroup||['ToggleSecret','RevealSecret'].includes(node.Properties?.ControlAction?.Kind))&&!capabilitySet.has('pcode.secret-controls.v1'))fail('SecretGroup requires pcode.secret-controls.v1');
     if((node.Properties?.ControlAction||node.Properties?.OpenPickerOnClick!==undefined)&&!capabilitySet.has('pcode.control-action.v1'))fail('ControlAction requires pcode.control-action.v1');
     if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.action-menu.v1'))fail('ActionMenu requires pcode.action-menu.v1');
     if(node.Properties?.ActionMenu&&!capabilitySet.has('pcode.semantic-model.v1')&&(node.Properties.ActionMenu.EnabledSource||Object.values(node.Properties.ActionMenu.Items??{}).some(item=>item.Source||item.EnabledSource||item.VisibleSource)))fail('ActionMenu sources require pcode.semantic-model.v1');
@@ -380,6 +388,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     for(const key of ["InputType","Placeholder","Disabled","Required","AriaLabel","InputMode","OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])delete p[key];
     validateVisualRule(p,"EditableInput "+input.Login,false);checkFill(p,"EditableInput "+input.Login);
     const source=input.Properties??{};
+    if(source.SecretGroup!==undefined&&source.InputType!=='Secret')fail('SecretGroup requires Secret input');
     if(source.OpenPickerOnClick!==undefined&&source.InputType!=='Date')fail('OpenPickerOnClick requires a Date input');
     if(source.DecimalInput&&!['Number','Text'].includes(source.InputType??'Text'))fail('DecimalInput requires text or number input');
     if(source.InputType!==undefined&&!INPUT_TYPES.has(source.InputType))fail("invalid InputType for EditableInput "+input.Login);

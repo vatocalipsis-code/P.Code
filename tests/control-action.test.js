@@ -27,3 +27,21 @@ test('native picker click requires a date input and negotiated capability',()=>{
  data[0].Layout[0].Properties.InputType='Text';
  assert.throws(()=>validatePLang(data,{},caps),/Date input/);
 });
+
+test('secret controls require negotiated capability and a secret target; placeholders round trip',()=>{
+ const caps=['pcode.control-action.v1','pcode.secret-controls.v1','pcode.semantic-model.v1','pcode.editable-input.v1','pcode.flow-layout.v1'];
+ const input={Type:'EditableInput',Login:'Secret',Properties:{InputType:'Secret',SecretGroup:'credentials',SecretResetSource:'$.signedIn',PlaceholderSource:'$.setup',PlaceholderFormat:{Kind:'Text',Map:{true:'Generated',false:'Password'}}}};
+ const action={Type:'Flow',Login:'Toggle',Properties:{Tag:'button',Text:'Toggle',ControlAction:{Kind:'ToggleSecret',Target:'Secret',HiddenLabel:'Show',RevealedLabel:'Hide'}}};
+ const data=[{Login:'Scene',Layout:[input,action],SimplePanels:[]}];validatePLang(data,{},caps);
+ assert.throws(()=>validatePLang(data,{},caps.filter(c=>c!=='pcode.secret-controls.v1')),/secret-controls/);
+ const envelope={SetLang:{Name:'Secrets',Version:1,Requires:caps,Data:data},SetData:{Name:'Data',Version:1,Data:{}},SetRender:{Name:'Render',Version:1,Data:{}}};assert.deepEqual(parseSPL(serializeSPL(envelope)).SetLang.Data,data);
+ input.Properties.InputType='Text';assert.throws(()=>validatePLang(data,{},caps),/Secret input/);
+ input.Properties.InputType='Secret';delete input.Properties.SecretGroup;assert.throws(()=>validatePLang(data,{},caps),/SecretGroup/);
+});
+
+test('stepped button metrics require explicit capability and valid stylesheet variable',()=>{
+ const rule={Selector:'.button',LabelSelector:'.label',LinesVariable:'--lines',FixedSelector:'.fixed',FixedClass:'fixed-action'};
+ const data=[{Login:'Scene',Properties:{SceneEffects:{SteppedButtons:rule}},Layout:[],SimplePanels:[]}];
+ assert.throws(()=>validatePLang(data,{},['pcode.scene-effects.v1']),/stepped-buttons/);
+ validatePLang(data,{},['pcode.scene-effects.v1','pcode.stepped-buttons.v1']);rule.LinesVariable='color';assert.throws(()=>validatePLang(data,{},['pcode.scene-effects.v1','pcode.stepped-buttons.v1']),/SceneEffects/);
+});

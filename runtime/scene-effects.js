@@ -1,3 +1,4 @@
+import {installSteppedButtons} from './stepped-buttons.js';
 import {installAudioCapture} from './audio-capture.js';
 import {installSteppedFields} from './stepped-fields.js';
 import {MODEL,semanticValue} from './semantic-model.js';
@@ -6,7 +7,7 @@ const scenes=new WeakMap();
 export function validateSceneEffects(effects){
  const fail=()=>{throw Error('Invalid SceneEffects')};
  if(!effects||typeof effects!=='object'||Array.isArray(effects))fail();
- const schemas={AudioCapture:['Source','SessionSource','ColorScope','Command','Waveform','Width','Height','Bars','BarInset','BarWidth','SampleStride','Divisor','MinBarHeight','ColorVariable','FallbackColor'],SteppedFields:['Selector','UnitVariable','DefaultUnit','Class'],Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command'],Confirm:['Source','Messages','Accept','Reject']};
+ const schemas={SteppedButtons:['Selector','LabelSelector','LinesVariable','FixedSelector','FixedClass'],AudioCapture:['Source','SessionSource','ColorScope','Command','Waveform','Width','Height','Bars','BarInset','BarWidth','SampleStride','Divisor','MinBarHeight','ColorVariable','FallbackColor'],SteppedFields:['Selector','UnitVariable','DefaultUnit','Class'],Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold','LatestSource'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command'],Confirm:['Source','Messages','Accept','Reject']};
  for(const [kind,rule] of Object.entries(effects)){
   const fields=schemas[kind];if(!fields||!rule||typeof rule!=='object'||Array.isArray(rule)||Object.keys(rule).some(key=>!fields.includes(key))||fields.some(key=>key!=='LatestSource'&&!Object.hasOwn(rule,key)))fail();
   if(kind==='AudioCapture'&&(!Number.isInteger(rule.Bars)||!Number.isInteger(rule.SampleStride)||rule.Bars*rule.SampleStride>128))fail();
@@ -26,16 +27,18 @@ export function validateSceneEffects(effects){
 export function installSceneEffects(root,plan,interaction){
  disposeSceneEffects(root);
  if(!plan.some(node=>node.Visual?.SceneEffects))return;
- const doc=root.ownerDocument,win=doc.defaultView,abort=new win.AbortController(),records=[];
+ const doc=root.ownerDocument,win=doc.defaultView,abort=new win.AbortController(),records=[],byLogin=new Map();
+ for(const el of root.querySelectorAll('[data-plane-login]'))if(!byLogin.has(el.dataset.planeLogin))byLogin.set(el.dataset.planeLogin,el);
  for(const node of plan){
   const rules=node.Visual?.SceneEffects;if(!rules)continue;
-  const panel=[...root.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===node.Login);if(!panel)continue;
+  const panel=byLogin.get(node.Login);if(!panel)continue;
   const wrapper=panel.closest('[data-plane-modal]')??panel;
-  const get=login=>[panel,...panel.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===login);
+  const get=login=>{const cached=byLogin.get(login);if(cached&&(cached===panel||panel.contains(cached)))return cached;const fresh=panel.querySelector('[data-plane-login="'+win.CSS.escape(login)+'"]');if(fresh)byLogin.set(login,fresh);return fresh};
   const record={panel,wrapper,rules,get,interaction,login:node.Login,open:false,scroll:null};records.push(record);
   const listen=(target,type,handler)=>target?.addEventListener(type,handler,{signal:abort.signal});
   if(rules.Viewport){const r=rules.Viewport;const update=()=>{if(wrapper.hidden)return;wrapper.style.setProperty(r.TopVariable,(win.visualViewport?.offsetTop??0)+'px');wrapper.style.setProperty(r.HeightVariable,(win.visualViewport?.height??win.innerHeight)+'px')};listen(win.visualViewport,'resize',update);listen(win.visualViewport,'scroll',update);listen(win,'resize',update);record.viewport=update;update()}
   if(rules.AudioCapture){const rule=rules.AudioCapture;record.audio=installAudioCapture(panel,rule,value=>{if(interaction?.isEnabled())interaction.emit('OnInput',node.Login,rule.Command,{Payload:value})},root)}
+  if(rules.SteppedButtons)record.buttons=installSteppedButtons(panel,rules.SteppedButtons,abort.signal);
   if(rules.SteppedFields)record.stepped=installSteppedFields(panel,rules.SteppedFields,abort.signal);
   if(rules.AutoSize){
    const r=rules.AutoSize,area=get(r.Target);if(!area)throw Error('Unknown AutoSize target '+r.Target);
@@ -51,7 +54,7 @@ export function beforeSceneUpdate(root){for(const r of scenes.get(root)?.records
 export function updateSceneEffects(root,data={}){
  for(const r of scenes.get(root)?.records??[]){
   const open=!r.wrapper.hasAttribute('data-plane-exiting')&&!r.wrapper.hidden&&r.panel.getAttribute('aria-hidden')!=='true'&&r.panel.isConnected;
-  if(open){if(!r.open)r.viewport?.();r.resize?.();r.stepped?.resize();if(!r.open&&r.rules.Scroll){const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
+  if(open){if(!r.open)r.viewport?.();r.resize?.();r.stepped?.resize();r.buttons?.resize();if(!r.open&&r.rules.Scroll){const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   if(open&&!r.open&&r.rules.Focus){const rule=r.rules.Focus;const target=r.get(root.ownerDocument.defaultView.innerWidth<=rule.CompactWidth?rule.CompactTarget:rule.Target);queueMicrotask(()=>{if(target?.isConnected&&!r.wrapper.hidden){if(!target.matches('input,textarea,select,button,a,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true})}})}
   if(open&&r.rules.Scroll?.LatestSource){const latest=semanticValue(r.rules.Scroll.LatestSource,data[MODEL]);if(latest!==r.latest){r.latest=latest;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:0,bottom:true}}}
   if(r.rules.Confirm){
@@ -70,7 +73,7 @@ export function updateSceneEffects(root,data={}){
   if(r.scroll){const {el,top,bottom}=r.scroll;queueMicrotask(()=>{if(el.isConnected)el.scrollTop=bottom?el.scrollHeight:top});r.scroll=null}
  }
 }
-export function disposeSceneEffects(root){const state=scenes.get(root);state?.abort.abort();for(const r of state?.records??[]){r.observer?.disconnect();r.stepped?.dispose();r.audio?.dispose()}scenes.delete(root)}
+export function disposeSceneEffects(root){const state=scenes.get(root);state?.abort.abort();for(const r of state?.records??[]){r.observer?.disconnect();r.stepped?.dispose();r.buttons?.dispose();r.audio?.dispose()}scenes.delete(root)}
 export function appendLinkedText(el,value){
  const text=String(value??''),pattern=/https?:\/\/[^\s]+/gu;let cursor=0;
  for(const match of text.matchAll(pattern)){el.append(el.ownerDocument.createTextNode(text.slice(cursor,match.index)));const a=el.ownerDocument.createElement('a');a.href=match[0];a.textContent=match[0];a.target='_blank';a.rel='noopener noreferrer';el.append(a);cursor=match.index+match[0].length}

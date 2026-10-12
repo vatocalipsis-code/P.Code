@@ -309,3 +309,28 @@ normal focus. A false condition leaves the authored semantic OffPress intact.
 The application never resolves visual targets or requests browser picker DOM.
 
 Date EditableInput can author `OpenPickerOnClick: true` under this capability. Picot owns the direct-click behavior and respects the field's disabled/read-only state.
+
+
+### `pcode.secret-controls.v1` (2.42)
+
+Static scene secret inputs can declare a fixed `SecretGroup` (repeated inputs are rejected by this capability). Scene-local ControlAction
+`ToggleSecret` or `RevealSecret` changes that group's local visual state without
+changing input values or emitting an application event. Optional `Continue: true`
+then invokes the authored OffPress (for example, generating a credential).
+`HiddenLabel` and `RevealedLabel` author the toggle's accessible labels.
+`SecretResetSource` references a semantic context value; a changed defined value
+conceals the group. The state belongs to Picot and survives remounting the same
+root. Runtime disposal releases cached DOM references. Input and action targets
+are validated; executable content and cross-scene targets are rejected.
+
+This capability also permits `PlaceholderSource` plus text-only
+`PlaceholderFormat` on inputs, for skin-authored contextual hints.
+
+
+### `pcode.stepped-buttons.v1` (2.42)
+
+SceneEffects.SteppedButtons authors Selector, LabelSelector, LinesVariable,
+FixedSelector and FixedClass. Picot batches text-line measurements before style
+writes and schedules them on scene updates, width changes and font readiness.
+Only open scenes are measured. Fixed controls use one line. Runtime disposal
+cancels queued work and observers; no application DOM mutation is required.

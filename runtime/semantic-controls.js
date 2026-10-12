@@ -13,6 +13,7 @@ export function createInputElement(config){
   if(type==='Multiline'&&config.Rows!==undefined)el.rows=config.Rows;
   if(config.Autocomplete)el.autocomplete=config.Autocomplete;
   if(config.MaxLength!==undefined)el.maxLength=config.MaxLength;
+  if(config.SecretGroup)el.dataset.planeSecretGroup=config.SecretGroup;
   if(config.OpenPickerOnClick)el.addEventListener('click',()=>openNativePicker(el));
   el.placeholder=config.Placeholder??'';return el;
 }
@@ -45,6 +46,7 @@ export function patchInputElement(el,node,dataSet,item=null){
 }
 export function patchInputState(el,node,dataSet,item=null){
   const rule=node.Visual??{},config=node.Input??{},data=dataSet[node.dataSlot]??{};
+  if(rule.PlaceholderSource)el.placeholder=formatValue(semanticValue(rule.PlaceholderSource,dataSet[MODEL],item),rule.PlaceholderFormat,dataSet[MODEL]).map(p=>p.value).join('');
   el.readOnly=config.ReadOnly===true||(rule.ReadOnlySource?semanticValue(rule.ReadOnlySource,dataSet[MODEL],item)===true:false);
   el.disabled=config.Disabled===true||(rule.EnabledSource?semanticValue(rule.EnabledSource,dataSet[MODEL],item)!==true:false)||
     el.readOnly&&['Choice','Range','Checkbox'].includes(config.InputType);

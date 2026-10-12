@@ -1,4 +1,4 @@
-import {invokeControlAction} from './control-action.js';
+import {invokeControlAction,syncSecretControls,refreshSecretControls,releaseSecretControls} from './control-action.js';
 import {bindActionMenu,consumeActionMenuBack} from './action-menu.js';
 import {installSceneEffects,beforeSceneUpdate,updateSceneEffects,disposeSceneEffects,appendLinkedText} from './scene-effects.js';
 import {applySequence} from './sequence.js';
@@ -167,7 +167,7 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
   return text?[text]:picture?[picture]:[];
 }
 function applySemanticState(el,rule,dataSet,item=null){
-  if(rule.ControlAction||rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource||rule.TitleSource)el.dataset.planeSemanticState='';
+  if(rule.PlaceholderSource||rule.ControlAction||rule.Sequence||rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.ReadOnlySource||rule.ErrorSource||rule.PressedSource||rule.LabelSource||rule.TitleSource)el.dataset.planeSemanticState='';
   if(rule.ControlAction)el.__planeControlAction=(!rule.ControlAction.WhenSource||semanticValue(rule.ControlAction.WhenSource,dataSet[MODEL],item)===true)?rule.ControlAction:null;
   if(rule.Role)el.setAttribute('role',rule.Role);
   if(rule.AriaLevel)el.setAttribute('aria-level',String(rule.AriaLevel));
@@ -467,6 +467,7 @@ export function requestTiltParallax(root){
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
 export function consumePlaneCodeBack(root){return consumeActionMenuBack(root)||consumeNumericBack(root)}
 export function disposePlaneCode(root){
+  releaseSecretControls(root);
   disposeSceneEffects(root);
   disposeNumericEditor(root);disposeDecimalPreviews(root);
   disposeControlFeedback(root);
@@ -494,7 +495,7 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
     const scene=createModalScene(panel,node,interaction);modals.push(scene);return scene.wrapper;
   });
   releaseDeferredPictures(root);
-  root.replaceChildren(...panels);
+  root.replaceChildren(...panels);refreshSecretControls(root,dataSet[MODEL]);
   installNumericEditor(root,roots,interaction,dataSet);installDecimalPreviews(root,roots);
   installControlFeedback(root,roots,interaction);
   installRouteScenes(root,routes,interaction);updateRouteScenes(root,dataSet);
@@ -508,13 +509,14 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
   beforeSceneUpdate(root);
   const exiting=prepareModalUpdate(root,nextData),frozen=el=>exiting&&el.closest?.('[data-plane-exiting]');
   const resources=prepareResources(root,resourceSet);
-  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!frozen(el)&&!el.closest?.('[data-plane-repeat]')){applySemanticState(el,el.__planeVisual??{},nextData);if(semanticOnly&&el.__planeInput&&(el.__planeVisual.EnabledSource||el.__planeVisual.ReadOnlySource||el.__planeVisual.ErrorSource))patchInputState(el,el.__planeInput,nextData)}
+  for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!frozen(el)&&!el.closest?.('[data-plane-repeat]')){applySemanticState(el,el.__planeVisual??{},nextData);if(semanticOnly&&el.__planeInput&&(el.__planeVisual.PlaceholderSource||el.__planeVisual.EnabledSource||el.__planeVisual.ReadOnlySource||el.__planeVisual.ErrorSource))patchInputState(el,el.__planeInput,nextData)}
   for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source],[data-plane-decimal]':'[data-plane-data-slot]')){
     if(frozen(el)||el.closest?.('[data-plane-repeat]'))continue;
     if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??'')){if(el.__planeVisual?.DecimalInput)patchDecimalInput(el,el.__planeInput,nextData);continue;}
     patchElementSource(el,nextData,renderSet,resources);
   }
   for(const record of activeRepeatLists.get(root)??[]){if(frozen(record.list))continue;record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
+  syncSecretControls(root,nextData[MODEL]);
   updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root,nextData);
   for(const el of root.querySelectorAll('[data-plane-menu]'))el.__planeMenu?.update(nextData);
 }
