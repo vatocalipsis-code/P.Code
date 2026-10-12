@@ -33,7 +33,7 @@ export function decimalParts(value,format={}){
   const raw=absolute.toString().padStart(value.scale+1,'0');
   const whole=(value.scale?raw.slice(0,-value.scale):raw).replace(/\B(?=(\d{3})+(?!\d))/g,format.GroupSeparator??' ');
   const fraction=(value.scale?raw.slice(-value.scale):'').padEnd(precision,'0').slice(0,precision);
-  return {whole:(number<0n&&format.Absolute!==true?'−':'')+whole,fraction:precision?(format.DecimalSeparator??'.')+fraction:'',unit:format.ShowUnit&&value.unit?' '+value.unit:''};
+  return {whole:(number<0n&&format.Absolute!==true?(format.NegativeSign??'−'):'')+whole,fraction:precision?(format.DecimalSeparator??'.')+fraction:'',unit:format.ShowUnit&&value.unit?' '+value.unit:''};
 }
 export function textTemplate(value,template){
   if(typeof template!=='string')return typeof value==='object'?'':String(value??'');
