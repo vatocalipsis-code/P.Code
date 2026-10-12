@@ -271,3 +271,17 @@ focus/caret continuity and semantic ItemId dispatch use the standard repeat path
 
 Checks: `node --test tests/repeat-subset.test.js` and
 `PLAYWRIGHT_MODULE=... UI_BROWSER=chromium|webkit node tests/check-repeat-continuity-browser.mjs`.
+
+## `pcode.modal-slide.v1`
+
+`ModalEnter` and `ModalExit` may author `{ Effect = "Slide", Speed = 4.68,
+Acceleration = 0.12 }`. They reuse the route motion curve; the application does
+not calculate keyframes or manipulate the DOM. Speed is 1–100 viewport widths
+per second, acceleration 0–1 seconds, with Speed × Acceleration ≤ 2 so the
+curve completes within one viewport. Enter and exit are cancelled when the
+scene changes or the runtime is disposed. Exit preserves outgoing contents until
+completion and reopening cancels that exit. Reduced motion skips the entrance
+and completes the exit immediately. Existing Fade exits remain compatible.
+
+Checks: `node --test tests/modal-slide.test.js` and
+`UI_MODAL_SLIDE=1 PLAYWRIGHT_MODULE=... UI_BROWSER=chromium|webkit node tests/check-modal-transition-browser.mjs`.

@@ -32,7 +32,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
+  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -174,7 +174,12 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.SceneEffects!==undefined){if(!label.startsWith('BasePanel '))fail('SceneEffects require BasePanel');validateSceneEffects(rule.SceneEffects)}
   if(rule.Linkify!==undefined&&(!label.startsWith('Flow ')||typeof rule.Linkify!=='boolean'))fail('Linkify requires Flow');
   if(rule.Rows!==undefined&&(!label.startsWith('EditableInput ')||!Number.isInteger(rule.Rows)||rule.Rows<1||rule.Rows>100))fail('Invalid input Rows');
-  if(rule.ModalExit!==undefined){const r=rule.ModalExit;if(rule.Modal!==true||!r||typeof r!=='object'||Array.isArray(r)||Object.keys(r).some(k=>!['Effect','Duration'].includes(k))||r.Effect!=='Fade'||!Number.isFinite(r.Duration)||r.Duration<0||r.Duration>1000)fail('Invalid ModalExit')}
+  for(const key of ['ModalEnter','ModalExit'])if(rule[key]!==undefined){
+    const r=rule[key];if(rule.Modal!==true||!r||typeof r!=='object'||Array.isArray(r))fail('Invalid '+key);
+    if(r.Effect==='Fade'&&key==='ModalExit'){if(Object.keys(r).some(k=>!['Effect','Duration'].includes(k))||!Number.isFinite(r.Duration)||r.Duration<0||r.Duration>1000)fail('Invalid '+key)}
+    else if(r.Effect==='Slide'){if(Object.keys(r).some(k=>!['Effect','Speed','Acceleration'].includes(k))||!Number.isFinite(r.Speed)||r.Speed<1||r.Speed>100||!Number.isFinite(r.Acceleration)||r.Acceleration<0||r.Acceleration>1||r.Speed*r.Acceleration>2)fail('Invalid '+key)}
+    else fail('Invalid '+key);
+  }
   if(rule.Modal!==undefined){
     if(!label.startsWith('BasePanel ')||rule.Modal!==true||!rule.VisibleSource)fail('Modal requires a BasePanel and VisibleSource');
     if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
@@ -341,6 +346,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(usesUnitPlacement(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-unit-layout.v1'))fail('UnitPlacement requires pcode.decimal-unit-layout.v1');
     if(node.Properties?.DecimalInput?.Preview&&!capabilitySet.has('pcode.decimal-preview.v1'))fail('DecimalInput Preview requires pcode.decimal-preview.v1');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
+    if((node.Properties?.ModalEnter||node.Properties?.ModalExit?.Effect==='Slide')&&!capabilitySet.has('pcode.modal-slide.v1'))fail('Modal slide requires pcode.modal-slide.v1');
     if(node.Properties?.ModalExit&&!capabilitySet.has('pcode.modal-transition.v1'))fail('ModalExit requires pcode.modal-transition.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
     if((node.Properties?.Format?.Kind==='Composite'||node.Properties?.Format?.Kind==='Text'&&node.Properties.Format.Map||node.Properties?.Format?.TrimFraction)&&!capabilitySet.has('pcode.composite-format.v1'))fail('Extended Format requires pcode.composite-format.v1');

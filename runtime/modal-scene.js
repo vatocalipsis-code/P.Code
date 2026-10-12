@@ -1,4 +1,5 @@
 /** Picot owns modality, focus restoration and dismissal; commands remain opaque. */
+import {slideFrames} from './route-scene.js';
 import {MODEL,semanticValue} from './semantic-model.js';
 const scenes=new WeakMap();
 const focusable=panel=>[...panel.querySelectorAll('button,input,select,textarea,[tabindex="0"]')].filter(node=>!node.disabled&&node.getAttribute('aria-disabled')!=='true'&&!node.hidden&&node.getClientRects().length);
@@ -39,8 +40,10 @@ export function prepareModalUpdate(root,data){
   for(const record of state.records){
     const open=semanticValue(record.node.Visual.VisibleSource,data[MODEL])===true;
     if(open&&record.exit){record.exit.cancel();record.exit=null;delete record.wrapper.dataset.planeExiting;record.wrapper.inert=false;record.wrapper.style.pointerEvents=''}
+    if(!open&&record.enter){record.enter.cancel();record.enter=null}
     if(!open&&record.open&&record.node.Visual.ModalExit&&record.wrapper.animate){
-      const animation=record.wrapper.animate([{opacity:1},{opacity:0}],{duration:record.node.Visual.ModalExit.Duration,easing:'ease',fill:'forwards'});
+      const rule=record.node.Visual.ModalExit,slide=rule.Effect==='Slide',motion=slide?slideFrames(root.ownerDocument.defaultView.innerWidth,rule.Speed,rule.Acceleration,true):{frames:[{opacity:1},{opacity:0}],duration:rule.Duration};
+      const animation=(slide?record.panel:record.wrapper).animate(motion.frames,{duration:root.ownerDocument.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches?0:motion.duration,easing:slide?'linear':'ease',fill:'forwards'});
       record.exit=animation;record.wrapper.dataset.planeExiting='';record.wrapper.style.pointerEvents='none';
       animation.finished.then(()=>{
         if(record.exit!==animation)return;
@@ -63,6 +66,13 @@ export function updateModalScenes(root,data){
     if(record.wrapper.hidden===open){record.wrapper.hidden=!open;record.wrapper.style.display=open?'':'none'}
     if(record.panel.hidden===open)record.panel.hidden=!open;
     if(record.panel.getAttribute('aria-hidden')!==String(!open))record.panel.setAttribute('aria-hidden',String(!open));
+  }
+  for(const record of opened){
+    const rule=record.node.Visual.ModalEnter,view=doc.defaultView;
+    if(!rule||!record.panel.animate||view.matchMedia('(prefers-reduced-motion: reduce)').matches)continue;
+    record.enter?.cancel();const motion=slideFrames(view.innerWidth,rule.Speed,rule.Acceleration);
+    const animation=record.panel.animate(motion.frames,{duration:motion.duration,easing:'linear'});record.enter=animation;
+    animation.finished.catch(()=>{}).finally(()=>{if(record.enter===animation)record.enter=null});
   }
   state.stack=state.stack.filter(record=>record.open);
   state.stack.push(...opened);
@@ -97,7 +107,7 @@ export function updateModalScenes(root,data){
 export function disposeModalScenes(root){
   const state=scenes.get(root);if(state?.previous)for(const [node,inert]of state.previous)node.inert=inert;
   for(const record of state?.records??[])if(record.previousZ!==undefined){record.wrapper.style.zIndex=record.previousZ;delete record.previousZ}
-  for(const record of state?.records??[]){record.exit?.cancel();record.exit=null}
+  for(const record of state?.records??[]){record.exit?.cancel();record.exit=null;record.enter?.cancel();record.enter=null}
   state?.abort.abort();
   scenes.delete(root);
 }
