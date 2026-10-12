@@ -28,7 +28,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Modal","ModalClass","Dismiss","NativeButton","Route"
+  "Modal","ModalClass","Dismiss","NativeButton","Route","Feedback"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -74,6 +74,32 @@ function validateEventToken(value,label){
   if(!isNonEmptyString(value))fail(label+" must be null or a non-empty opaque string");
   if(value==="NOT_YET_SPECIFIED")fail(label+" must not use NOT_YET_SPECIFIED");
 }
+export function validateFormat(f,label='Format',depth=0){
+ if(depth>8||!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime','Composite'].includes(f.Kind))fail('Invalid Format for '+label);
+ if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix','Parts','TrimFraction'].includes(key)))fail('Unknown Format property for '+label);
+ if(f.Kind==='Composite'){
+  if(!f.Parts||typeof f.Parts!=='object'||Array.isArray(f.Parts)||Object.keys(f.Parts).length>64)fail('Composite Format requires up to 64 named parts');
+  for(const part of Object.values(f.Parts)){
+   if(!part||typeof part!=='object'||Array.isArray(part)||Object.keys(part).some(key=>!['Text','Source','Format','When','Unless','Equals'].includes(key)))fail('Invalid Composite part');
+   const path=value=>typeof value==='string'&&/^[$@]\.[a-zA-Z0-9_.-]+$/.test(value);
+   for(const key of ['When','Unless'])if(part[key]!==undefined&&!path(part[key]))fail('Invalid Composite condition');
+   if(Object.hasOwn(part,'Equals')&&(!part.When||!['string','boolean','number'].includes(typeof part.Equals)))fail('Invalid Composite equality');
+   if(Object.hasOwn(part,'Text')){if(typeof part.Text!=='string'||part.Source!==undefined||part.Format!==undefined)fail('Invalid Composite literal')}
+   else {if(!path(part.Source))fail('Composite source must be a semantic path');validateFormat(part.Format,label,depth+1)}
+  }
+ }else if(f.Parts!==undefined)fail('Parts require Composite Format');
+ if(f.Map!==undefined){
+  if(!['Text','Picture'].includes(f.Kind)||!f.Map||typeof f.Map!=='object'||Array.isArray(f.Map)||Object.values(f.Map).some(value=>typeof value!=='string'))fail('Invalid Format map');
+ }
+ if(f.Kind==='Picture'){
+  if(!f.Map)fail('Picture Format requires a map');
+  for(const url of Object.values(f.Map))if(!isCanonicalImageFile(url))fail('Picture Format must use local images');
+  if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
+ }
+ for(const key of ['Absolute','ShowUnit','TrimFraction'])if(f[key]!==undefined&&typeof f[key]!=='boolean')fail(key+' must be boolean');
+ for(const key of ['Fallback','GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
+ if(f.Options!==undefined&&(!f.Options||typeof f.Options!=='object'||Array.isArray(f.Options)))fail('DateTime Options must be an object');
+}
 function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false){
   if(!rule||typeof rule!=="object"||Array.isArray(rule))fail("Properties for "+label+" must be an object");
   for(const key of Object.keys(rule))if(!VISUAL_RULES.has(key))fail("unsupported property "+key+" for "+label);
@@ -90,6 +116,16 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
   if(rule.Repeat!==undefined&&(!label.startsWith("ActivePanel ")||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires an ActivePanel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
+  if(rule.Feedback!==undefined){
+    const f=rule.Feedback;
+    if(!label.startsWith('BasePanel ')||!f||typeof f!=='object'||Array.isArray(f))fail('Feedback requires a BasePanel');
+    if(Object.keys(f).some(key=>!['Scope','Target','KeyboardExclude','PressedClass','HaloClass','MinWidth','MinHeight','ReleaseDelay','HaloTimeout'].includes(key)))fail('Unknown Feedback property');
+    if(!['Root','Document'].includes(f.Scope))fail('Invalid Feedback scope');
+    for(const key of ['Target','KeyboardExclude'])if(!isNonEmptyString(f[key]))fail('Feedback requires selectors');
+    for(const key of ['PressedClass','HaloClass'])if(typeof f[key]!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(f[key]))fail('Invalid Feedback class');
+    for(const key of ['MinWidth','MinHeight'])if(!isNonNegativeNumber(f[key]))fail('Invalid Feedback geometry');
+    for(const key of ['ReleaseDelay','HaloTimeout'])if(!isNonNegativeNumber(f[key])||f[key]>10000)fail('Invalid Feedback duration');
+  }
   if(rule.Route!==undefined){
     const r=rule.Route;
     if(!label.startsWith('BasePanel ')||rule.Modal||!r||typeof r!=='object'||Array.isArray(r))fail('Route requires a non-modal BasePanel');
@@ -125,19 +161,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
   for(const key of ['StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
-  if(rule.Format!==undefined){
-    const f=rule.Format;
-    if(!f||typeof f!=='object'||Array.isArray(f)||!['Text','Picture','Decimal','DateTime'].includes(f.Kind))fail('Invalid Format for '+label);
-    if(Object.keys(f).some(key=>!['Kind','Map','Fallback','Absolute','ShowUnit','GroupSeparator','DecimalSeparator','Locale','Options','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix'].includes(key)))fail('Unknown Format property for '+label);
-    if(f.Kind==='Picture'){
-      if(!f.Map||typeof f.Map!=='object'||Array.isArray(f.Map))fail('Picture Format requires a map');
-      for(const url of Object.values(f.Map))if(!isCanonicalImageFile(url))fail('Picture Format must use local images');
-      if(f.Fallback!==undefined&&!isCanonicalImageFile(f.Fallback))fail('Picture fallback must use a local image');
-    }
-    for(const key of ['Absolute','ShowUnit'])if(f[key]!==undefined&&typeof f[key]!=='boolean')fail(key+' must be boolean');
-    for(const key of ['GroupSeparator','DecimalSeparator','Locale','DateTimeSeparator','Template','ListSeparator','Prefix','Suffix'])if(f[key]!==undefined&&typeof f[key]!=='string')fail(key+' must be string');
-    if(f.Options!==undefined&&(!f.Options||typeof f.Options!=='object'||Array.isArray(f.Options)))fail('DateTime Options must be an object');
-  }
+  if(rule.Format!==undefined)validateFormat(rule.Format,label);
   if(rule.PanelTransparency!==undefined){
     if(!allowPanelEffects)fail("PanelTransparency is not allowed for "+label);
     if(!isTransparency(rule.PanelTransparency))fail("PanelTransparency for "+label+" must be 0..1");
@@ -246,6 +270,7 @@ export function validateSetData(data,pLang,capabilities=[],resources=null){
 }
 
 export function validatePLang(pLang,setData={},capabilities=[],resources=null){
+  if((pLang??[]).filter(panel=>panel.Properties?.Feedback).length>1)fail('Only one Feedback scene per runtime is allowed');
   const routeIds=new Set();
   for(const panel of pLang??[]){const route=panel.Properties?.Route;if(route){const key=route.Source+'\0'+route.Id;if(routeIds.has(key))fail('Duplicate Route identity');routeIds.add(key)}}
   if(!Array.isArray(pLang))fail("SetLang.Data must be BasePanel[]");
@@ -260,7 +285,9 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(node.Properties?.Repeat&&!capabilitySet.has("pcode.semantic-repeat.v1"))
       fail("Repeat requires negotiated pcode.semantic-repeat.v1");
     if(Object.entries(node.Properties??{}).some(([key,value])=>['Format','StateSource','VisibleSource','ExpandedSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'].includes(key)||['Source','Repeat'].includes(key)&&/^[$@]\./.test(value))&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Semantic sources require negotiated pcode.semantic-model.v1');
+    if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
+    if((node.Properties?.Format?.Kind==='Composite'||node.Properties?.Format?.Kind==='Text'&&node.Properties.Format.Map||node.Properties?.Format?.TrimFraction)&&!capabilitySet.has('pcode.composite-format.v1'))fail('Extended Format requires pcode.composite-format.v1');
     if(node.Properties?.Route&&!capabilitySet.has('pcode.semantic-routes.v1'))fail('Route requires pcode.semantic-routes.v1');
     if(node.Properties?.Route&&!capabilitySet.has('pcode.semantic-model.v1'))fail('Route requires pcode.semantic-model.v1');
     if(node.Properties?.NativeButton&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('NativeButton requires pcode.semantic-controls.v1');

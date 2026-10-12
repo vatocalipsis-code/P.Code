@@ -1,4 +1,6 @@
+import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} from './control-feedback.js';
 /** Browser renderer for compiled P.Code Object Plans. */
+import {formatValue} from './value-format.js';
 import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
 import {createInputElement,patchInputElement,inputValue} from './semantic-controls.js';
 import {createModalScene,installModalScenes,updateModalScenes,disposeModalScenes} from './modal-scene.js';
@@ -114,11 +116,17 @@ function applyContainerContentLayout(content,rule={}){
   if(rule.Gap!==undefined)applyLayoutValue(content,"gap","content-gap",px(rule.Gap));
 }
 function renderSource(source,renderSet,rule,shadow=0,resources=null){
+  if(source.kind==='Formatted'){
+    const el=document.createElement('span');el.dataset.planeSource='Text';
+    for(const segment of source.value)el.append(segment.kind==='Text'?document.createTextNode(segment.value):renderSource(segment,renderSet,rule,shadow,resources));
+    return el;
+  }
   if(source.kind==='Decimal'){
-    const parts=decimalParts(source.value,rule.Format),el=document.createElement('span');el.dataset.planeSource='Decimal';
+    const parts=source.parts??decimalParts(source.value,rule.Format),el=document.createElement('span');el.dataset.planeSource='Decimal';el.dataset.planeNumberSign=BigInt(source.value.units??String(source.value).replace(/[.,]/g,''))===0n?'zero':String(source.value.units??source.value).startsWith('-')?'negative':'positive';
     const whole=document.createElement('span'),fraction=document.createElement('span'),unit=document.createElement('span');
     whole.dataset.planeNumberWhole='';fraction.dataset.planeNumberFraction='';unit.dataset.planeNumberUnit='';
-    whole.textContent=parts.whole;fraction.textContent=parts.fraction;unit.textContent=parts.unit;el.append(whole,fraction,unit);return el;
+    whole.textContent=parts.whole;fraction.textContent=parts.fraction;unit.textContent=parts.unit;
+    const body=document.createElement('span');body.dataset.planeNumber='';body.append(whole,fraction,unit);el.append(body);return el;
   }
   if(source.kind==="Text"){
     const e=document.createElement("span");e.dataset.planeSource="Text";e.textContent=source.value;e.style.opacity=opacityFromTransparency(renderSet.TextTransparency);
@@ -137,22 +145,7 @@ function renderSource(source,renderSet,rule,shadow=0,resources=null){
 function sourcesFromData(node,dataSet,repeatedItem=null){
   const rule=node.Visual??{};
   if(/^[$@]\./.test(rule.Source??'')){
-    const value=semanticValue(rule.Source,dataSet[MODEL],repeatedItem),format=rule.Format??{Kind:'Text'};
-    if(format.Kind==='Picture'){const url=Object.hasOwn(format.Map??{},value)?format.Map[value]:format.Fallback;return url?[{kind:'Picture',value:url}]:[]}
-    if(value===null||value===undefined||value==='')return [];
-    if(format.Kind==='Decimal')return [{kind:'Decimal',value}];
-    if(format.Kind==='DateTime'){
-      let text=new Intl.DateTimeFormat(format.Locale,format.Options).format(new Date(value));
-      if(format.DateTimeSeparator!==undefined)text=text.replace(',',format.DateTimeSeparator);
-      return [{kind:'Text',value:text}];
-    }
-    if(format.Template)return [{kind:'Text',value:textTemplate(value,format.Template)}];
-    if(format.ListSeparator!==undefined){
-      if(!Array.isArray(value)||value.some(item=>!['string','number','boolean'].includes(typeof item)))throw Error('List text Source must resolve to scalar entries');
-      return [{kind:'Text',value:(format.Prefix??'')+value.join(format.ListSeparator)+(format.Suffix??'')}];
-    }
-    if(!['string','number','boolean'].includes(typeof value))throw Error('Text Source must resolve to a scalar');
-    return [{kind:'Text',value:String(value)}];
+    return formatValue(semanticValue(rule.Source,dataSet[MODEL],repeatedItem),rule.Format??{Kind:'Text'},dataSet[MODEL]);
   }
   const item=repeatedItem&&node.Visual?.Source?repeatedItem.Fields?.[node.Visual.Source]??{}:dataSet[node.dataSlot]??{};
   const text=typeof item.SourceText==="string"&&item.SourceText.length?{kind:"Text",value:item.SourceText}:null;
@@ -363,13 +356,15 @@ export function requestTiltParallax(root){
     activeTilt.set(root,{cancel});
   });
 }
-export function cancelPlaneCodeInteraction(root){activeInteraction.get(root)?.cancel()}
+export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
 export function disposePlaneCode(root){
+  disposeControlFeedback(root);
   disposeRouteScenes(root);
   disposeModalScenes(root);
   cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
+  disposeControlFeedback(root);
   disposeRouteScenes(root);
   cancelPlaneCodeInteraction(root);
   disposeModalScenes(root);
@@ -387,6 +382,7 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   });
   releaseDeferredPictures(root);
   root.replaceChildren(...panels);
+  installControlFeedback(root,roots,interaction);
   installRouteScenes(root,routes,interaction);updateRouteScenes(root,dataSet);
   installModalScenes(root,modals);updateModalScenes(root,dataSet);
   activeInteraction.set(root,{cancel(){for(const cancel of cancellers)cancel()}});
