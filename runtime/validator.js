@@ -1,3 +1,4 @@
+import {validateSceneEffects} from './scene-effects.js';
 import {validateVector} from './vector.js';
 /** P.Code contract validators. */
 import {validateNumericEditor,validateDecimalInput} from './numeric-editor.js';
@@ -30,7 +31,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","LabelTemplate",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
+  "Text","Role","AriaLevel","Sequence","Vector","Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -120,7 +121,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Direction!==undefined&&!DIRECTIONS.has(rule.Direction))fail("invalid Direction for "+label);
   if(rule.Parallax!==undefined&&!isFiniteNumber(rule.Parallax))fail("invalid Parallax for "+label);
   if(rule.CornerRadius!==undefined&&!isNonNegativeNumber(rule.CornerRadius))fail("CornerRadius for "+label+" must be non-negative");
-  if(rule.Repeat!==undefined&&(! /^(ActivePanel|SimplePanel) /.test(label)||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires a panel and a collection Login");
+  if(rule.Repeat!==undefined&&(! /^(ActivePanel|SimplePanel|Flow) /.test(label)||!isNonEmptyString(rule.Repeat)))fail("Repeat for "+label+" requires a panel and a collection Login");
   if(rule.Class!==undefined&&(typeof rule.Class!=="string"||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.Class)))fail("Class for "+label+" must be local CSS class names");
   if(rule.NumericEditor!==undefined)validateNumericEditor(rule.NumericEditor,label);
   if(rule.DecimalInput!==undefined)validateDecimalInput(rule.DecimalInput,label);
@@ -161,14 +162,17 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
       for(const key of ['Target','Exclude','ScrollBoundary','IndicatorClass','SpinnerClass','FadingClass','Label'])if(g[key]!==undefined&&!isNonEmptyString(g[key]))fail('Invalid Route gesture string');
     }
   }
+  if(rule.SceneEffects!==undefined){if(!label.startsWith('BasePanel '))fail('SceneEffects require BasePanel');validateSceneEffects(rule.SceneEffects)}
+  if(rule.Linkify!==undefined&&(!label.startsWith('Flow ')||typeof rule.Linkify!=='boolean'))fail('Linkify requires Flow');
+  if(rule.Rows!==undefined&&(!label.startsWith('EditableInput ')||!Number.isInteger(rule.Rows)||rule.Rows<1||rule.Rows>100))fail('Invalid input Rows');
   if(rule.Modal!==undefined){
     if(!label.startsWith('BasePanel ')||rule.Modal!==true||!rule.VisibleSource)fail('Modal requires a BasePanel and VisibleSource');
     if(rule.ModalClass!==undefined&&(typeof rule.ModalClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*(?:\s+[-_a-zA-Z][-_a-zA-Z0-9]*)*$/.test(rule.ModalClass)))fail('Invalid ModalClass');
     validateEventToken(rule.Dismiss,label+'.Dismiss');
   }else if(rule.ModalClass!==undefined||rule.Dismiss!==undefined)fail('ModalClass and Dismiss require Modal');
-  if(rule.Text!==undefined&&(!rule.NativeButton||typeof rule.Text!=='string'))fail('Text requires a NativeButton');
+  if(rule.Text!==undefined&&((!rule.NativeButton&&!label.startsWith('Flow '))||typeof rule.Text!=='string'))fail('Text requires a NativeButton');
   if(rule.NativeButton!==undefined&&(rule.NativeButton!==true||!label.startsWith('ActivePanel ')))fail('NativeButton requires an ActivePanel');
-  if(rule.Source!==undefined&&(!/^(?:Container|EditableInput) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
+  if(rule.Source!==undefined&&(!/^(?:Container|EditableInput|Flow) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
   for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
   if(rule.LabelTemplate!==undefined&&(!rule.LabelSource||typeof rule.LabelTemplate!=='string'))fail('LabelTemplate requires LabelSource and text');
   if(rule.Role!==undefined&&!['status','alert','log','heading','group','region','list','listitem','img','presentation'].includes(rule.Role))fail('Invalid semantic Role');
@@ -177,7 +181,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
     const q=rule.Sequence;
     if(!q||typeof q!=='object'||Array.isArray(q)||Object.keys(q).some(k=>!['Source','Key','Part'].includes(k))||!/^\$\.[a-zA-Z0-9_.-]+$/.test(q.Source??'')||!isNonEmptyString(q.Key)||!Number.isInteger(q.Part??0)||(q.Part??0)<0||(q.Part??0)>99)fail('Invalid Sequence declaration');
   }
-  if(rule.Vector!==undefined){if(!label.startsWith("Container ")||rule.Source!==undefined||rule.Format!==undefined)fail("Vector requires a static Container");validateVector(rule.Vector)}
+  if(rule.Vector!==undefined){if(! /^(Container|Flow) /.test(label)||rule.Source!==undefined||rule.Format!==undefined)fail("Vector requires a static Container");validateVector(rule.Vector)}
   if(rule.Format!==undefined)validateFormat(rule.Format,label);
   if(rule.PanelTransparency!==undefined){
     if(!allowPanelEffects)fail("PanelTransparency is not allowed for "+label);
@@ -297,8 +301,10 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(Array.isArray(node)){node.forEach(checkVisualCapabilities);return}
     if(!node||typeof node!=="object")return;
     if((node.Properties?.Role||node.Properties?.Sequence||node.SimplePanels?.length&&!pLang.includes(node)||node.Properties?.Repeat&&node.ActivePanels)&&!capabilitySet.has('pcode.panel-composition.v1'))fail('Panel composition requires pcode.panel-composition.v1');
-    if(node.Properties?.Text!==undefined&&!capabilitySet.has('pcode.native-button-text.v1'))fail('Native button text requires pcode.native-button-text.v1');
+    if(node.Type!=='Flow'&&node.Properties?.Text!==undefined&&!capabilitySet.has('pcode.native-button-text.v1'))fail('Native button text requires pcode.native-button-text.v1');
     if(node.Type==='Group'&&node.Properties?.VisibleSource&&!capabilitySet.has('pcode.group-state.v1'))fail('Group visibility requires pcode.group-state.v1');
+    if(node.Properties?.SceneEffects&&!capabilitySet.has('pcode.scene-effects.v1'))fail('SceneEffects requires pcode.scene-effects.v1');
+    if(node.Type==='Flow'&&!capabilitySet.has('pcode.flow-layout.v1'))fail('Flow requires pcode.flow-layout.v1');
     if(node.Properties?.Vector&&!capabilitySet.has('pcode.vector.v1'))fail('Vector requires pcode.vector.v1');
     if(node.Properties?.CornerRadius!==undefined&&!capabilitySet.has("pcode.corner-radius.v1"))
       fail("CornerRadius requires negotiated pcode.corner-radius.v1");
@@ -348,8 +354,21 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(source.InputMode!==undefined&&!INPUT_MODES.has(source.InputMode))fail("invalid InputMode for EditableInput "+input.Login);
     for(const key of ["OnFocus","OnBlur","OnInput","OnChange","OnSubmit"])validateEventToken(source[key],"EditableInput "+input.Login+"."+key);
   };
-  const checkLayout=(items,label)=>{if(!Array.isArray(items))fail(label+".Layout must be an array");for(const item of items){if(item?.Type==="Group")checkGroup(item);else if(item?.Type==="EditableInput")checkInput(item);else if(item?.Type==="Container"||item?.Login!==undefined)checkContainer(item);else fail(label+".Layout accepts only Group, Container, or EditableInput")}};
-  const checkGroup=g=>{const p=g.Properties??{};const allowed=new Set(["Orientation","Width","MinWidth","Height","MinHeight","FillHorizontal","FillVertical","Gap","VisibleSource"]);for(const k of Object.keys(p))if(!allowed.has(k))fail("Group property "+k+" is not allowed");for(const k of ["Width","MinWidth","MinHeight","Gap"])if(p[k]!==undefined&&!isNonNegativeNumber(p[k]))fail("Group."+k+" must be non-negative");if(p.Height!==undefined&&p.Height!=="Auto"&&!isNonNegativeNumber(p.Height))fail("Group.Height must be Auto or non-negative");checkFill(p,"Group");if(!DIRECTIONS.has(p.Orientation))fail("Group.Properties.Orientation must be Horizontal or Vertical");if(g.Login!==undefined)fail("Group must not have Login");if(p.VisibleSource!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.VisibleSource))fail("Group.VisibleSource must be a semantic path");checkLayout(g.Layout??[],"Group")};
+  const checkFlow=(node,depth)=>{
+    if(depth>32)fail('Flow nesting exceeds 32');
+    add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
+    if(!['div','section','article','p','span','strong','small','time','label','button','h1','h2','h3'].includes(tag))fail('Invalid Flow Tag');
+    const allowed=new Set(['Tag','Class','Text','Source','Format','Repeat','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
+    for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
+    if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');
+    if(p.Repeat!==undefined&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(p.Repeat))fail('Flow Repeat must be semantic');
+    if(p.OffPress&&tag!=='button')fail('Flow actions require a native button');
+    if([p.Text,p.Source,p.Vector].filter(value=>value!==undefined).length>1||(p.Text!==undefined||p.Source!==undefined||p.Vector!==undefined)&&node.Layout?.length)fail('Flow content must have one owner');
+    delete p.Tag;validateVisualRule(p,'Flow '+node.Login,false,tag==='button');
+    checkLayout(node.Layout??[],node.Login,depth);
+  };
+  const checkLayout=(items,label,depth=0)=>{if(depth>32)fail('Layout nesting exceeds 32');if(!Array.isArray(items))fail(label+'.Layout must be an array');for(const item of items){if(item?.Type==='Flow')checkFlow(item,depth+1);else if(item?.Type==='Group')checkGroup(item,depth+1);else if(item?.Type==='EditableInput')checkInput(item);else if(item?.Type==='Container'||item?.Login!==undefined)checkContainer(item);else fail(label+'.Layout accepts only Group, Container, EditableInput or Flow')}};
+  const checkGroup=(g,depth=0)=>{const p=g.Properties??{};const allowed=new Set(["Orientation","Width","MinWidth","Height","MinHeight","FillHorizontal","FillVertical","Gap","VisibleSource"]);for(const k of Object.keys(p))if(!allowed.has(k))fail("Group property "+k+" is not allowed");for(const k of ["Width","MinWidth","MinHeight","Gap"])if(p[k]!==undefined&&!isNonNegativeNumber(p[k]))fail("Group."+k+" must be non-negative");if(p.Height!==undefined&&p.Height!=="Auto"&&!isNonNegativeNumber(p.Height))fail("Group.Height must be Auto or non-negative");checkFill(p,"Group");if(!DIRECTIONS.has(p.Orientation))fail("Group.Properties.Orientation must be Horizontal or Vertical");if(g.Login!==undefined)fail("Group must not have Login");if(p.VisibleSource!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.VisibleSource))fail("Group.VisibleSource must be a semantic path");checkLayout(g.Layout??[],"Group",depth)};
   const panelLayout=(node,label)=>{if(node.Layout!==undefined&&node.Containers!==undefined)fail(label+" cannot define both Layout and legacy Containers");if(node.Layout!==undefined)checkLayout(node.Layout,label);else{if(!Array.isArray(node.Containers))fail(label+".Layout or legacy Containers required");node.Containers.forEach(checkContainer)}};
   const checkActive=(a,aggregate=false)=>{if(a.Properties?.Text!==undefined&&(a.Layout?.length||a.Containers?.length))fail('NativeButton Text cannot have a child layout');add(a.Login,aggregate?"AggregateActivePanel":"ActivePanel");validateVisualRule(a.Properties??{},(aggregate?"AggregateActivePanel ":"ActivePanel ")+a.Login,true,true);panelLayout(a,a.Login)};
   const checkSimple=(sp,depth=0)=>{if(depth>32)fail("Panel nesting exceeds 32");add(sp.Login,"SimplePanel");const p={...(sp.Properties??{})};const ag=p.AggregateActivePanels??[];delete p.AggregateActivePanels;validateVisualRule(p,"SimplePanel "+sp.Login,true);if(!Array.isArray(ag)||ag.length>1)fail(sp.Login+".Properties.AggregateActivePanels must contain 0..1 item");ag.forEach(x=>checkActive(x,true));panelLayout(sp,sp.Login);if(!Array.isArray(sp.ActivePanels))fail(sp.Login+".ActivePanels required");sp.ActivePanels.forEach(x=>checkActive(x,false));if(sp.SimplePanels!==undefined){if(!Array.isArray(sp.SimplePanels))fail("SimplePanels must be an array");sp.SimplePanels.forEach(x=>checkSimple(x,depth+1))}};

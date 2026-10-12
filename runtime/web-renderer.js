@@ -1,3 +1,4 @@
+import {installSceneEffects,beforeSceneUpdate,updateSceneEffects,disposeSceneEffects,appendLinkedText} from './scene-effects.js';
 import {applySequence} from './sequence.js';
 import {renderVector} from './vector.js';
 import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput,installDecimalPreviews,updateDecimalPreviews,disposeDecimalPreviews} from './numeric-editor.js';
@@ -212,7 +213,8 @@ function renderEditableInput(node,parentOrientation,dataSet,renderSet,interactio
   cancellers.push(()=>{composing=false;el.blur?.()});
   return el;
 }
-function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem=null){
+function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem=null,repeatLists=[]){
+  if(node.type==="Flow"){if(node.Repeat)return renderRepeat(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists);return renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem)}
   if(node.type==="Group"){
     const rule=node.Layout??{};const el=document.createElement("div");el.dataset.planeType="Group";el.dataset.planeGroup="";el.style.display="flex";el.style.flexDirection=rule.Orientation==="Horizontal"?"row":"column";
     if(rule.Gap!==undefined)applyLayoutValue(el,"gap","gap",px(rule.Gap));
@@ -222,7 +224,7 @@ function renderLayoutItem(node,parentOrientation,dataSet,renderSet,parallaxNodes
     if(rule.MinHeight!==undefined)applyLayoutValue(el,"minHeight","min-height",px(rule.MinHeight));
     applyFill(el,rule,parentOrientation);
     if(rule.VisibleSource){el.__planeVisual=rule;applySemanticState(el,rule,dataSet,repeatedItem)}
-    for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem));
+    for(const child of node.children??[])el.append(renderLayoutItem(child,rule.Orientation,dataSet,renderSet,parallaxNodes,ownerShadow,interaction,cancellers,resources,repeatedItem,repeatLists));
     return el;
   }
   if(node.type==="EditableInput")return renderEditableInput(node,parentOrientation,dataSet,renderSet,interaction,cancellers,resources,repeatedItem);
@@ -271,7 +273,39 @@ function bindActivePanel(el,node,interaction,cancellers,repeatedItem=null){
   el.addEventListener("pointercancel",release);el.addEventListener("lostpointercapture",release);
   cancellers.push(release);
 }
+function patchFlowContent(el,node,dataSet,renderSet,resources,item=null){
+  const rule=node.Visual;
+  if(rule.Source===undefined&&rule.Text===undefined)return;
+  const sources=rule.Text!==undefined?[{kind:'Text',value:rule.Text}]:sourcesFromData(node,dataSet,item);
+  const signature=JSON.stringify(sources);if(el.__planeSourceSignature===signature)return;
+  el.__planeSourceSignature=signature;
+  el.replaceChildren();for(const source of sources){if(source.kind==='Text'&&rule.Linkify)appendLinkedText(el,source.value);else el.append(source.kind==='Text'?document.createTextNode(source.value):renderSource(source,renderSet,rule,0,resources))}
+}
+function renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem){
+  const rule=node.Visual,el=document.createElement(rule.Tag);el.dataset.planeType='Flow';el.dataset.planeLogin=node.Login;el.__planeVisual=rule;el.__planeFlow=node;
+  if(rule.Class)el.className=rule.Class;
+  if(rule.AriaLabel)el.setAttribute('aria-label',rule.AriaLabel);
+  if(repeatedItem)el.dataset.planeItemId=repeatedItem.Id;
+  if(rule.Source){el.dataset.planeSemanticSource='';el.dataset.planeDataSlot=node.dataSlot}
+  if(rule.Tag==='button'){
+    el.type='button';
+    el.addEventListener('click',event=>{if(!el.disabled&&interaction?.isEnabled()&&node.OffPress){event.stopPropagation();interaction.emit('OffPress',node.Login,node.OffPress,repeatedItem?{ItemId:repeatedItem.Id}:null)}});
+  }
+  if(rule.Vector)el.append(renderVector(rule.Vector));
+  applySemanticState(el,rule,dataSet,repeatedItem);patchFlowContent(el,node,dataSet,renderSet,resources,repeatedItem);
+  for(const child of node.layout)el.append(renderLayoutItem(child,null,dataSet,renderSet,parallaxNodes,0,interaction,cancellers,resources,repeatedItem,repeatLists));
+  return el;
+}
+function renderRepeat(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists){
+  const list=document.createElement('div');list.dataset.planeRepeat=node.Repeat;list.style.display='contents';
+  const paths=new Set();
+  const collect=value=>{if(!value||typeof value!=='object')return;for(const [key,v]of Object.entries(value))if(key!=='Repeat'&&typeof v==='string'&&v.startsWith('$.'))paths.add(v);else if(typeof v==='object')collect(v)};collect(node);
+  const record={list,node,signature:null,renderSet,interaction,resources,rows:new Map(),parallaxNodes,paths:[...paths]};repeatLists.push(record);
+  cancellers.push(()=>{for(const row of record.rows.values())for(const cancel of row.cancellers)cancel()});
+  renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists);return list;
+}
 function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists=[],repeatedItem=null){
+  if(node.type==='Flow')return renderFlow(node,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem);
   const el=document.createElement(node.Visual?.NativeButton?'button':'div');if(node.Visual?.NativeButton)el.type='button';el.dataset.planeType=node.type;el.dataset.planeLogin=node.Login;const rule=node.Visual??{};el.__planeVisual=rule;
   if(rule.AriaLabel)el.setAttribute('aria-label',rule.AriaLabel);
   if(rule.Class)el.className=rule.Class;
@@ -282,16 +316,9 @@ function renderPanel(node,dataSet,renderSet,parallaxNodes,interaction,cancellers
   const parallax=rule.Parallax??renderSet.Parallax??0;if(parallax!==0)parallaxNodes.push({element:el,parallax});
   const orientation=rule.Direction??"Vertical";const shadow=panelEffects?(rule.Shadow??0):0;
   if(rule.Text!==undefined)el.append(document.createTextNode(rule.Text));
-  for(const item of node.layout??[])el.append(renderLayoutItem(item,orientation,dataSet,renderSet,parallaxNodes,shadow,interaction,cancellers,resources,repeatedItem));
+  for(const item of node.layout??[])el.append(renderLayoutItem(item,orientation,dataSet,renderSet,parallaxNodes,shadow,interaction,cancellers,resources,repeatedItem,repeatLists));
   for(const child of node.children??[]){
-    if(child.Repeat){
-      const list=document.createElement("div");list.dataset.planeRepeat=child.Repeat;list.style.display="contents";
-      const paths=new Set();
-      const collect=value=>{if(!value||typeof value!=='object')return;for(const [key,v]of Object.entries(value))if(key!=='Repeat'&&typeof v==='string'&&v.startsWith('$.'))paths.add(v);else if(typeof v==='object')collect(v)};collect(child);
-      const record={list,node:child,signature:null,renderSet,interaction,resources,rows:new Map(),parallaxNodes,paths:[...paths]};repeatLists.push(record);
-      cancellers.push(()=>{for(const row of record.rows.values())for(const cancel of row.cancellers)cancel()});
-      renderRepeatedItems(record,dataSet,parallaxNodes,cancellers,repeatLists);
-      el.append(list);
+    if(child.Repeat){el.append(renderRepeat(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists));
     }else el.append(renderPanel(child,dataSet,renderSet,parallaxNodes,interaction,cancellers,resources,repeatLists,repeatedItem));
   }
   if(node.type==="ActivePanel"||node.type==="AggregateActivePanel")bindActivePanel(el,node,interaction,cancellers,repeatedItem);
@@ -377,6 +404,7 @@ export function requestTiltParallax(root){
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
 export function consumePlaneCodeBack(root){return consumeNumericBack(root)}
 export function disposePlaneCode(root){
+  disposeSceneEffects(root);
   disposeNumericEditor(root);disposeDecimalPreviews(root);
   disposeControlFeedback(root);
   disposeRouteScenes(root);
@@ -384,6 +412,7 @@ export function disposePlaneCode(root){
   cancelPlaneCodeInteraction(root);activeInteraction.delete(root);activeRepeatLists.delete(root);activeParallax.get(root)?.cancel();activeParallax.delete(root);stopTilt(root);tiltScenes.delete(root);activeResourceStyles.get(root)?.remove?.();activeResourceStyles.delete(root);activeResources.delete(root);activeSkinStyles.get(root)?.remove();activeSkinStyles.delete(root);releaseDeferredPictures(root);root.replaceChildren();
 }
 export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=null,resourceSet=null,skinStyleSheet=null){
+  disposeSceneEffects(root);
   disposeNumericEditor(root);disposeDecimalPreviews(root);
   disposeControlFeedback(root);
   disposeRouteScenes(root);
@@ -407,16 +436,19 @@ export function renderPlaneCode(root,objectPlan,dataSet,renderSet,interaction=nu
   installControlFeedback(root,roots,interaction);
   installRouteScenes(root,routes,interaction);updateRouteScenes(root,dataSet);
   installModalScenes(root,modals);updateModalScenes(root,dataSet);
+  installSceneEffects(root,roots,interaction);
   activeInteraction.set(root,{cancel(){for(const cancel of cancellers)cancel()}});
   activeRepeatLists.set(root,repeatLists);
   bindParallax(root,parallaxNodes);
 }
 export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticOnly=false}={}){
+  beforeSceneUpdate(root);
   const resources=prepareResources(root,resourceSet);
   for(const el of root.querySelectorAll('[data-plane-semantic-state]'))if(!el.closest?.('[data-plane-repeat]')){applySemanticState(el,el.__planeVisual??{},nextData);if(semanticOnly&&el.__planeInput&&(el.__planeVisual.EnabledSource||el.__planeVisual.ReadOnlySource||el.__planeVisual.ErrorSource))patchInputState(el,el.__planeInput,nextData)}
   for(const el of root.querySelectorAll(semanticOnly?'[data-plane-semantic-source],[data-plane-decimal]':'[data-plane-data-slot]')){
     if(el.closest?.('[data-plane-repeat]'))continue;
     if(semanticOnly&&!/^[$@]\./.test(el.__planeVisual?.Source??'')){if(el.__planeVisual?.DecimalInput)patchDecimalInput(el,el.__planeInput,nextData);continue;}
+    if(el.__planeFlow){patchFlowContent(el,el.__planeFlow,nextData,renderSet,resources);continue}
     if(el.dataset.planeType==="EditableInput"){patchInputElement(el,el.__planeInput,nextData);continue}
     const body=el.querySelector(':scope > [data-plane-container-content]');if(!body)continue;
     const visual=el.__planeVisual??{};const node={type:"Container",dataSlot:el.dataset.planeDataSlot,Order:el.dataset.planeOrder??"Positive",Visual:visual};
@@ -429,5 +461,5 @@ export function patchSetData(root,nextData,renderSet,resourceSet=null,{semanticO
     releaseDeferredPictures(body);body.replaceChildren(...sources);applyTextLayout(el,body,visual);
   }
   for(const record of activeRepeatLists.get(root)??[]){record.resources=resources;record.renderSet=renderSet;renderRepeatedItems(record,nextData,[],[],[])}
-  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);
+  updateRouteScenes(root,nextData);updateModalScenes(root,nextData);updateNumericEditor(root,nextData);updateDecimalPreviews(root);updateSceneEffects(root);
 }

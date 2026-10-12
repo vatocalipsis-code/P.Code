@@ -1,0 +1,53 @@
+/** Optional, SPL-authored browser behavior. No application state or commands are interpreted. */
+const scenes=new WeakMap();
+export function validateSceneEffects(effects){
+ const fail=()=>{throw Error('Invalid SceneEffects')};
+ if(!effects||typeof effects!=='object'||Array.isArray(effects))fail();
+ const schemas={Viewport:['TopVariable','HeightVariable'],AutoSize:['Target','RowHeight','MultilineHeight','MultilineClass'],Scroll:['Target','Threshold'],Resize:['Handle','Target','MinHeight','ViewportMargin'],Focus:['Target','CompactTarget','CompactWidth'],Outside:['Target','Scope','Command']};
+ for(const [kind,rule] of Object.entries(effects)){
+  const fields=schemas[kind];if(!fields||!rule||typeof rule!=='object'||Array.isArray(rule)||Object.keys(rule).some(key=>!fields.includes(key))||fields.some(key=>!Object.hasOwn(rule,key)))fail();
+  for(const [key,value]of Object.entries(rule)){
+   if(['RowHeight','MultilineHeight','Threshold','MinHeight','ViewportMargin','CompactWidth'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>10000)fail()}
+   else if(typeof value!=='string'||!value.trim()||value.length>256)fail();
+   if(key.endsWith('Variable')&&!/^--[-a-zA-Z0-9]+$/.test(value))fail();
+   if(key.endsWith('Class')&&!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value))fail();
+  }
+ }
+}
+export function installSceneEffects(root,plan,interaction){
+ disposeSceneEffects(root);
+ if(!plan.some(node=>node.Visual?.SceneEffects))return;
+ const doc=root.ownerDocument,win=doc.defaultView,abort=new win.AbortController(),records=[];
+ for(const node of plan){
+  const rules=node.Visual?.SceneEffects;if(!rules)continue;
+  const panel=[...root.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===node.Login);if(!panel)continue;
+  const wrapper=panel.closest('[data-plane-modal]')??panel;
+  const get=login=>[panel,...panel.querySelectorAll('[data-plane-login]')].find(el=>el.dataset.planeLogin===login);
+  const record={panel,wrapper,rules,get,open:false,scroll:null};records.push(record);
+  const listen=(target,type,handler)=>target?.addEventListener(type,handler,{signal:abort.signal});
+  if(rules.Viewport){const r=rules.Viewport;const update=()=>{wrapper.style.setProperty(r.TopVariable,(win.visualViewport?.offsetTop??0)+'px');wrapper.style.setProperty(r.HeightVariable,(win.visualViewport?.height??win.innerHeight)+'px')};listen(win.visualViewport,'resize',update);listen(win.visualViewport,'scroll',update);listen(win,'resize',update);update()}
+  if(rules.AutoSize){
+   const r=rules.AutoSize,area=get(r.Target);if(!area)throw Error('Unknown AutoSize target '+r.Target);
+   const resize=()=>{if(!area.getClientRects().length)return;const parent=area.parentElement;parent.classList.remove(r.MultilineClass);area.style.setProperty('height','0px','important');const multiple=area.scrollHeight>r.RowHeight;parent.classList.toggle(r.MultilineClass,multiple);area.style.setProperty('height','0px','important');area.style.setProperty('height',Math.max(multiple?r.MultilineHeight:r.RowHeight,area.scrollHeight)+'px','important')};
+   listen(area,'input',resize);let width=0;const observer=new win.ResizeObserver(()=>{const next=area.parentElement.clientWidth;if(next!==width){width=next;resize()}});observer.observe(area.parentElement);record.resize=resize;record.observer=observer;
+  }
+  if(rules.Resize){const r=rules.Resize,handle=get(r.Handle),target=get(r.Target);if(!handle||!target)throw Error('Unknown Resize target');let drag=null;listen(handle,'pointerdown',e=>{e.preventDefault();handle.setPointerCapture(e.pointerId);drag={id:e.pointerId,y:e.clientY,height:target.getBoundingClientRect().height}});listen(handle,'pointermove',e=>{if(drag?.id===e.pointerId)target.style.height=Math.max(r.MinHeight,Math.min(win.innerHeight-r.ViewportMargin,drag.height+e.clientY-drag.y))+'px'});for(const event of ['pointerup','pointercancel','lostpointercapture'])listen(handle,event,()=>{drag=null})}
+  if(rules.Outside){const r=rules.Outside,target=get(r.Target),scope=get(r.Scope);if(!target||!scope)throw Error('Unknown Outside target');wrapper.addEventListener('click',e=>{if(target.getClientRects().length&&!scope.contains(e.target)&&interaction?.isEnabled())interaction.emit('OffPress',node.Login,r.Command)},{capture:true,signal:abort.signal})}
+ }
+ scenes.set(root,{records,abort});updateSceneEffects(root);
+}
+export function beforeSceneUpdate(root){for(const r of scenes.get(root)?.records??[]){if(!r.rules.Scroll)continue;const el=r.get(r.rules.Scroll.Target);if(el)r.scroll={el,top:el.scrollTop,bottom:el.scrollHeight-el.clientHeight-el.scrollTop<r.rules.Scroll.Threshold}}}
+export function updateSceneEffects(root){
+ for(const r of scenes.get(root)?.records??[]){
+  const open=!r.wrapper.hidden&&r.panel.getClientRects().length>0;r.resize?.();
+  if(open&&!r.open&&r.rules.Focus){const rule=r.rules.Focus;const target=r.get(root.ownerDocument.defaultView.innerWidth<=rule.CompactWidth?rule.CompactTarget:rule.Target);queueMicrotask(()=>{if(target?.isConnected&&!r.wrapper.hidden){if(!target.matches('input,textarea,select,button,a,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true})}})}
+  r.open=open;
+  if(r.scroll){const {el,top,bottom}=r.scroll;queueMicrotask(()=>{if(el.isConnected)el.scrollTop=bottom?el.scrollHeight:top});r.scroll=null}
+ }
+}
+export function disposeSceneEffects(root){const state=scenes.get(root);state?.abort.abort();for(const r of state?.records??[])r.observer?.disconnect();scenes.delete(root)}
+export function appendLinkedText(el,value){
+ const text=String(value??''),pattern=/https?:\/\/[^\s]+/gu;let cursor=0;
+ for(const match of text.matchAll(pattern)){el.append(el.ownerDocument.createTextNode(text.slice(cursor,match.index)));const a=el.ownerDocument.createElement('a');a.href=match[0];a.textContent=match[0];a.target='_blank';a.rel='noopener noreferrer';el.append(a);cursor=match.index+match[0].length}
+ el.append(el.ownerDocument.createTextNode(text.slice(cursor)));
+}

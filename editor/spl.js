@@ -136,7 +136,7 @@ class Parser {
         if(k!=="AggregateActivePanels") syntax(`unsupported Properties collection ${k}`,this.peek(-1));
         obj[k]=this.entityArrayBody();
         this.expect("]");
-      } else if(['Sequence','Vector','Format','Route','Feedback','NumericEditor','DecimalInput'].includes(k)&&this.match('{')){obj[k]=this.mapBody();this.expect('}');}
+      } else if(['Sequence','Vector','Format','Route','Feedback','NumericEditor','DecimalInput','SceneEffects'].includes(k)&&this.match('{')){obj[k]=this.mapBody();this.expect('}');}
       else syntax(`expected =, structured property, or [ after Properties.${k}`,this.peek());
     }
     return obj;
@@ -156,7 +156,7 @@ class Parser {
 
     this.expect("{");
     const node={};
-    if(type==="Group"||type==="EditableInput") node.Type=type;
+    if(type==="Group"||type==="EditableInput"||type==="Flow") node.Type=type;
     if(login!==undefined) node.Login=login;
 
     while(!this.is("}")){
@@ -295,7 +295,7 @@ function serializeMap(obj,indent){
 }
 
 function inferredType(node,collection){
-  if(node?.Type==="Group"||node?.Type==="EditableInput") return node.Type;
+  if(node?.Type==="Group"||node?.Type==="EditableInput"||node?.Type==="Flow") return node.Type;
   if(collection==="Data") return "BasePanel";
   if(collection==="SimplePanels") return "SimplePanel";
   if(collection==="ActivePanels") return "ActivePanel";
@@ -310,7 +310,7 @@ function serializeProperties(props,indent){
       rows.push(line(indent+1,"AggregateActivePanels ["));
       for(const node of v) rows.push(...serializeEntity(node,"AggregateActivePanels",indent+2));
       rows.push(line(indent+1,"]"));
-    } else if(['Sequence','Vector','Format','Route','Feedback','NumericEditor','DecimalInput'].includes(k)&&v&&typeof v==='object'&&!Array.isArray(v)){
+    } else if(['Sequence','Vector','Format','Route','Feedback','NumericEditor','DecimalInput','SceneEffects'].includes(k)&&v&&typeof v==='object'&&!Array.isArray(v)){
       rows.push(line(indent+1,k+' {'),...serializeMap(v,indent+2),line(indent+1,'}'));
     } else if(!(v && typeof v==="object")) {
       rows.push(line(indent+1,`${k} = ${lit(v)}`));

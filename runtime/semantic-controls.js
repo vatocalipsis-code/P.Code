@@ -8,6 +8,7 @@ export function createInputElement(config){
   if(type!=='Choice'&&type!=='Multiline')el.type={Secret:'password',Number:'text',Date:'date',Range:'range',Checkbox:'checkbox',Text:'text'}[type];
   if(type==='Number')el.inputMode=config.InputMode??'decimal';else if(config.InputMode)el.inputMode=config.InputMode;
   for(const key of ['Min','Max','Step'])if(config[key]!==undefined)el[key.toLowerCase()]=String(config[key]);
+  if(type==='Multiline'&&config.Rows!==undefined)el.rows=config.Rows;
   if(config.Autocomplete)el.autocomplete=config.Autocomplete;
   if(config.MaxLength!==undefined)el.maxLength=config.MaxLength;
   el.placeholder=config.Placeholder??'';return el;

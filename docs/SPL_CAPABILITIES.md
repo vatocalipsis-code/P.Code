@@ -103,3 +103,30 @@ For breadcrumb-like text, `Format.ListSeparator`, `Prefix` and `Suffix` format
 an array of scalar semantic values. The application supplies the path values;
 SPL supplies the separator and decoration. ActivePanel `AriaLabel` is applied by
 the renderer, including native buttons.
+
+## Declarative native layout and scene behavior (2.28.0)
+
+`pcode.flow-layout.v1` allows `Flow` in a panel's `Layout`. Each Flow has a
+unique Login, a validated native Tag, optional Class, semantic Source/Format,
+state/accessibility sources, and child Layout or one content source. Supported
+Tags are div, section, article, p, span, strong, small, time, label, button and
+h1–h3. Native buttons emit an opaque OffPress command; repeated buttons include
+the semantic ItemId. Flow uses the same keyed Repeat implementation as panels.
+It does not accept HTML, inline style, event code, or arbitrary attributes.
+Static Vector content negotiates `pcode.vector.v1`; `Linkify = true` makes
+HTTP(S) tokens into safe text anchors with noopener/noreferrer.
+
+`pcode.scene-effects.v1` allows SceneEffects on a BasePanel. Its declarative
+rules reference child Logins, never product handlers:
+
+- Viewport: TopVariable and HeightVariable track the visual viewport.
+- AutoSize: Target, RowHeight, MultilineHeight, MultilineClass control a textarea.
+- Scroll: Target and Threshold preserve scroll position or a pinned end.
+- Resize: Handle, Target, MinHeight, ViewportMargin define vertical resizing.
+- Focus: Target, CompactTarget, CompactWidth choose initial focus.
+- Outside: Target, Scope, Command emit an opaque command outside an open region.
+
+The runtime installs and disposes observers/listeners with its mounted scene.
+Numeric limits, CSS variable/class syntax, shape keys and commands are validated.
+EditableInput of InputType Multiline can declare Rows (1–100).
+Application models contain data and command results, not these presentation rules.
