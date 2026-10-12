@@ -1,3 +1,4 @@
+import {validateVector} from './vector.js';
 /** P.Code contract validators. */
 import {validateNumericEditor,validateDecimalInput} from './numeric-editor.js';
 function isTransparency(v){return typeof v==="number"&&Number.isFinite(v)&&v>=0&&v<=1}
@@ -29,7 +30,7 @@ const VISUAL_RULES=new Set([
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
   "CornerRadius","Repeat","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","LabelTemplate",
   "ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
-  "Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
+  "Vector","Modal","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput"
 ]);
 const RENDER_RULES=new Set([
   "PanelSpacing","BackgroundColor","PanelColor","BorderColor","TextColor",
@@ -167,6 +168,7 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
   for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
   if(rule.LabelTemplate!==undefined&&(!rule.LabelSource||typeof rule.LabelTemplate!=='string'))fail('LabelTemplate requires LabelSource and text');
+  if(rule.Vector!==undefined){if(!label.startsWith("Container ")||rule.Source!==undefined||rule.Format!==undefined)fail("Vector requires a static Container");validateVector(rule.Vector)}
   if(rule.Format!==undefined)validateFormat(rule.Format,label);
   if(rule.PanelTransparency!==undefined){
     if(!allowPanelEffects)fail("PanelTransparency is not allowed for "+label);
@@ -285,6 +287,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
   const checkVisualCapabilities=node=>{
     if(Array.isArray(node)){node.forEach(checkVisualCapabilities);return}
     if(!node||typeof node!=="object")return;
+    if(node.Properties?.Vector&&!capabilitySet.has('pcode.vector.v1'))fail('Vector requires pcode.vector.v1');
     if(node.Properties?.CornerRadius!==undefined&&!capabilitySet.has("pcode.corner-radius.v1"))
       fail("CornerRadius requires negotiated pcode.corner-radius.v1");
     if(node.Properties?.Parallax&&!capabilitySet.has("pcode.parallax.v1"))

@@ -1,3 +1,4 @@
+import {renderVector} from './vector.js';
 import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput,installDecimalPreviews,updateDecimalPreviews,disposeDecimalPreviews} from './numeric-editor.js';
 import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} from './control-feedback.js';
 /** Browser renderer for compiled P.Code Object Plans. */
@@ -117,6 +118,7 @@ function applyContainerContentLayout(content,rule={}){
   if(rule.Gap!==undefined)applyLayoutValue(content,"gap","content-gap",px(rule.Gap));
 }
 function renderSource(source,renderSet,rule,shadow=0,resources=null){
+  if(source.kind==='Vector')return renderVector(source.value);
   if(source.kind==='Formatted'){
     const el=document.createElement('span');el.dataset.planeSource='Text';
     for(const segment of source.value)el.append(segment.kind==='Text'?document.createTextNode(segment.value):renderSource(segment,renderSet,rule,shadow,resources));
@@ -150,6 +152,7 @@ function renderSource(source,renderSet,rule,shadow=0,resources=null){
 }
 function sourcesFromData(node,dataSet,repeatedItem=null){
   const rule=node.Visual??{};
+  if(rule.Vector)return [{kind:"Vector",value:rule.Vector}];
   if(/^[$@]\./.test(rule.Source??'')){
     return formatValue(semanticValue(rule.Source,dataSet[MODEL],repeatedItem),rule.Format??{Kind:'Text'},dataSet[MODEL]);
   }
@@ -162,7 +165,7 @@ function sourcesFromData(node,dataSet,repeatedItem=null){
 function applySemanticState(el,rule,dataSet,item=null){
   if(rule.StateSource||rule.VisibleSource||rule.ExpandedSource||rule.EnabledSource||rule.PressedSource||rule.LabelSource)el.dataset.planeSemanticState='';
   if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
-  if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.display=el.hidden?'none':''}
+  if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.setProperty('display',el.hidden?'none':'',el.hidden?'important':'')}
   if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));
   if(rule.LabelSource){const value=semanticValue(rule.LabelSource,dataSet[MODEL],item);el.setAttribute('aria-label',textTemplate(value,rule.LabelTemplate))}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));

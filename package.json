@@ -1,6 +1,6 @@
 {
   "name": "p-code",
-  "version": "2.23.0",
+  "version": "2.24.0",
   "private": true,
   "type": "module",
   "scripts": {"test": "node --test"},

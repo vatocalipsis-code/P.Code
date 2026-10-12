@@ -71,3 +71,21 @@ introduce product permissions or actions into the renderer.
 to render the unit after the number body, with a separate intervening text
 space. Default placement remains inside. This applies to composite formats too;
 SPL owns the typography of number, fraction and unit. Values are not changed.
+
+### Skin-local format libraries and vectors (2.24)
+
+`pcode.format-library.v1` allows `SetLang.Formats { Name { Kind = ... } }`.
+A source container references a declaration with `FormatRef = "Name"`. Picot
+resolves references once before validation and compilation; shared definitions
+are immutable and local to that skin. Unknown names, inline overrides and
+missing capability negotiation fail preparation. Models cannot supply formats.
+
+`pcode.vector.v1` adds a static `Vector` declaration to a Container. `ViewBox`,
+`Fill`, `Stroke`, `StrokeWidth`, `LineCap`, `LineJoin` and named `Elements`
+(`Shape = "Path"` with `D`, or `Shape = "Circle"` with `CX`, `CY`, `R`)
+produce native SVG nodes without parsing markup. Colors can reference skin CSS
+variables. Scripts, events, remote resources and arbitrary SVG attributes are
+not accepted. Vectors neither inspect application entities nor perform commands.
+
+Semantic `VisibleSource` now enforces hidden state with an inline important
+rule, so a skin's important display rule cannot expose an unavailable component.

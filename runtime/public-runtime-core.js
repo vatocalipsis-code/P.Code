@@ -200,6 +200,10 @@ export function createPlaneCodeEngine(dependencies){
         return rejected("capability","parallax-capability-not-negotiated");
       if(setRenderData.TiltParallax&&!requires.includes("pcode.tilt-parallax.v1"))
         return rejected("capability","tilt-parallax-requirement-missing");
+      if(dependencies.resolveLang){
+        try{input={...input,SetLang:dependencies.resolveLang(input.SetLang,this.capabilities)};setLangData=input.SetLang.Data}
+        catch(error){return rejected("setlang","invalid-setlang",diagnostic(error))}
+      }
       try{dependencies.validateResources(input.Resources);dependencies.validatePlan(setLangData,setDataData,this.capabilities,input.Resources)}
       catch(error){return rejected("setlang","invalid-setlang",diagnostic(error))}
       try{dependencies.validateData(setDataData,setLangData,this.capabilities,input.Resources)}
