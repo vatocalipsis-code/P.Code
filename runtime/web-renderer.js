@@ -174,7 +174,12 @@ function applySemanticState(el,rule,dataSet,item=null){
   if(rule.Sequence)applySequence(el,rule.Sequence,dataSet[MODEL]);
   if(rule.StateSource){const value=semanticValue(rule.StateSource,dataSet[MODEL],item);el.dataset.planeState=value==null?'':String(value)}
   if(rule.VisibleSource){el.hidden=semanticValue(rule.VisibleSource,dataSet[MODEL],item)!==true;el.setAttribute('aria-hidden',String(el.hidden));el.style.setProperty('display',el.hidden?'none':el.dataset.planeType==='Group'?'flex':'',el.hidden?'important':'')}
-  if(rule.PressedSource)el.setAttribute('aria-pressed',String(semanticValue(rule.PressedSource,dataSet[MODEL],item)===true));
+  if(rule.PressedSource){
+    const value=semanticValue(rule.PressedSource,dataSet[MODEL],item);
+    const selected=rule.PressedEquals!==undefined?value===rule.PressedEquals:value===true;
+    el.setAttribute('aria-pressed',String(selected));
+    if(rule.SelectedClass)el.classList.toggle(rule.SelectedClass,selected);
+  }
   if(rule.LabelSource){const value=semanticValue(rule.LabelSource,dataSet[MODEL],item);el.setAttribute('aria-label',textTemplate(value,rule.LabelTemplate))}
   if(rule.TitleSource){const value=semanticValue(rule.TitleSource,dataSet[MODEL],item);if(value==null||value==='')el.removeAttribute('title');else el.setAttribute('title',String(value))}
   if(rule.ExpandedSource)el.setAttribute('aria-expanded',String(semanticValue(rule.ExpandedSource,dataSet[MODEL],item)===true));

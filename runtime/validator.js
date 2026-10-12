@@ -31,7 +31,7 @@ const VISUAL_RULES=new Set([
   "FillHorizontal","FillVertical","Order","HorizontalAlignment","VerticalAlignment",
   "Font","SecretGroup","SecretResetSource","PlaceholderSource","PlaceholderFormat","OpenPickerOnClick","InputType","InputMode","Placeholder","AriaLabel","Source",
   "OnInput","OnChange","OnSubmit","OnFocus","OnBlur","ReadOnly","Disabled","Required","Visible",
-  "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","LabelSource","TitleSource","LabelTemplate",
+  "CornerRadius","Repeat","RepeatIds","Class","Format","StateSource","VisibleSource","ExpandedSource","PressedSource","PressedEquals","SelectedClass","LabelSource","TitleSource","LabelTemplate",
   "EmptyChoice","ChoicesSource","EnabledSource","ReadOnlySource","ErrorSource","ChoiceValue","ChoiceLabel","ChoiceAvailableField","UnavailableSuffix","EmptyPlaceholder","Min","Max","Step","MaxLength","Autocomplete",
   "Text","Role","AriaLevel","Sequence","Vector","ControlAction","Modal","ModalEnter","ModalExit","ActionMenu","ModalClass","Dismiss","NativeButton","Route","Feedback","NumericEditor","DecimalInput","SceneEffects","Linkify","Rows","LiveVariable","NativeSwitch"
 ]);
@@ -210,6 +210,8 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Source!==undefined&&(!/^(?:Container|EditableInput|Flow) /.test(label)||!isNonEmptyString(rule.Source)))fail("Source for "+label+" requires a Container or EditableInput and a field name");
   for(const key of ['StateSource','VisibleSource','ExpandedSource','PressedSource','LabelSource','TitleSource','ChoicesSource','EnabledSource','ReadOnlySource','ErrorSource'])if(rule[key]!==undefined&&(typeof rule[key]!=='string'||!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(rule[key])))fail(key+' must be a semantic path');
   if(rule.LabelTemplate!==undefined&&(!rule.LabelSource||typeof rule.LabelTemplate!=='string'))fail('LabelTemplate requires LabelSource and text');
+  if(rule.PressedEquals!==undefined&&(!rule.PressedSource||!['string','boolean','number'].includes(typeof rule.PressedEquals)))fail('PressedEquals requires a PressedSource and scalar value');
+  if(rule.SelectedClass!==undefined&&(!rule.PressedSource||typeof rule.SelectedClass!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(rule.SelectedClass)))fail('SelectedClass requires a PressedSource and one CSS class');
   if(rule.Role!==undefined&&!['status','alert','log','heading','group','region','list','listitem','img','presentation','button'].includes(rule.Role))fail('Invalid semantic Role');
   if(rule.AriaLevel!==undefined&&(rule.Role!=='heading'||!Number.isInteger(rule.AriaLevel)||rule.AriaLevel<1||rule.AriaLevel>6))fail('AriaLevel requires a heading level 1..6');
   if(rule.Sequence!==undefined){
@@ -374,6 +376,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
     if(usesDecimalProjection(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-projection.v1'))fail('Decimal projection requires pcode.decimal-projection.v1');
     if(usesTextSlice(node.Properties?.Format)&&!capabilitySet.has('pcode.text-slice.v1'))fail('Text slice requires pcode.text-slice.v1');
+    if((node.Properties?.PressedEquals!==undefined||node.Properties?.SelectedClass!==undefined)&&!capabilitySet.has('pcode.pressed-match.v1'))fail('Pressed matching requires pcode.pressed-match.v1');
     if((node.Properties?.ModalEnter||node.Properties?.ModalExit?.Effect==='Slide')&&!capabilitySet.has('pcode.modal-slide.v1'))fail('Modal slide requires pcode.modal-slide.v1');
     if(node.Properties?.ModalExit&&!capabilitySet.has('pcode.modal-transition.v1'))fail('ModalExit requires pcode.modal-transition.v1');
     if(node.Properties?.Modal&&!capabilitySet.has('pcode.semantic-controls.v1'))fail('Modal requires pcode.semantic-controls.v1');
@@ -420,7 +423,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(depth>32)fail('Flow nesting exceeds 32');
     add(node.Login,'Flow');const p={...(node.Properties??{})},tag=p.Tag;
     if(!['div','section','article','p','span','strong','small','time','label','output','button','h1','h2','h3','canvas'].includes(tag))fail('Invalid Flow Tag');
-    const allowed=new Set(['ControlAction','Tag','Class','Text','Source','Format','Repeat','RepeatIds','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
+    const allowed=new Set(['ControlAction','Tag','Class','Text','Source','Format','Repeat','RepeatIds','StateSource','VisibleSource','ExpandedSource','EnabledSource','PressedSource','PressedEquals','SelectedClass','LabelSource','TitleSource','LabelTemplate','AriaLabel','Role','AriaLevel','OffPress','Sequence','Linkify','Vector']);
     for(const key of Object.keys(p))if(!allowed.has(key))fail('Unsupported Flow property '+key);
     if(p.Source!==undefined&&!/^[$@]\.[a-zA-Z0-9_.-]+$/.test(p.Source))fail('Flow Source must be semantic');
     if(p.Repeat!==undefined&&!/^\$\.[a-zA-Z0-9_.-]+$/.test(p.Repeat))fail('Flow Repeat must be semantic');
