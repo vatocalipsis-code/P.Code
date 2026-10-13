@@ -4,7 +4,7 @@ import {installSceneEffects,beforeSceneUpdate,updateSceneEffects,disposeSceneEff
 import {applySequence} from './sequence.js';
 import {renderVector} from './vector.js';
 import {installNumericEditor,updateNumericEditor,disposeNumericEditor,consumeNumericBack,patchDecimalInput,installDecimalPreviews,updateDecimalPreviews,disposeDecimalPreviews} from './numeric-editor.js';
-import {installControlFeedback,disposeControlFeedback,cancelControlFeedback} from './control-feedback.js';
+import {installControlFeedback,disposeControlFeedback,cancelControlFeedback,acknowledgeControlFeedback} from './control-feedback.js';
 /** Browser renderer for compiled P.Code Object Plans. */
 import {formatValue} from './value-format.js';
 import {MODEL,semanticValue,decimalParts,textTemplate} from './semantic-model.js';
@@ -471,6 +471,7 @@ export function requestTiltParallax(root){
   });
 }
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
+export function acknowledgePlaneCodeEvent(root,eventType,model){return acknowledgeControlFeedback(root,eventType,model)}
 export function consumePlaneCodeBack(root){return consumeActionMenuBack(root)||consumeNumericBack(root)}
 export function disposePlaneCode(root){
   releaseSecretControls(root);

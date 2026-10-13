@@ -74,6 +74,7 @@ export function createPlaneCodeEngine(dependencies){
         try{validateSemanticModel({payload:Details.Payload});event.Payload=structuredClone(Details.Payload)}catch{return}
       }
       if(Details&&typeof Details.ItemId==="string")event.ItemId=Details.ItemId;
+      try{dependencies.renderer.feedback?.(this.target,EventType,this.semanticModel)}catch{}
       try{this.sink(event)}catch{}
     }
     // Presentation may consume Back before the application changes its semantic route.

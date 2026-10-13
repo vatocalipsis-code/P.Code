@@ -146,12 +146,13 @@ function validateVisualRule(rule,label,allowPanelEffects=false,allowEvents=false
   if(rule.Feedback!==undefined){
     const f=rule.Feedback;
     if(!label.startsWith('BasePanel ')||!f||typeof f!=='object'||Array.isArray(f))fail('Feedback requires a BasePanel');
-    if(Object.keys(f).some(key=>!['Scope','Target','KeyboardExclude','PressedClass','HaloClass','MinWidth','MinHeight','ReleaseDelay','HaloTimeout'].includes(key)))fail('Unknown Feedback property');
+    if(Object.keys(f).some(key=>!['Scope','Target','KeyboardExclude','PressedClass','HaloClass','MinWidth','MinHeight','ReleaseDelay','HaloTimeout','HapticSource','HapticDuration'].includes(key)))fail('Unknown Feedback property');
     if(!['Root','Document'].includes(f.Scope))fail('Invalid Feedback scope');
     for(const key of ['Target','KeyboardExclude'])if(!isNonEmptyString(f[key]))fail('Feedback requires selectors');
     for(const key of ['PressedClass','HaloClass'])if(typeof f[key]!=='string'||!/^[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(f[key]))fail('Invalid Feedback class');
     for(const key of ['MinWidth','MinHeight'])if(!isNonNegativeNumber(f[key]))fail('Invalid Feedback geometry');
     for(const key of ['ReleaseDelay','HaloTimeout'])if(!isNonNegativeNumber(f[key])||f[key]>10000)fail('Invalid Feedback duration');
+    if((f.HapticSource!==undefined||f.HapticDuration!==undefined)&&(!/^\$\.[a-zA-Z0-9_.-]+$/.test(f.HapticSource??'')||!Number.isInteger(f.HapticDuration)||f.HapticDuration<1||f.HapticDuration>100))fail('Feedback haptics require a semantic source and duration 1..100');
   }
   if(rule.Route!==undefined){
     const r=rule.Route;
@@ -374,6 +375,7 @@ export function validatePLang(pLang,setData={},capabilities=[],resources=null){
     if(usesUnitPlacement(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-unit-layout.v1'))fail('UnitPlacement requires pcode.decimal-unit-layout.v1');
     if(node.Properties?.DecimalInput?.Preview&&!capabilitySet.has('pcode.decimal-preview.v1'))fail('DecimalInput Preview requires pcode.decimal-preview.v1');
     if(node.Properties?.Feedback&&!capabilitySet.has('pcode.control-feedback.v1'))fail('Feedback requires pcode.control-feedback.v1');
+    if(node.Properties?.Feedback?.HapticSource&&!capabilitySet.has('pcode.haptic-feedback.v1'))fail('Feedback haptics require pcode.haptic-feedback.v1');
     if(usesDecimalProjection(node.Properties?.Format)&&!capabilitySet.has('pcode.decimal-projection.v1'))fail('Decimal projection requires pcode.decimal-projection.v1');
     if(usesTextSlice(node.Properties?.Format)&&!capabilitySet.has('pcode.text-slice.v1'))fail('Text slice requires pcode.text-slice.v1');
     if((node.Properties?.PressedEquals!==undefined||node.Properties?.SelectedClass!==undefined)&&!capabilitySet.has('pcode.pressed-match.v1'))fail('Pressed matching requires pcode.pressed-match.v1');

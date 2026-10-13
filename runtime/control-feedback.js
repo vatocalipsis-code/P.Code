@@ -1,4 +1,6 @@
 /** Transient control feedback declared by SPL; emits no application commands. */
+import {semanticValue} from './semantic-model.js';
+import {hapticAcknowledgement} from './feedback-cues.js';
 const scenes=new WeakMap();
 export function installControlFeedback(root,plan,interaction){
  disposeControlFeedback(root);
@@ -31,7 +33,12 @@ export function installControlFeedback(root,plan,interaction){
  win.addEventListener('blur',()=>release(true),{signal:abort.signal});
  doc.addEventListener('visibilitychange',()=>{if(doc.hidden)release(true)},{signal:abort.signal});
  const cancel=()=>{release(true);for(const halo of halos.keys())removeHalo(halo)};
- scenes.set(root,{cancel,dispose(){abort.abort();cancel()}});
+ scenes.set(root,{rule,view:win,cancel,dispose(){abort.abort();cancel()}});
 }
 export function disposeControlFeedback(root){scenes.get(root)?.dispose();scenes.delete(root)}
 export function cancelControlFeedback(root){scenes.get(root)?.cancel()}
+export function acknowledgeControlFeedback(root,eventType,model){
+ const scene=scenes.get(root);
+ if(!scene||!['OnPress','OffPress','OnSubmit'].includes(eventType)||semanticValue(scene.rule.HapticSource,model)!==true)return false;
+ return hapticAcknowledgement(true,scene.view,scene.rule.HapticDuration);
+}

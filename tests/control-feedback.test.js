@@ -9,6 +9,10 @@ test('feedback is an SPL capability with one owner and validated lifetimes',()=>
  assert.equal(validatePLang(data,{},['pcode.control-feedback.v1']),true);
  assert.throws(()=>validatePLang([...data,{...data[0],Login:'Other'}],{},['pcode.control-feedback.v1']),/one Feedback/);
  assert.throws(()=>validatePLang([{...data[0],Properties:{Feedback:{...rule,ReleaseDelay:-1}}}],{},['pcode.control-feedback.v1']),/duration/);
+ const haptic={...rule,HapticSource:'$.preferences.haptics',HapticDuration:8};
+ assert.throws(()=>validatePLang([{...data[0],Properties:{Feedback:haptic}}],{},['pcode.control-feedback.v1']),/haptic-feedback/);
+ assert.equal(validatePLang([{...data[0],Properties:{Feedback:haptic}}],{},['pcode.control-feedback.v1','pcode.haptic-feedback.v1']),true);
+ assert.throws(()=>validatePLang([{...data[0],Properties:{Feedback:{...haptic,HapticDuration:0}}}],{},['pcode.control-feedback.v1','pcode.haptic-feedback.v1']),/duration/);
  const project={SetLang:{Name:'test',Version:1,Data:data},SetData:{Name:'data',Version:1,Data:{}},SetRender:{Name:'render',Version:1,Data:{}}};
  assert.deepEqual(parseSPL(serializeSPL(project)).SetLang.Data[0].Properties.Feedback,rule);
 });
