@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {presentationVisible,waitForRendererStyle,failStartupScreen} from '../runtime/startup-presentation.js';
+import {presentationRoot,presentationVisible,waitForRendererStyle,failStartupScreen} from '../runtime/startup-presentation.js';
 
 test('Picot owns renderer stylesheet readiness and the failed-startup presentation',async()=>{
  let cleared=0,removed,hidden;
@@ -13,6 +13,7 @@ test('Picot owns renderer stylesheet readiness and the failed-startup presentati
   '[data-picot-loader]':loader
  })[key]};
  assert.equal(presentationVisible(doc),true);
+ assert.equal(presentationRoot(doc),root);
  await waitForRendererStyle(doc);
  assert.equal(stylesheet.media,'all');
  failStartupScreen(doc);

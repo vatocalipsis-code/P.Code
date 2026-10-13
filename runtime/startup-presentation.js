@@ -8,6 +8,7 @@ const config={
 };
 const select=(selector,doc=globalThis.document)=>doc?.querySelector(selector);
 
+export const presentationRoot=(doc=globalThis.document)=>select(config.root,doc);
 export const presentationVisible=(doc=globalThis.document)=>doc?.visibilityState!=='hidden';
 
 export async function waitForRendererStyle(doc=globalThis.document){
