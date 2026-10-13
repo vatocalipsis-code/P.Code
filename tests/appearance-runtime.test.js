@@ -73,6 +73,23 @@ test('Picot applies saved appearance and screen metadata without application DOM
  }finally{globalThis.matchMedia=before;delete VISUAL_STYLES.OldStyle}
 });
 
+test('Picot creates browser theme metadata from the active SPL palette',()=>{
+ const previous=globalThis.matchMedia;
+ const values=new Map(),attributes=new Map(),meta=[];
+ const html={dataset:{},style:{getPropertyValue:key=>values.get(key),setProperty:(key,value)=>values.set(key,value)},setAttribute:(key,value)=>attributes.set(key,value)};
+ const viewport={content:''};
+ const doc={documentElement:html,head:{append:node=>meta.push(node)},createElement:tag=>({tagName:tag}),querySelector:key=>key==='meta[name="theme-color"]'?meta[0]??null:viewport};
+ const palette={Light:{Background:'#FAFBFC',Panel:'#FFFFFF',Tint:'#EEEEEE'},Dark:{Background:'#151617',Panel:'#242526',Tint:'#353637'}};
+ VISUAL_STYLES.OldStyle={label:'Old Style',splFile:'OldStyle'};
+ try{
+  globalThis.matchMedia=()=>({matches:false});
+  applyAppearance({palette,preferences:{theme:'dark'},visualStyle:'OldStyle',root:{dataset:{}},document:doc});
+  assert.equal(meta.length,1);assert.equal(meta[0].name,'theme-color');assert.equal(meta[0].content,'#151617');
+  applyAppearance({palette,preferences:{theme:'light'},visualStyle:'OldStyle',root:{dataset:{}},document:doc});
+  assert.equal(meta.length,1);assert.equal(meta[0].content,'#FAFBFC');
+ }finally{globalThis.matchMedia=previous;delete VISUAL_STYLES.OldStyle}
+});
+
 test('Picot watches system appearance only when the caller needs it',()=>{
  const before=globalThis.matchMedia;
  let listener,changes=0,allowed=false;

@@ -107,8 +107,11 @@ export function applyAppearance({preferences,visualStyle,palette,root,authentica
  const boundedAccent=Number.isFinite(accentLevel)?Math.max(0,Math.min(100,accentLevel)):28;
  setToken('--uc-user-accent-alpha',String(boundedAccent/100));
  if(palette)setToken('--uc-user-accent-ink',tokens.accent);
- const themeColor=doc.querySelector('meta[name="theme-color"]');
- if(palette&&themeColor&&themeColor.content!==tokens.background)themeColor.content=tokens.background;
+ if(palette){
+  let themeColor=doc.querySelector('meta[name="theme-color"]');
+  if(!themeColor){themeColor=doc.createElement('meta');themeColor.name='theme-color';doc.head.append(themeColor)}
+  if(themeColor.content!==tokens.background)themeColor.content=tokens.background;
+ }
  const viewport=doc.querySelector('meta[name="viewport"]');
  const viewportContent='width=device-width,initial-scale=1,viewport-fit=cover'+(authenticated?',maximum-scale=1,user-scalable=no':'');
  if(viewport&&viewport.content!==viewportContent)viewport.content=viewportContent;
