@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {applyAppearance,applyAppearancePreferenceChange,appearanceSettingsModel,watchSystemAppearance} from '../runtime/appearance.js';
+import {applyAppearance,applyAppearancePreferenceChange,appearanceSettingsModel,appearanceChanged,followsSystemAppearance,appearanceActionHandlers,watchSystemAppearance} from '../runtime/appearance.js';
 import {VISUAL_STYLES} from '../runtime/skin-manager.js';
 
 test('Picot builds the appearance settings view from saved preferences',()=>{
@@ -27,6 +27,26 @@ test('Picot installs a saved skin and restores the previous preference if instal
  await applyAppearancePreferenceChange({theme:'dark'},adapter);
  assert.equal(preferences.theme,'dark');
  assert.deepEqual(calls,[['save',undefined],['remount']]);
+});
+
+test('Picot owns appearance commands and validates the selection before persisting',()=>{
+ const changes=[];VISUAL_STYLES.Functional={label:'Functional',splFile:'Functional'};
+ try{
+  const actions=appearanceActionHandlers({change:patch=>changes.push(patch),readPreferences:()=>({haptics:true}),prefix:'cash.appearance',hapticsCommand:'cash.haptics.toggle'});
+  actions['cash.appearance.theme.dark']();
+  actions['cash.appearance.accent.blue']();
+  actions['cash.appearance.font.inter']();
+  actions['cash.appearance.visualStyle.select']({ItemId:'Functional'});
+  actions['cash.appearance.visualStyle.select']({ItemId:'missing'});
+  actions['cash.appearance.rowHeight.change']({Value:'48'});
+  actions['cash.appearance.rowHeight.change']({Value:'65'});
+  actions['cash.haptics.toggle']();
+  assert.deepEqual(changes,[{theme:'dark'},{accent:'#007AFF'},{font:'inter'},{visualStyle:'Functional'},{rowHeight:48},{haptics:false}]);
+  assert.equal(followsSystemAppearance({theme:'system'}),true);
+  assert.equal(followsSystemAppearance({theme:'dark'}),false);
+  assert.equal(appearanceChanged({theme:'light',rowPadding:12},{theme:'light',rowPadding:12}),false);
+  assert.equal(appearanceChanged({theme:'light'},{theme:'dark'}),true);
+ }finally{delete VISUAL_STYLES.Functional}
 });
 
 test('Picot applies saved appearance and screen metadata without application DOM work',()=>{

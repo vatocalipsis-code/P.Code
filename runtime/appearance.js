@@ -37,7 +37,7 @@ export function appearanceTokens(preferences,systemDark){
  return {dark,background,panel,accent:ink,surface:pastelAccent(accent),tint:dark?'#303033':'#EBF0F6'};
 }
 
-import {applyVisualStyle,commitVisualStyle} from './skin-manager.js';
+import {VISUAL_STYLES,applyVisualStyle,commitVisualStyle} from './skin-manager.js';
 
 const appearanceKey=()=>globalThis.document?.querySelector('script[data-picot-boot]')?.dataset.appearanceStorageKey??'picot.appearance';
 export const REGISTRATION_APPEARANCE=Object.freeze({theme:'dark',accent:'#636366',accentIntensity:25,font:'system'});
@@ -47,6 +47,23 @@ export function appearanceSettingsModel(preferences,{enabled=true}={}){
  return {theme:preferences?.theme??'system',font:preferences?.font??'system',accent:String(preferences?.accent??'#007AFF').toUpperCase(),
   haptics:Boolean(preferences?.haptics),enabled,rowHeight:preferences?.rowHeight??44,rowPadding:preferences?.rowPadding??12,
   accentIntensity:preferences?.accentIntensity??28};
+}
+
+const appearanceSnapshot=preferences=>JSON.stringify([preferences?.theme,preferences?.accent,preferences?.font,preferences?.accentIntensity,preferences?.rowHeight,preferences?.rowPadding]);
+export const appearanceChanged=(before,after)=>appearanceSnapshot(before)!==appearanceSnapshot(after);
+export const followsSystemAppearance=preferences=>!preferences?.theme||preferences.theme==='system';
+export function appearanceActionHandlers({change,readPreferences,prefix='appearance',hapticsCommand='haptics.toggle'}){
+ const actions={};
+ for(const theme of ['system','light','dark'])actions[prefix+'.theme.'+theme]=()=>change({theme});
+ for(const [key,accent] of ACCENT_COLORS)actions[prefix+'.accent.'+key]=()=>change({accent});
+ for(const [key] of FONT_CHOICES)actions[prefix+'.font.'+key]=()=>change({font:key});
+ actions[prefix+'.visualStyle.select']=event=>Object.hasOwn(VISUAL_STYLES,event.ItemId)?change({visualStyle:event.ItemId}):undefined;
+ for(const [key,min,max] of [['rowHeight',36,64],['rowPadding',4,20],['accentIntensity',0,100]])actions[prefix+'.'+key+'.change']=event=>{
+  const value=Number(event.Value);
+  return Number.isInteger(value)&&value>=min&&value<=max?change({[key]:value}):undefined;
+ };
+ actions[hapticsCommand]=()=>change({haptics:!readPreferences().haptics});
+ return actions;
 }
 
 /** Keep persistence, SPL installation and rollback one presentation transaction. */
