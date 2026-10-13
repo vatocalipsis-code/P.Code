@@ -37,7 +37,7 @@ export function appearanceTokens(preferences,systemDark){
  return {dark,background,panel,accent:ink,surface:pastelAccent(accent),tint:dark?'#303033':'#EBF0F6'};
 }
 
-import {applyVisualStyle} from './skin-manager.js';
+import {applyVisualStyle,commitVisualStyle} from './skin-manager.js';
 
 const appearanceKey=()=>globalThis.document?.querySelector('script[data-picot-boot]')?.dataset.appearanceStorageKey??'picot.appearance';
 export const REGISTRATION_APPEARANCE=Object.freeze({theme:'dark',accent:'#636366',accentIntensity:25,font:'system'});
@@ -47,6 +47,26 @@ export function appearanceSettingsModel(preferences,{enabled=true}={}){
  return {theme:preferences?.theme??'system',font:preferences?.font??'system',accent:String(preferences?.accent??'#007AFF').toUpperCase(),
   haptics:Boolean(preferences?.haptics),enabled,rowHeight:preferences?.rowHeight??44,rowPadding:preferences?.rowPadding??12,
   accentIntensity:preferences?.accentIntensity??28};
+}
+
+/** Keep persistence, SPL installation and rollback one presentation transaction. */
+export async function applyAppearancePreferenceChange(patch,{readPreferences,setPreferences,currentStyle,save,mountStyle,remountCurrent,commitStyle=commitVisualStyle}){
+ const previousPreferences=readPreferences(),previousStyle=currentStyle();
+ const result=await save(patch);
+ setPreferences(result.preferences);
+ try{
+  if(patch.visualStyle){await mountStyle(patch.visualStyle);commitStyle(patch.visualStyle)}
+  else await remountCurrent();
+ }catch(error){
+  if(patch.visualStyle){
+   setPreferences(previousPreferences);
+   commitStyle(previousStyle);
+   const restored=await save({visualStyle:previousStyle});
+   setPreferences(restored.preferences);
+  }
+  throw error;
+ }
+ return result.preferences;
 }
 
 /** Project saved appearance values onto browser presentation owned by Picot. */
