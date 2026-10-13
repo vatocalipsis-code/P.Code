@@ -472,6 +472,11 @@ export function requestTiltParallax(root){
 }
 export function cancelPlaneCodeInteraction(root){cancelControlFeedback(root);activeInteraction.get(root)?.cancel()}
 export function acknowledgePlaneCodeEvent(root,eventType,model){return acknowledgeControlFeedback(root,eventType,model)}
+export function updateDocumentTitle(root,source,model){
+ if(!source)return;
+ const value=semanticValue(source,model);
+ if(typeof value==='string'&&value.trim()&&root.ownerDocument.title!==value)root.ownerDocument.title=value;
+}
 export function consumePlaneCodeBack(root){return consumeActionMenuBack(root)||consumeNumericBack(root)}
 export function disposePlaneCode(root){
   releaseSecretControls(root);

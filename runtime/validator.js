@@ -243,6 +243,8 @@ export function validateSetEnvelope(value,label){
   if(value.Data===undefined)fail(label+".Data is required");
   if(label==="SetLang"&&value.ThemeContract!==undefined&&!new Set(["SelfContained","HostMapped"]).has(value.ThemeContract))
     fail("SetLang.ThemeContract must be SelfContained or HostMapped");
+  if(label==="SetLang"&&value.DocumentTitleSource!==undefined&&(!/^\$\.[a-zA-Z0-9_.-]+$/.test(value.DocumentTitleSource)||!(value.Requires??[]).includes('pcode.document-title.v1')))
+    fail("SetLang.DocumentTitleSource requires a semantic source and pcode.document-title.v1");
   if(label==="SetLang"&&value.StyleSheet!==undefined){
     if(typeof value.StyleSheet!=="string"||!value.StyleSheet.trim())fail("SetLang.StyleSheet must be non-empty CSS text");
     if(value.StyleSheet.length>2_000_000)fail("SetLang.StyleSheet is too large");

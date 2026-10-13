@@ -87,6 +87,7 @@ export function createPlaneCodeEngine(dependencies){
         try{
           dependencies.renderer.mount(RenderTarget,this.objectPlan,withModel(this.setData.Data,this.semanticModel),this.setRender.Data,{isEnabled:()=>this.state==="ACTIVE",emit:(type,login,value,details)=>this._emit(type,login,value,details)},this.resources,this.setLang.StyleSheet);
           owners.set(RenderTarget,this);this.target=RenderTarget;this.state="MOUNTED_INACTIVE";
+          dependencies.renderer.documentTitle?.(this.target,this.setLang.DocumentTitleSource,this.semanticModel);
           return completed();
         }catch(error){return this._failStop("mount-failed",error)}
       });
@@ -118,7 +119,7 @@ export function createPlaneCodeEngine(dependencies){
         try{validateSemanticModel(model)}catch(error){return rejected('data-update','invalid-semantic-model',diagnostic(error))}
         try{
           this.semanticModel=structuredClone(model);
-          if(this.target)(dependencies.renderer.patchModel??dependencies.renderer.patchData)(this.target,withModel(this.setData.Data,this.semanticModel),this.setRender.Data,this.resources);
+          if(this.target){(dependencies.renderer.patchModel??dependencies.renderer.patchData)(this.target,withModel(this.setData.Data,this.semanticModel),this.setRender.Data,this.resources);dependencies.renderer.documentTitle?.(this.target,this.setLang.DocumentTitleSource,this.semanticModel)}
           return completed();
         }catch(error){return this._failStop('model-update-failed',error)}
       });
