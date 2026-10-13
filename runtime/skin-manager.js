@@ -16,6 +16,9 @@ export function resolveVisualStyle(savedStyle,{onboarding=false}={}){
   if(onboarding)return defaultVisualStyle();
   return Object.hasOwn(VISUAL_STYLES,savedStyle)?savedStyle:Object.keys(VISUAL_STYLES)[0];
 }
+export function visualStyleChoices(selected,{enabled=true}={}){
+ return {available:Object.entries(VISUAL_STYLES).map(([id,entry])=>({id,label:entry.label,selected:id===selected})),enabled};
+}
 const documentRoot=()=>globalThis.document?.documentElement;
 const skinRoot=()=>globalThis.document?.querySelector(config.rootSelector);
 export async function loadVisualStyleCatalog(){

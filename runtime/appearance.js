@@ -43,6 +43,12 @@ const appearanceKey=()=>globalThis.document?.querySelector('script[data-picot-bo
 export const REGISTRATION_APPEARANCE=Object.freeze({theme:'dark',accent:'#636366',accentIntensity:25,font:'system'});
 export const systemDark=()=>Boolean(globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches);
 
+export function appearanceSettingsModel(preferences,{enabled=true}={}){
+ return {theme:preferences?.theme??'system',font:preferences?.font??'system',accent:String(preferences?.accent??'#007AFF').toUpperCase(),
+  haptics:Boolean(preferences?.haptics),enabled,rowHeight:preferences?.rowHeight??44,rowPadding:preferences?.rowPadding??12,
+  accentIntensity:preferences?.accentIntensity??28};
+}
+
 /** Project saved appearance values onto browser presentation owned by Picot. */
 export function applyAppearance({preferences,visualStyle,root,authenticated=false,persist=false,document:doc=globalThis.document,storage}={}){
  const metrics=preferences??{},tokens=appearanceTokens(metrics,systemDark());
