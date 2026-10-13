@@ -12,6 +12,10 @@ export const VISUAL_STYLES=Object.create(null);
 let switchController=null;
 const styleName=/^[A-Z][A-Za-z0-9]*$/;
 const defaultVisualStyle=()=>Object.hasOwn(VISUAL_STYLES,config.defaultSkin)?config.defaultSkin:Object.keys(VISUAL_STYLES)[0];
+export function resolveVisualStyle(savedStyle,{onboarding=false}={}){
+  if(onboarding)return defaultVisualStyle();
+  return Object.hasOwn(VISUAL_STYLES,savedStyle)?savedStyle:Object.keys(VISUAL_STYLES)[0];
+}
 const documentRoot=()=>globalThis.document?.documentElement;
 const skinRoot=()=>globalThis.document?.querySelector(config.rootSelector);
 export async function loadVisualStyleCatalog(){

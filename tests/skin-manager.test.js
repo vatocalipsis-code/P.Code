@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {VISUAL_STYLES,loadVisualStyleCatalog,readVisualStyle,applyVisualStyle,commitVisualStyle} from '../runtime/skin-manager.js';
+import {VISUAL_STYLES,loadVisualStyleCatalog,readVisualStyle,resolveVisualStyle,applyVisualStyle,commitVisualStyle} from '../runtime/skin-manager.js';
 
 test('skin manager accepts the installed catalog and keeps visual state in Picot',async()=>{
  const fetchBefore=globalThis.fetch;
@@ -12,6 +12,9 @@ test('skin manager accepts the installed catalog and keeps visual state in Picot
   await loadVisualStyleCatalog();
   assert.deepEqual(Object.keys(VISUAL_STYLES),['OldStyle','Functional']);
   assert.equal(readVisualStyle({getItem:()=>null}),'OldStyle');
+  assert.equal(resolveVisualStyle('Functional'),'Functional');
+  assert.equal(resolveVisualStyle('unknown'),'OldStyle');
+  assert.equal(resolveVisualStyle('Functional',{onboarding:true}),'OldStyle');
   const attributes=new Map(),doc={getAttribute:name=>attributes.get(name),setAttribute:(name,value)=>attributes.set(name,value)};
   const root={dataset:{}};
   const saved=[];
