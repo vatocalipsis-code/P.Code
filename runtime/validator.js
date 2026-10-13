@@ -245,6 +245,16 @@ export function validateSetEnvelope(value,label){
     fail("SetLang.ThemeContract must be SelfContained or HostMapped");
   if(label==="SetLang"&&value.DocumentTitleSource!==undefined&&(!/^\$\.[a-zA-Z0-9_.-]+$/.test(value.DocumentTitleSource)||!(value.Requires??[]).includes('pcode.document-title.v1')))
     fail("SetLang.DocumentTitleSource requires a semantic source and pcode.document-title.v1");
+  if(label==="SetLang"&&value.AppearancePalette!==undefined){
+    const palette=value.AppearancePalette;
+    if(!(value.Requires??[]).includes('pcode.appearance-palette.v1'))fail('AppearancePalette requires pcode.appearance-palette.v1');
+    if(!palette||typeof palette!=='object'||Array.isArray(palette)||Object.keys(palette).some(key=>!['Light','Dark'].includes(key)))fail('Invalid AppearancePalette');
+    for(const mode of ['Light','Dark']){
+      const colors=palette[mode];
+      if(!colors||typeof colors!=='object'||Array.isArray(colors)||Object.keys(colors).some(key=>!['Background','Panel','Tint'].includes(key)))fail('Invalid AppearancePalette.'+mode);
+      for(const key of ['Background','Panel','Tint'])if(!/^#[0-9a-f]{6}$/i.test(colors[key]??''))fail('Invalid AppearancePalette.'+mode+'.'+key);
+    }
+  }
   if(label==="SetLang"&&value.StyleSheet!==undefined){
     if(typeof value.StyleSheet!=="string"||!value.StyleSheet.trim())fail("SetLang.StyleSheet must be non-empty CSS text");
     if(value.StyleSheet.length>2_000_000)fail("SetLang.StyleSheet is too large");

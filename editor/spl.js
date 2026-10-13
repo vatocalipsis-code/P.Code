@@ -245,8 +245,8 @@ class Parser {
         this.expect("{");
         env.Data = name==="SetLang" ? this.setLangData() : name==="SetData" ? this.setDataData() : this.mapBody();
         this.expect("}");
-      } else if(field==="Formats"&&name==="SetLang"){
-        this.expect("{");env.Formats=this.mapBody();this.expect("}");
+      } else if(["Formats","AppearancePalette"].includes(field)&&name==="SetLang"){
+        this.expect("{");env[field]=this.mapBody();this.expect("}");
       } else if(field==="Requires"&&name==="SetLang"){
         this.expect("[");env.Requires=this.literalArrayBody();this.expect("]");
       } else {
@@ -371,6 +371,7 @@ function serializeEnvelope(name,env){
     rows.push(line(1,"]"));
   }
   if(name==="SetLang"&&env.Formats){rows.push(line(1,"Formats {"));rows.push(...serializeMap(env.Formats,2));rows.push(line(1,"}"));}
+  if(name==="SetLang"&&env.AppearancePalette){rows.push(line(1,"AppearancePalette {"));rows.push(...serializeMap(env.AppearancePalette,2));rows.push(line(1,"}"));}
   for(const [k,v] of Object.entries(env)){
     if(["Name","Version","Data","Requires"].includes(k)) continue;
     if(v===null||typeof v!=="object") rows.push(line(1,`${k} = ${lit(v)}`));

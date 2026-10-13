@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {applyAppearance,applyAppearancePreferenceChange,appearanceSettingsModel,appearanceChanged,followsSystemAppearance,appearanceActionHandlers,watchSystemAppearance} from '../runtime/appearance.js';
+const palette={Light:{Background:'#F0F7FD',Panel:'#FFFFFF',Tint:'#EBF0F6'},Dark:{Background:'#151617',Panel:'#28292A',Tint:'#313234'}};
 import {VISUAL_STYLES} from '../runtime/skin-manager.js';
 
 test('Picot builds the appearance settings view from saved preferences',()=>{
@@ -54,18 +55,18 @@ test('Picot applies saved appearance and screen metadata without application DOM
  const values=new Map(),attributes=new Map(),saved=[];
  const html={dataset:{},style:{getPropertyValue:key=>values.get(key),setProperty:(key,value)=>values.set(key,value)},getAttribute:key=>attributes.get(key),setAttribute:(key,value)=>attributes.set(key,value)};
  const meta={content:''},viewport={content:''};
- const doc={documentElement:html,querySelector:key=>key==='meta[name="theme-color"]'?meta:viewport};
+ const doc={defaultView:{getComputedStyle(){throw Error('Palette must not read computed styles')}},documentElement:html,querySelector:key=>key==='meta[name="theme-color"]'?meta:viewport};
  const root={dataset:{}};
  VISUAL_STYLES.OldStyle={label:'Old Style',splFile:'OldStyle'};
  try{
   globalThis.matchMedia=()=>({matches:false});
-  applyAppearance({preferences:{theme:'dark',accent:'#34C759',rowHeight:48,rowPadding:10,font:'inter'},visualStyle:'OldStyle',root,authenticated:true,persist:true,document:doc,storage:{setItem:(key,value)=>saved.push([key,value])}});
+  applyAppearance({palette,preferences:{theme:'dark',accent:'#34C759',rowHeight:48,rowPadding:10,font:'inter'},visualStyle:'OldStyle',root,authenticated:true,persist:true,document:doc,storage:{setItem:(key,value)=>saved.push([key,value])}});
   assert.equal(html.dataset.theme,'dark');
   assert.equal(html.dataset.ucFont,'inter');
   assert.equal(values.get('--uc-row-height'),'48px');
   assert.equal(values.get('--uc-row-padding'),'10px');
   assert.equal(root.dataset.splSkin,'OldStyle');
-  assert.equal(meta.content,'#111113');
+  assert.equal(meta.content,'#151617');
   assert.match(viewport.content,/maximum-scale=1/);
   assert.equal(saved[0][0],'picot.appearance');
   assert.equal(attributes.get('data-picot-skin'),'OldStyle');

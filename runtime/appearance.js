@@ -31,10 +31,10 @@ export function controlAccentTokens(preferences,systemDark){
  const channels=rgb(accent).join(',');
  return {main:'rgba('+channels+','+intensity+')',secondary:'rgba('+channels+','+(intensity*(dark?.12/.32:.14/.40))+')'};
 }
-export function appearanceTokens(preferences,systemDark){
- const dark=effectiveDark(preferences,systemDark),background=dark?'#111113':'#F0F7FD',panel=dark?'#252527':'#FFFFFF',
+export function appearanceTokens(preferences,systemDark,palette){
+ const dark=effectiveDark(preferences,systemDark),{Background:background,Panel:panel,Tint:tint}=palette[dark?'Dark':'Light'],
  accent=/^#[0-9a-f]{6}$/i.test(preferences?.accent??'')?preferences.accent:'#007AFF',ink=readableAccent(accent,dark?panel:background);
- return {dark,background,panel,accent:ink,surface:pastelAccent(accent),tint:dark?'#303033':'#EBF0F6'};
+ return {dark,background,panel,accent:ink,surface:pastelAccent(accent),tint};
 }
 
 import {VISUAL_STYLES,applyVisualStyle,commitVisualStyle} from './skin-manager.js';
@@ -87,8 +87,8 @@ export async function applyAppearancePreferenceChange(patch,{readPreferences,set
 }
 
 /** Project saved appearance values onto browser presentation owned by Picot. */
-export function applyAppearance({preferences,visualStyle,root,authenticated=false,persist=false,document:doc=globalThis.document,storage}={}){
- const metrics=preferences??{},tokens=appearanceTokens(metrics,systemDark());
+export function applyAppearance({preferences,visualStyle,palette,root,authenticated=false,persist=false,document:doc=globalThis.document,storage}={}){
+ const metrics=preferences??{},tokens=palette?appearanceTokens(metrics,systemDark(),palette):{dark:effectiveDark(metrics,systemDark())};
  const html=doc.documentElement,theme=tokens.dark?'dark':'light';
  const setToken=(name,value)=>{if(html.style.getPropertyValue(name)!==value)html.style.setProperty(name,value)};
  setToken('--uc-row-height',(metrics.rowHeight??44)+'px');
@@ -106,9 +106,9 @@ export function applyAppearance({preferences,visualStyle,root,authenticated=fals
  const accentLevel=Number(metrics.accentIntensity??28);
  const boundedAccent=Number.isFinite(accentLevel)?Math.max(0,Math.min(100,accentLevel)):28;
  setToken('--uc-user-accent-alpha',String(boundedAccent/100));
- setToken('--uc-user-accent-ink',tokens.accent);
+ if(palette)setToken('--uc-user-accent-ink',tokens.accent);
  const themeColor=doc.querySelector('meta[name="theme-color"]');
- if(themeColor&&themeColor.content!==tokens.background)themeColor.content=tokens.background;
+ if(palette&&themeColor&&themeColor.content!==tokens.background)themeColor.content=tokens.background;
  const viewport=doc.querySelector('meta[name="viewport"]');
  const viewportContent='width=device-width,initial-scale=1,viewport-fit=cover'+(authenticated?',maximum-scale=1,user-scalable=no':'');
  if(viewport&&viewport.content!==viewportContent)viewport.content=viewportContent;

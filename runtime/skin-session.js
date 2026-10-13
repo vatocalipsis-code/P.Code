@@ -12,9 +12,9 @@ export function createSkinSession({root,contract,validateContract,actionRegistry
  if(switchStyle)bindVisualStyleSwitch(style=>switchStyle({visualStyle:style}));
  let skin=null,runtime=null,connection=null,currentText=null,currentLabel=null,stableContract=null;
  const resultOk=result=>{if(result.Outcome!=='Completed')throw new Error(JSON.stringify(result.Failure));return result};
- const syncAppearance=()=>{
+ const syncAppearance=(palette=skin?.SetLang.AppearancePalette)=>{
   const current=appearance();
-  return projectAppearance({preferences:current.preferences,visualStyle:currentLabel??selectedStyle(),root,
+  return projectAppearance({palette,preferences:current.preferences,visualStyle:currentLabel??selectedStyle(),root,
    authenticated:current.authenticated,persist:current.persist});
  };
  const dispose=async()=>{if(connection){await connection.close().catch(()=>{});connection=null;runtime=null;skin=null}};
@@ -43,7 +43,7 @@ export function createSkinSession({root,contract,validateContract,actionRegistry
    const previousText=currentText,previousLabel=currentLabel;
    try{
     const startStyle=performance.now();currentText=text;currentLabel=label;
-    applyStyle(label,root);syncAppearance();measure(metricPrefix+'-pre-dispose',startStyle);
+    applyStyle(label,root);syncAppearance(prepared.skin.SetLang.AppearancePalette);measure(metricPrefix+'-pre-dispose',startStyle);
     const startDispose=performance.now();await dispose();measure(metricPrefix+'-dispose',startDispose);
     await activate(prepared);
     if(stable)stableContract=prepared.contract;

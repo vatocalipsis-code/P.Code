@@ -334,3 +334,14 @@ FixedSelector and FixedClass. Picot batches text-line measurements before style
 writes and schedules them on scene updates, width changes and font readiness.
 Only open scenes are measured. Fixed controls use one line. Runtime disposal
 cancels queued work and observers; no application DOM mutation is required.
+
+## pcode.appearance-palette.v1
+
+`SetLang.AppearancePalette` supplies `Light` and `Dark` maps, each containing
+`Background`, `Panel` and `Tint` as six-digit hexadecimal colors. The capability
+must appear in `SetLang.Requires`. Missing or malformed fields reject the SPL.
+Picot's skin session passes the validated palette directly to the appearance
+projection before mounting and when restoring a previous skin. Contrast
+calculation and browser theme-color use these values; no computed-style read
+is needed. Skins without this optional capability do not project palette
+colors through the session. Stored user accent preferences remain unchanged.
