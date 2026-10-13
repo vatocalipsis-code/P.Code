@@ -2,13 +2,14 @@ import {parseSPL} from '../editor/spl.js';
 import {createPCodeHost} from '../host/browser-host.js';
 import {PlaneCodeEngine} from './public-runtime.js';
 import {applyAppearance} from './appearance.js';
-import {applyVisualStyle,VISUAL_STYLES} from './skin-manager.js';
+import {applyVisualStyle,bindVisualStyleSwitch,VISUAL_STYLES} from './skin-manager.js';
 
 /** Owns one mounted SPL and its Picot renderer connection. */
 export function createSkinSession({root,contract,validateContract,actionRegistry,onEvent,onEventError,bind,surface,
- appearance,selectedStyle,expectedName,metricPrefix='picot-skin',measure=()=>{},
+ appearance,selectedStyle,expectedName,switchStyle,metricPrefix='picot-skin',measure=()=>{},
  createHost=createPCodeHost,engine=PlaneCodeEngine,parse=parseSPL,applyStyle=applyVisualStyle,projectAppearance=applyAppearance}){
  const host=createHost({engine,parse});
+ if(switchStyle)bindVisualStyleSwitch(style=>switchStyle({visualStyle:style}));
  let skin=null,runtime=null,connection=null,currentText=null,currentLabel=null,stableContract=null;
  const resultOk=result=>{if(result.Outcome!=='Completed')throw new Error(JSON.stringify(result.Failure));return result};
  const syncAppearance=()=>{
