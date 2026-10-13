@@ -25,3 +25,12 @@ The application supplies authorization, API requests, SetData values, action
 dispatch, navigation, and the installed skin catalog. The Host does not own
 those decisions. A second application can use the adapter with different
 names, endpoints, and actions; it does not import U.Cash code.
+
+## Initial skin selection
+
+Picot selects the first entry in the installed skin catalog when there is no
+valid saved selection or when onboarding requests the default. The application
+bootstrap supplies the catalog URL and storage namespace, never a skin name.
+`early-skin.js` and the application bootstrap share `loadVisualStyleCatalog()`;
+its successful promise is reused, and a failed request can be retried. An
+unavailable or invalid catalog does not install a fallback skin.

@@ -9,7 +9,10 @@ test('skin manager accepts the installed catalog and keeps visual state in Picot
   globalThis.fetch=async()=>({ok:true,json:async()=>[
    {key:'OldStyle',label:'Old Style'},{key:'Functional',label:'Functional'}
   ]});
-  await loadVisualStyleCatalog();
+  const first=loadVisualStyleCatalog();
+  assert.equal(loadVisualStyleCatalog(),first,'Early boot and app reuse one catalog request');
+  await first;
+  assert.equal(loadVisualStyleCatalog(),first,'Completed catalog is reused');
   assert.deepEqual(Object.keys(VISUAL_STYLES),['OldStyle','Functional']);
   assert.equal(readVisualStyle({getItem:()=>null}),'OldStyle');
   assert.equal(resolveVisualStyle('Functional'),'Functional');
@@ -43,8 +46,25 @@ test('skin manager rejects malformed catalogs without replacing the current one'
   globalThis.fetch=async()=>({ok:true,json:async()=>[
    {key:'Functional',label:'Functional'},{key:'Functional',label:'Duplicate'}
   ]});
-  await assert.rejects(loadVisualStyleCatalog,/повреждён/);
+  await assert.rejects(()=>loadVisualStyleCatalog({reload:true}),/повреждён/);
   assert.ok(Object.hasOwn(VISUAL_STYLES,'OldStyle'));
+ }finally{
+  globalThis.fetch=fetchBefore;
+  for(const key of Object.keys(VISUAL_STYLES))delete VISUAL_STYLES[key];
+  Object.assign(VISUAL_STYLES,previous);
+ }
+});
+
+test('catalog order controls the default and failed requests can be retried',async()=>{
+ const fetchBefore=globalThis.fetch,previous={...VISUAL_STYLES};let requests=0;
+ try{
+  globalThis.fetch=async()=>{requests++;if(requests===1)throw Error('offline');return {ok:true,json:async()=>[{key:'Functional',label:'Functional'},{key:'OldStyle',label:'Old Style'}]}};
+  await assert.rejects(loadVisualStyleCatalog({reload:true}),/offline/);
+  await loadVisualStyleCatalog();
+  assert.equal(requests,2);
+  assert.equal(readVisualStyle({getItem:()=>null}),'Functional');
+  assert.equal(resolveVisualStyle('OldStyle',{onboarding:true}),'Functional');
+  assert.equal(readVisualStyle({getItem:()=> 'OldStyle'}),'OldStyle');
  }finally{
   globalThis.fetch=fetchBefore;
   for(const key of Object.keys(VISUAL_STYLES))delete VISUAL_STYLES[key];

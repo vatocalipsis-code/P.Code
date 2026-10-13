@@ -3,7 +3,6 @@ const boot=typeof document==='undefined'?null:document.querySelector('script[dat
 const config={
   catalogUrl:boot?.dataset.catalogUrl??'/skins/catalog.json',
   storageKey:boot?.dataset.styleStorageKey??'picot.visualStyle',
-  defaultSkin:boot?.dataset.defaultSkin,
   rootSelector:boot?.dataset.rootSelector??'[data-picot-root]',
   styleAttribute:boot?.dataset.styleAttribute??'data-picot-skin',
   uiBase:boot?.dataset.uiBase??'Standard'
@@ -11,7 +10,7 @@ const config={
 export const VISUAL_STYLES=Object.create(null);
 let switchController=null;
 const styleName=/^[A-Z][A-Za-z0-9]*$/;
-const defaultVisualStyle=()=>Object.hasOwn(VISUAL_STYLES,config.defaultSkin)?config.defaultSkin:Object.keys(VISUAL_STYLES)[0];
+const defaultVisualStyle=()=>Object.keys(VISUAL_STYLES)[0];
 export function resolveVisualStyle(savedStyle,{onboarding=false}={}){
   if(onboarding)return defaultVisualStyle();
   return Object.hasOwn(VISUAL_STYLES,savedStyle)?savedStyle:Object.keys(VISUAL_STYLES)[0];
@@ -21,7 +20,15 @@ export function visualStyleChoices(selected,{enabled=true}={}){
 }
 const documentRoot=()=>globalThis.document?.documentElement;
 const skinRoot=()=>globalThis.document?.querySelector(config.rootSelector);
-export async function loadVisualStyleCatalog(){
+let catalogRequest=null;
+export function loadVisualStyleCatalog({reload=false}={}){
+  if(catalogRequest&&!reload)return catalogRequest;
+  const request=fetchVisualStyleCatalog();
+  catalogRequest=request;
+  request.catch(()=>{if(catalogRequest===request)catalogRequest=null});
+  return request;
+}
+async function fetchVisualStyleCatalog(){
   const response=await fetch(config.catalogUrl,{cache:'no-store'});
   if(!response.ok)throw new Error('Не удалось загрузить каталог шкурок');
   const entries=await response.json();
