@@ -1,5 +1,7 @@
 # P.Code
 
+When P.Code is packaged for U.Cash, follow the [U.Cash release policy](/home/tot/projects/ucash-monobank-20261008/docs/canon/RELEASE-POLICY.md): the exact P.Code commit is part of one approved immutable artifact for all U.Cash clients. See [AGENTS.md](AGENTS.md).
+
 P.Code is a standalone declarative interface engine. Applications describe an interface with an .SPL SetPlan; P.Code validates and compiles the static interface model, binds live data, and renders the resulting Object Plan.
 
 **Former name:** `PlaneCode` (retained only in historical release records and compatibility-sensitive identifiers).
